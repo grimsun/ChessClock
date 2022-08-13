@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="winnerColor" format="color" />
+    <attr name="looserColor" format="color" />
+    <attr name="inactiveColor" format="color" />
+    <attr name="fontColor" format="color" />
+</resources>

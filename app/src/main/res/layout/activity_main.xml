@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    tools:context=".MainActivity">
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progress1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@id/timer1"
+        app:layout_constraintEnd_toEndOf="@id/timer1"
+        app:layout_constraintStart_toStartOf="@id/timer1"
+        app:layout_constraintTop_toTopOf="@id/timer1" />
+
+    <TextView
+        android:id="@+id/timer1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        tools:text="10:00"
+        android:textSize="60sp"
+        android:textColor="?attr/fontColor"
+        android:gravity="center"
+        app:layout_constraintBottom_toTopOf="@id/controlButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/controlButton"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@id/timer2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timer1"
+        tools:text="Start" />
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progress2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@id/timer2"
+        app:layout_constraintEnd_toEndOf="@id/timer2"
+        app:layout_constraintStart_toStartOf="@id/timer2"
+        app:layout_constraintTop_toTopOf="@id/timer2" />
+
+    <TextView
+        android:id="@+id/timer2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        tools:text="10:00"
+        android:textSize="60sp"
+        android:textColor="?attr/fontColor"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/controlButton" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
