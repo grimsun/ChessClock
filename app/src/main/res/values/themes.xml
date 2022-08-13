@@ -1,0 +1,24 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.ChessClock" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryContainer">@color/neutral</item>
+        <item name="colorOnSecondaryContainer">@color/font_dark</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- Custom items. -->
+        <item name="inactiveColor">@color/neutral</item>
+        <item name="winnerColor">@color/green</item>
+        <item name="looserColor">@color/red</item>
+        <item name="fontColor">@color/font_dark</item>
+        <!-- Indicator style. -->
+        <item name="circularProgressIndicatorStyle">@style/Widget.App.CircularProgressIndicator</item>
+    </style>
+
+    <style name="Widget.App.CircularProgressIndicator" parent="Widget.Material3.CircularProgressIndicator">
+        <item name="trackThickness">15dp</item>
+        <item name="trackCornerRadius">8dp</item>
+        <item name="android:elevation">2dp</item>
+        <item name="indicatorSize">300dp</item>
+    </style>
+</resources>
