@@ -11,27 +11,33 @@ class ChessClock(private val firstTimerMs: Long, private val secondTimerMs: Long
     }
 
     fun getState(): ChessClockState {
-        return ChessClockState(state.firstTimer.copy(), state.secondTimer.copy())
+        return state.copy()
     }
 
-    fun resetClock() {
+    fun resetClock(): ChessClockState {
         state = ChessClockState(
             ChessTimerState(firstTimerMs, false),
             ChessTimerState(secondTimerMs, false))
+
+        return getState()
     }
 
-    fun startClock(isFirstTimer: Boolean) {
-        if (isFinished()) return
+    fun startClock(isFirstTimer: Boolean): ChessClockState {
+        if (isFinished()) return getState()
 
         state.firstTimer.active = isFirstTimer
         state.secondTimer.active = !isFirstTimer
+
+        return getState()
     }
 
-    fun pauseClock() {
-        if (isFinished()) return
+    fun pauseClock(): ChessClockState {
+        if (isFinished()) return getState()
 
         state.firstTimer.active = false
         state.secondTimer.active = false
+
+        return getState()
     }
 
     fun tick(ms: Long) {

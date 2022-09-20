@@ -15,20 +15,19 @@ abstract class ChessClockManager(private val clock: ChessClock) {
         val state = clock.getState()
         if (!countdownStarted) {
             countdown = createCountdown(
-                state.firstTimer.ms + state.firstTimer.ms, COUNTDOWN_INTERVAL_SHORT)
+                state.firstTimer.ms + state.firstTimer.ms, COUNTDOWN_INTERVAL)
             countdown?.start()
             countdownStarted = true
 
         }
-        clock.startClock(firstTimer)
-        onStateChange(clock.getState())
+        onStateChange(clock.startClock(firstTimer))
     }
 
     fun pauseOrReset() {
         val state = clock.getState()
         if (state.isPaused() || state.isFinished()) {
             reset()
-        }else if (state.isRunning()) {
+        } else if (state.isRunning()) {
             pause()
         } else {
             start(false)
@@ -36,17 +35,15 @@ abstract class ChessClockManager(private val clock: ChessClock) {
     }
 
     private fun reset() {
-        clock.resetClock()
         countdown?.cancel()
         countdownStarted = false
-        onStateChange(clock.getState())
+        onStateChange(clock.resetClock())
     }
 
     fun pause() {
-        clock.pauseClock()
         countdown?.cancel()
         countdownStarted = false
-        onStateChange(clock.getState())
+        onStateChange(clock.pauseClock())
     }
 
     private fun createCountdown(millisInFuture: Long, countDownInterval: Long): CountDownTimer {
@@ -76,6 +73,6 @@ abstract class ChessClockManager(private val clock: ChessClock) {
     abstract fun onStateChange(state: ChessClockState)
 
     companion object {
-        const val COUNTDOWN_INTERVAL_SHORT = 100L
+        const val COUNTDOWN_INTERVAL = 100L
     }
 }
