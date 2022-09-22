@@ -10,10 +10,10 @@ class SettingsActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_settings)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.settings_container_view, SettingsFragment())
-            .commit()
+//        supportFragmentManager
+//            .beginTransaction()
+//            .replace(R.id.settings_container_view, SettingsFragment())
+//            .commit()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
