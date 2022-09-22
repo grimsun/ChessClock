@@ -1,10 +1,12 @@
 package com.lab.chessclock
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 
 class MainActivity : AppCompatActivity() {
@@ -14,6 +16,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressIndicator1: CircularProgressIndicator
     private lateinit var progressIndicator2: CircularProgressIndicator
     private lateinit var controlButton: Button
+    private lateinit var settingsButton: FloatingActionButton
 
     private lateinit var clockManager: ChessClockManager
     private lateinit var viewModel: ViewModel
@@ -21,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar?.hide()
 
         timerView1 = findViewById<TextView?>(R.id.timer1).apply {
             setOnClickListener {
@@ -37,6 +41,11 @@ class MainActivity : AppCompatActivity() {
         controlButton = findViewById<Button?>(R.id.controlButton).apply {
             setOnClickListener {
                 clockManager.pauseOrReset()
+            }
+        }
+        settingsButton = findViewById<FloatingActionButton?>(R.id.settings_button).apply {
+            setOnClickListener {
+                it.context.startActivity(Intent(it.context, SettingsActivity::class.java))
             }
         }
 
