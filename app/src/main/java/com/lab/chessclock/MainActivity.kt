@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import androidx.preference.PreferenceManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 
@@ -48,13 +49,16 @@ class MainActivity : AppCompatActivity() {
                 it.context.startActivity(Intent(it.context, SettingsActivity::class.java))
             }
         }
-
-        clockManager = createClock()
     }
 
     override fun onPause() {
         super.onPause()
         clockManager.pause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        clockManager = createClock()
     }
 
     private fun onStateChange(state: ChessClockState) {
@@ -77,7 +81,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun createClock(): ChessClockManager {
-        return object: ChessClockManager(ChessClock(ViewModel.TIMER_MS, ViewModel.TIMER_MS)) {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val hours = sharedPreferences.getInt("timer_h", 0)
+        val minutes = sharedPreferences.getInt("timer_m", 0)
+        val seconds = sharedPreferences.getInt("timer_s", 0)
+        val ms = 1000 * (3600 * hours + 60 * minutes + seconds)
+
+        return object: ChessClockManager(ChessClock(ms.toLong(), ms.toLong())) {
             override fun onStateChange(state: ChessClockState) {
                 this@MainActivity.onStateChange(state)
             }

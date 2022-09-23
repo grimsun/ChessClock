@@ -5,10 +5,6 @@ import android.util.TypedValue
 
 class ViewModel(var chessClockState: ChessClockState) {
 
-    companion object {
-        const val TIMER_MS = 20000L
-    }
-
     private fun getProgress(isFirstTimer: Boolean): Int {
         if (chessClockState.isFinished()) {
             return 100
@@ -16,7 +12,7 @@ class ViewModel(var chessClockState: ChessClockState) {
         val msLeft = if (isFirstTimer)
             chessClockState.firstTimer.ms else chessClockState.secondTimer.ms
 
-        return (msLeft.toDouble() / TIMER_MS * 100).toInt()
+        return (msLeft.toDouble() / chessClockState.firstTimer.msInitial * 100).toInt()
     }
 
     fun getFirstTimerProgress(): Int {
