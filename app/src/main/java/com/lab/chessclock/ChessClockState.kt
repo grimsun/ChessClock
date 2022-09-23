@@ -14,3 +14,8 @@ fun ChessClockState.isPaused(): Boolean {
     return !isRunning() &&
             (firstTimer.ms < firstTimer.msInitial || secondTimer.ms < secondTimer.msInitial)
 }
+
+fun ChessClockState.initialStateEquals(state: ChessClockState): Boolean {
+    return firstTimer.msInitial == state.firstTimer.msInitial &&
+            secondTimer.msInitial == state.secondTimer.msInitial
+}
