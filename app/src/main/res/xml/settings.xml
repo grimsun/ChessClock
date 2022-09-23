@@ -1,14 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <SwitchPreferenceCompat
-        app:key="notifications"
-        app:title="Enable message notifications"/>
+    <SeekBarPreference
+        app:key="timer_h"
+        app:title="Hours"
+        app:defaultValue="0"
+        app:min="0"
+        app:seekBarIncrement="1"
+        android:max="12"
+        app:adjustable="true"
+        app:isPreferenceVisible="true"
+        app:showSeekBarValue="true"/>
 
-    <Preference
-        app:key="feedback"
-        app:title="Send feedback"
-        app:summary="Report technical issues or suggest new features"/>
+    <SeekBarPreference
+        app:key="timer_m"
+        app:title="Minutes"
+        app:defaultValue="5"
+        app:min="0"
+        app:seekBarIncrement="1"
+        android:max="60"
+        app:adjustable="true"
+        app:isPreferenceVisible="true"
+        app:showSeekBarValue="true"/>
+
+    <SeekBarPreference
+        app:key="timer_s"
+        app:title="Seconds"
+        app:defaultValue="0"
+        app:min="0"
+        app:seekBarIncrement="1"
+        android:max="60"
+        app:adjustable="true"
+        app:isPreferenceVisible="true"
+        app:showSeekBarValue="true"/>
 
 </PreferenceScreen>
