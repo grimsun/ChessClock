@@ -94,4 +94,8 @@ class ViewModel(var chessClockState: ChessClockState) {
             chessClockState.secondTimer.ms,
             chessClockState.isFinished())
     }
+
+    fun initialStateEquals(state: ChessClockState): Boolean {
+        return chessClockState.initialStateEquals(state)
+    }
 }

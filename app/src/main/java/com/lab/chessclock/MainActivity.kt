@@ -58,7 +58,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        clockManager = createClock()
+
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val hours = sharedPreferences.getInt("timer_h", 0)
+        val minutes = sharedPreferences.getInt("timer_m", 0)
+        val seconds = sharedPreferences.getInt("timer_s", 0)
+        val ms = 1000 * (3600 * hours + 60 * minutes + seconds)
+        val chessClock = ChessClock(ms.toLong(), ms.toLong())
+        if (!this::viewModel.isInitialized ||
+            !viewModel.initialStateEquals(chessClock.getState())) {
+            clockManager = createClock(chessClock)
+        }
     }
 
     private fun onStateChange(state: ChessClockState) {
@@ -80,14 +90,8 @@ class MainActivity : AppCompatActivity() {
         progressIndicator2.setIndicatorColor(viewModel.getSecondTimerColor(this))
     }
 
-    private fun createClock(): ChessClockManager {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val hours = sharedPreferences.getInt("timer_h", 0)
-        val minutes = sharedPreferences.getInt("timer_m", 0)
-        val seconds = sharedPreferences.getInt("timer_s", 0)
-        val ms = 1000 * (3600 * hours + 60 * minutes + seconds)
-
-        return object: ChessClockManager(ChessClock(ms.toLong(), ms.toLong())) {
+    private fun createClock(chessClock: ChessClock): ChessClockManager {
+        return object: ChessClockManager(chessClock) {
             override fun onStateChange(state: ChessClockState) {
                 this@MainActivity.onStateChange(state)
             }
