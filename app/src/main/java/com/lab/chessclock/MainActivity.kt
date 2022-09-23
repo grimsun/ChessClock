@@ -3,7 +3,6 @@ package com.lab.chessclock
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.preference.PreferenceManager
@@ -59,15 +58,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val hours = sharedPreferences.getInt("timer_h", 0)
-        val minutes = sharedPreferences.getInt("timer_m", 0)
-        val seconds = sharedPreferences.getInt("timer_s", 0)
-        val ms = 1000 * (3600 * hours + 60 * minutes + seconds)
-        val chessClock = ChessClock(ms.toLong(), ms.toLong())
+        val chessClock = createClock()
         if (!this::viewModel.isInitialized ||
             !viewModel.initialStateEquals(chessClock.getState())) {
-            clockManager = createClock(chessClock)
+            clockManager = createClockManager(chessClock)
         }
     }
 
@@ -90,11 +84,21 @@ class MainActivity : AppCompatActivity() {
         progressIndicator2.setIndicatorColor(viewModel.getSecondTimerColor(this))
     }
 
-    private fun createClock(chessClock: ChessClock): ChessClockManager {
+    private fun createClockManager(chessClock: ChessClock): ChessClockManager {
         return object: ChessClockManager(chessClock) {
             override fun onStateChange(state: ChessClockState) {
                 this@MainActivity.onStateChange(state)
             }
         }
+    }
+
+    private fun createClock(): ChessClock {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val hours = sharedPreferences.getInt("timer_h", 0)
+        val minutes = sharedPreferences.getInt("timer_m", 0)
+        val seconds = sharedPreferences.getInt("timer_s", 0)
+        val ms = 1000 * (3600 * hours + 60 * minutes + seconds)
+
+        return ChessClock(ms.toLong(), ms.toLong())
     }
 }
