@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="orientationArray">
+        <item>Horizontal, Same direction</item>
+        <item>Horizontal, Opposite directions</item>
+        <item>Vertical, Same direction</item>
+        <item>Vertical, Opposite direction</item>
+    </array>
+    <array name="orientationValuesArray">
+        <item>horizontal_same</item>
+        <item>horizontal_opposite</item>
+        <item>vertical_same</item>
+        <item>vertical_opposite</item>
+    </array>
+</resources>

@@ -3,6 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <ListPreference
+        android:defaultValue="horizontal_same"
+        android:entries="@array/orientationArray"
+        android:entryValues="@array/orientationValuesArray"
+        android:key="orientation"
+        android:title="Orientation" />
+
     <PreferenceCategory
         app:key="timer"
         app:title="Timer">
