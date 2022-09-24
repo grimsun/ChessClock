@@ -63,6 +63,38 @@ class MainActivity : AppCompatActivity() {
             !viewModel.initialStateEquals(chessClock.getState())) {
             clockManager = createClockManager(chessClock)
         }
+
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        when(sharedPreferences.getString("orientation", "horizontal_same")) {
+            "horizontal_same" -> {
+                timerView1.animate().rotation(0f).setDuration(0).start()
+                progressIndicator1.animate().rotation(0f).setDuration(0).start()
+                timerView2.animate().rotation(0f).setDuration(0).start()
+                progressIndicator2.animate().rotation(0f).setDuration(0).start()
+                controlButton.animate().rotation(0f).setDuration(0).start()
+            }
+            "horizontal_opposite" -> {
+                timerView1.animate().rotation(180f).setDuration(0).start()
+                progressIndicator1.animate().rotation(180f).setDuration(0).start()
+                timerView2.animate().rotation(0f).setDuration(0).start()
+                progressIndicator2.animate().rotation(0f).setDuration(0).start()
+                controlButton.animate().rotation(0f).setDuration(0).start()
+            }
+            "vertical_same" -> {
+                timerView1.animate().rotation(90f).setDuration(0).start()
+                progressIndicator1.animate().rotation(90f).setDuration(0).start()
+                timerView2.animate().rotation(90f).setDuration(0).start()
+                progressIndicator2.animate().rotation(90f).setDuration(0).start()
+                controlButton.animate().rotation(90f).setDuration(0).start()
+            }
+            "vertical_opposite" -> {
+                timerView1.animate().rotation(270f).setDuration(0).start()
+                progressIndicator1.animate().rotation(270f).setDuration(0).start()
+                timerView2.animate().rotation(90f).setDuration(0).start()
+                progressIndicator2.animate().rotation(90f).setDuration(0).start()
+                controlButton.animate().rotation(90f).setDuration(0).start()
+            }
+        }
     }
 
     private fun onStateChange(state: ChessClockState) {
