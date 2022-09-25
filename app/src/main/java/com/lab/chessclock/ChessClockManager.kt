@@ -30,6 +30,7 @@ abstract class ChessClockManager(private val clock: ChessClock) {
         } else if (state.isRunning()) {
             pause()
         } else {
+            // Clock is not started yet.
             start(false)
         }
     }

@@ -1,6 +1,6 @@
 package com.lab.chessclock
 
-class ChessClock(private val firstTimerMs: Long, private val secondTimerMs: Long) {
+class ChessClock(firstTimerMs: Long, secondTimerMs: Long, private val incrementMs: Long) {
     // Chess clock state
     private var state: ChessClockState
 
@@ -16,8 +16,8 @@ class ChessClock(private val firstTimerMs: Long, private val secondTimerMs: Long
 
     fun resetClock(): ChessClockState {
         state = ChessClockState(
-            ChessTimerState(firstTimerMs, false),
-            ChessTimerState(secondTimerMs, false))
+            ChessTimerState(state.firstTimer.msInitial, false),
+            ChessTimerState(state.secondTimer.msInitial, false))
 
         return getState()
     }
@@ -27,6 +27,11 @@ class ChessClock(private val firstTimerMs: Long, private val secondTimerMs: Long
 
         state.firstTimer.active = isFirstTimer
         state.secondTimer.active = !isFirstTimer
+        if (isFirstTimer) {
+            state.firstTimer.ms += incrementMs
+        } else {
+            state.firstTimer.ms += incrementMs
+        }
 
         return getState()
     }
