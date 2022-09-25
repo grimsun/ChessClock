@@ -28,7 +28,7 @@ class ChessClock(firstTimerMs: Long, secondTimerMs: Long, private val incrementM
         state.firstTimer.active = isFirstTimer
         state.secondTimer.active = !isFirstTimer
         if (isFirstTimer) {
-            state.firstTimer.ms += incrementMs
+            state.secondTimer.ms += incrementMs
         } else {
             state.firstTimer.ms += incrementMs
         }
