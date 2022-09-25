@@ -12,7 +12,7 @@ fun ChessClockState.isRunning(): Boolean {
 
 fun ChessClockState.isPaused(): Boolean {
     return !isRunning() &&
-            (firstTimer.ms < firstTimer.msInitial || secondTimer.ms < secondTimer.msInitial)
+            (firstTimer.ms < firstTimer.msMax || secondTimer.ms < secondTimer.msMax)
 }
 
 fun ChessClockState.initialStateEquals(state: ChessClockState): Boolean {
