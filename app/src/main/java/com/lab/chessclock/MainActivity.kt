@@ -28,12 +28,12 @@ class MainActivity : AppCompatActivity() {
 
         timerView1 = findViewById<TextView?>(R.id.timer1).apply {
             setOnClickListener {
-                clockManager.start(true)
+                clockManager.start(false)
             }
         }
         timerView2 = findViewById<TextView?>(R.id.timer2).apply {
             setOnClickListener {
-                clockManager.start(false)
+                clockManager.start(true)
             }
         }
         progressIndicator1 = findViewById(R.id.progress1)
