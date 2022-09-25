@@ -2,6 +2,7 @@ package com.lab.chessclock
 
 import android.content.Context
 import android.util.TypedValue
+import java.lang.Long.max
 
 class ViewModel(var chessClockState: ChessClockState) {
 
@@ -12,7 +13,10 @@ class ViewModel(var chessClockState: ChessClockState) {
         val msLeft = if (isFirstTimer)
             chessClockState.firstTimer.ms else chessClockState.secondTimer.ms
 
-        return (msLeft.toDouble() / chessClockState.firstTimer.msInitial * 100).toInt()
+        val msTotal = if (isFirstTimer)
+            chessClockState.firstTimer.msMax else chessClockState.secondTimer.msMax
+
+        return (msLeft.toDouble() / msTotal * 100).toInt()
     }
 
     fun getFirstTimerProgress(): Int {
