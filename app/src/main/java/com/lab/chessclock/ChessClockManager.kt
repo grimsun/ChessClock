@@ -11,7 +11,7 @@ abstract class ChessClockManager(private val clock: ChessClock) {
         onStateChange(clock.getState())
     }
 
-    fun start(firstTimer: Boolean) {
+    fun start(firstTimer: Boolean, useIncrement: Boolean) {
         val state = clock.getState()
         if (!countdownStarted) {
             countdown = createCountdown(
@@ -20,7 +20,7 @@ abstract class ChessClockManager(private val clock: ChessClock) {
             countdownStarted = true
 
         }
-        onStateChange(clock.startClock(firstTimer))
+        onStateChange(clock.startClock(firstTimer, useIncrement))
     }
 
     fun pauseOrReset() {
@@ -31,7 +31,7 @@ abstract class ChessClockManager(private val clock: ChessClock) {
             pause()
         } else {
             // Clock is not started yet.
-            start(false)
+            start(firstTimer = false, useIncrement = false)
         }
     }
 
