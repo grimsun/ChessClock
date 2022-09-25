@@ -1,6 +1,6 @@
 package com.lab.chessclock
 
-data class ChessClockState(val firstTimer: ChessTimerState, val secondTimer: ChessTimerState)
+data class ChessClockState(val firstTimer: ChessTimerState, val secondTimer: ChessTimerState, val increment: Long)
 
 fun ChessClockState.isFinished(): Boolean {
     return firstTimer.ms == 0L || secondTimer.ms == 0L
@@ -17,5 +17,5 @@ fun ChessClockState.isPaused(): Boolean {
 
 fun ChessClockState.initialStateEquals(state: ChessClockState): Boolean {
     return firstTimer.msInitial == state.firstTimer.msInitial &&
-            secondTimer.msInitial == state.secondTimer.msInitial
+            secondTimer.msInitial == state.secondTimer.msInitial && increment == state.increment
 }
