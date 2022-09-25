@@ -7,7 +7,8 @@ class ChessClock(firstTimerMs: Long, secondTimerMs: Long, private val incrementM
     init {
         state = ChessClockState(
             ChessTimerState(firstTimerMs, false),
-            ChessTimerState(secondTimerMs, false))
+            ChessTimerState(secondTimerMs, false),
+            incrementMs)
     }
 
     fun getState(): ChessClockState {
@@ -17,7 +18,8 @@ class ChessClock(firstTimerMs: Long, secondTimerMs: Long, private val incrementM
     fun resetClock(): ChessClockState {
         state = ChessClockState(
             ChessTimerState(state.firstTimer.msInitial, false),
-            ChessTimerState(state.secondTimer.msInitial, false))
+            ChessTimerState(state.secondTimer.msInitial, false),
+            state.increment)
 
         return getState()
     }
