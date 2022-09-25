@@ -130,8 +130,8 @@ class MainActivity : AppCompatActivity() {
         val minutes = sharedPreferences.getInt("timer_m", 0)
         val seconds = sharedPreferences.getInt("timer_s", 0)
         val ms = 1000 * (3600 * hours + 60 * minutes + seconds)
-        val increment = sharedPreferences.getLong("increment", 0)
+        val incrementMs = 1000L * sharedPreferences.getInt("increment", 0)
 
-        return ChessClock(ms.toLong(), ms.toLong(), increment)
+        return ChessClock(ms.toLong(), ms.toLong(), incrementMs)
     }
 }

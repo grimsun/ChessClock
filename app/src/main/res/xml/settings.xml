@@ -47,6 +47,17 @@
             app:isPreferenceVisible="true"
             app:showSeekBarValue="true"/>
 
+        <SeekBarPreference
+            app:key="increment"
+            app:title="Increment Seconds"
+            app:defaultValue="0"
+            app:min="0"
+            app:seekBarIncrement="1"
+            android:max="60"
+            app:adjustable="true"
+            app:isPreferenceVisible="true"
+            app:showSeekBarValue="true"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>
