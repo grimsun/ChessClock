@@ -8,6 +8,7 @@
         android:entries="@array/orientationArray"
         android:entryValues="@array/orientationValuesArray"
         android:key="orientation"
+        app:useSimpleSummaryProvider="true"
         android:title="Orientation" />
 
     <PreferenceCategory

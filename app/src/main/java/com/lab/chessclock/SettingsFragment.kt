@@ -7,7 +7,5 @@ import androidx.preference.PreferenceFragmentCompat
 class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.settings, rootKey)
-        val listPreference: ListPreference? = findPreference("orientation")
-        listPreference?.summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
     }
 }
