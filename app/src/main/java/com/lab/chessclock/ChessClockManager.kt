@@ -60,7 +60,7 @@ abstract class ChessClockManager(private val clock: ChessClock) {
 
                 clock.tick(this.msUntilFinished - msUntilFinished)
                 this.msUntilFinished = msUntilFinished
-                onStateChange(state)
+                onStateChange(clock.getState())
             }
 
             override fun onFinish() {

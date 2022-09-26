@@ -1,7 +1,6 @@
 package com.lab.chessclock
 
 import android.os.Bundle
-import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragmentCompat
 
 class SettingsFragment : PreferenceFragmentCompat() {
