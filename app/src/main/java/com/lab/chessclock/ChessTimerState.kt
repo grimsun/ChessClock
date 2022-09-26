@@ -2,7 +2,7 @@ package com.lab.chessclock
 
 import kotlin.math.max
 
-data class ChessTimerState(val msInitial: Long, var active: Boolean) {
+class ChessTimerState(val msInitial: Long, var active: Boolean) {
     var ms: Long = msInitial
         set(value) {
             field = value
@@ -10,8 +10,8 @@ data class ChessTimerState(val msInitial: Long, var active: Boolean) {
         }
 
     var msMax = msInitial
-}
 
-fun ChessTimerState.copy(): ChessTimerState {
-    return ChessTimerState(msInitial, active)
+    fun copy(): ChessTimerState {
+        return ChessTimerState(msInitial, active)
+    }
 }

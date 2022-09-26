@@ -2,7 +2,6 @@ package com.lab.chessclock
 
 import android.content.Context
 import android.util.TypedValue
-import java.lang.Long.max
 
 class ViewModel(var chessClockState: ChessClockState) {
 
