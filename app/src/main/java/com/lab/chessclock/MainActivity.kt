@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         }
         settingsButton = findViewById<FloatingActionButton?>(R.id.settings_button).apply {
             setOnClickListener {
-                it.context.startActivity(Intent(it.context, SettingsActivity::class.java))
+                startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
             }
         }
     }
