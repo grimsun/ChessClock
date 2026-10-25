@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Android Toolchain Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column with wide inserts (diagram, tables, ruler) that may break out; each layer of the toolchain keeps its own tint everywhere it appears. */
+:root {
+  --bg: #F4F7F5;
+  --surface: #FFFFFF;
+  --ink: #17201C;
+  --muted: #56645E;
+  --line: #D6DFDA;
+  --accent: #0A7556;
+  --accent-soft: #E1F1EA;
+  --code-bg: #EAF0ED;
+
+  --jdk: #F6EBDC;    --jdk-b: #B98A4E;
+  --gradle: #E2EBF4; --gradle-b: #5E87B0;
+  --agp: #E1F1E7;    --agp-b: #4E9A72;
+  --kotlin: #EDE5F7; --kotlin-b: #8C6CBE;
+  --sdk: #F3EFDD;    --sdk-b: #A8954A;
+  --dev: #E6EEF0;    --dev-b: #5E8C96;
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412; --surface: #151D1A; --ink: #E2EAE5; --muted: #98A79F; --line: #2A3631;
+    --accent: #52C99C; --accent-soft: #15302700; --code-bg: #1A2420;
+    --jdk: #2B2318; --jdk-b: #C79B60;
+    --gradle: #18232F; --gradle-b: #7FA5CC;
+    --agp: #162A20; --agp-b: #62B98B;
+    --kotlin: #251D32; --kotlin-b: #A88AD8;
+    --sdk: #27241A; --sdk-b: #BDA95E;
+    --dev: #172427; --dev-b: #76A8B3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412; --surface: #151D1A; --ink: #E2EAE5; --muted: #98A79F; --line: #2A3631;
+  --accent: #52C99C; --accent-soft: #15302700; --code-bg: #1A2420;
+  --jdk: #2B2318; --jdk-b: #C79B60;
+  --gradle: #18232F; --gradle-b: #7FA5CC;
+  --agp: #162A20; --agp-b: #62B98B;
+  --kotlin: #251D32; --kotlin-b: #A88AD8;
+  --sdk: #27241A; --sdk-b: #BDA95E;
+  --dev: #172427; --dev-b: #76A8B3;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 17px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 940px; margin: 0 auto; padding-block: 48px 96px; display: flex; flex-direction: column; gap: 64px; }
+section { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.prose { max-width: 66ch; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2.2rem, 5.5vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.5rem, 3.4vw, 2rem); font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.12rem; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--f-mono); font-size: 0.86em; }
+:not(pre) > code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; flex-direction: column; gap: 16px; }
+.lede { font-size: 1.2rem; color: var(--muted); max-width: 60ch; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.95rem; border-top: 1px solid var(--line); padding-top: 16px; }
+nav.toc a { text-decoration: none; color: var(--ink); border-bottom: 1px solid var(--line); }
+nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Stack diagram */
+.stack { display: grid; grid-template-columns: minmax(0, 1.25fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.layer { border: 1.5px solid; border-radius: 10px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.layer > .lh { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; }
+.layer .name { font-family: var(--f-display); font-weight: 700; font-size: 1.02rem; }
+.layer .ver { font-family: var(--f-mono); font-size: 0.78rem; }
+.layer .role { font-size: 0.86rem; color: var(--muted); line-height: 1.4; }
+.l-jdk { background: var(--jdk); border-color: var(--jdk-b); }
+.l-gradle { background: var(--gradle); border-color: var(--gradle-b); }
+.l-agp { background: var(--agp); border-color: var(--agp-b); }
+.l-kotlin { background: var(--kotlin); border-color: var(--kotlin-b); }
+.l-sdk { background: var(--sdk); border-color: var(--sdk-b); }
+.l-dev { background: var(--dev); border-color: var(--dev-b); }
+.inner-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--f-mono); font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--muted); font-size: 0.78rem; font-family: var(--f-mono); text-align: center; }
+.arrow .glyph { font-size: 1.6rem; line-height: 1; color: var(--ink); }
+.sdk-list { display: flex; flex-direction: column; gap: 8px; }
+.sdk-item { background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 7px 10px; display: flex; flex-direction: column; gap: 1px; }
+.sdk-item b { font-family: var(--f-mono); font-size: 0.8rem; font-weight: 600; }
+.sdk-item span { font-size: 0.84rem; color: var(--muted); line-height: 1.35; }
+.down { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.25fr) auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.down .apk { text-align: center; font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); }
+.device-row { grid-column: 1 / -1; }
+.ide { border-style: dashed; }
+@media (max-width: 720px) {
+  .stack, .down { grid-template-columns: minmax(0, 1fr); }
+  .arrow .glyph { transform: rotate(90deg); }
+  .down .spacer { display: none; }
+}
+
+/* Tables */
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); position: sticky; top: 0; }
+tr:last-child td { border-bottom: 0; }
+td.v { font-family: var(--f-mono); font-size: 0.8rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.v s { color: var(--muted); }
+td.f { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid; margin-right: 8px; vertical-align: 0; }
+tr.grp td { background: var(--bg); font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-block: 6px; }
+.flag { font-family: var(--f-mono); font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--jdk-b); color: var(--ink); background: var(--jdk); margin-left: 6px; white-space: nowrap; }
+
+/* Constraint list */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 12px; }
+.rule { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.rule .edge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 0.78rem; font-weight: 600; }
+.tag { padding: 2px 8px; border-radius: 5px; border: 1.5px solid; }
+.rule .edge .rel { color: var(--muted); font-weight: 400; }
+.rule p { font-size: 0.94rem; }
+
+/* API ruler */
+.ruler-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 16px 14px; }
+.ruler { min-width: 560px; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); row-gap: 10px; font-variant-numeric: tabular-nums; }
+.ruler .tick { text-align: center; font-family: var(--f-mono); font-size: 0.78rem; border-left: 1px solid var(--line); padding-top: 4px; color: var(--muted); }
+.ruler .tick:last-of-type { border-right: 1px solid var(--line); }
+.ruler .range { grid-column: 1 / 11; height: 26px; border-radius: 6px; background: var(--agp); border: 1.5px solid var(--agp-b); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-family: var(--f-mono); }
+.ruler .mk { display: flex; flex-direction: column; align-items: center; font-size: 0.76rem; line-height: 1.25; text-align: center; white-space: nowrap; }
+.ruler .mk b { font-family: var(--f-mono); font-size: 0.74rem; }
+.ruler .mk::before { content: ""; width: 2px; height: 10px; background: var(--ink); margin-bottom: 3px; }
+.ruler .rowlabel { grid-column: 1 / 11; font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+.ruler .avd { display: flex; flex-direction: column; align-items: center; font-size: 0.76rem; line-height: 1.25; text-align: center; white-space: nowrap; }
+.ruler .avd i { font-style: normal; width: 12px; height: 12px; border-radius: 3px; background: var(--dev); border: 1.5px solid var(--dev-b); margin-bottom: 4px; }
+
+.trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.trio .layer p { font-size: 0.93rem; }
+.big { font-family: var(--f-display); font-size: 2rem; font-weight: 700; line-height: 1; }
+
+/* Pipeline */
+ol.pipe { list-style: none; margin: 0; padding: 0; counter-reset: s; display: flex; flex-direction: column; }
+ol.pipe li { counter-increment: s; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+ol.pipe li::before { content: counter(s, decimal-leading-zero); font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); }
+ol.pipe li .who { font-family: var(--f-mono); font-size: 0.72rem; padding: 2px 8px; border-radius: 5px; border: 1.5px solid; white-space: nowrap; }
+ol.pipe li p { font-size: 0.95rem; }
+ol.pipe li strong { font-weight: 600; }
+@media (max-width: 560px) {
+  ol.pipe li { grid-template-columns: 2.2rem minmax(0, 1fr); }
+  ol.pipe li .who { grid-column: 2; justify-self: start; }
+}
+
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.65; }
+pre .c { color: var(--muted); }
+pre .k { color: var(--accent); font-weight: 600; }
+
+.callout { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; max-width: 66ch; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+ol.steps { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 10px; max-width: 72ch; }
+ol.steps li::marker { font-family: var(--f-mono); color: var(--muted); font-size: 0.85em; }
+footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--line); padding-top: 18px; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">ChessClock · upgraded 24 Oct 2026</div>
+    <h1>Android Toolchain Map</h1>
+    <p class="lede">Building one small Kotlin app touches about a dozen tools, each with its own version number. This page explains what each one does, where its version is set, and which ones force upgrades on the others. Every example comes from your own ChessClock setup.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#picture">The stack</a>
+      <a href="#versions">Every version</a>
+      <a href="#chain">What forces what</a>
+      <a href="#sdklevels">min / target / compile</a>
+      <a href="#java">Three Javas</a>
+      <a href="#build">One build, step by step</a>
+      <a href="#emulator">The emulator</a>
+      <a href="#disk">On disk</a>
+      <a href="#upgrade">Upgrade order</a>
+    </nav>
+  </header>
+
+  <section id="picture">
+    <div class="eyebrow">The stack</div>
+    <h2>Tools running inside other tools</h2>
+    <p class="prose">Read the left column from the outside in. Java runs Gradle, Gradle loads the Android Gradle Plugin (AGP), and AGP runs the Kotlin compiler and Android's packaging tools. AGP reads files from the Android SDK on the right. The output is an APK, which <code>adb</code> installs on the emulator.</p>
+
+    <div class="stack" role="img" aria-label="Diagram: JDK contains Gradle, which contains AGP, which contains the Kotlin compiler; AGP reads from the Android SDK; the APK goes through adb to the emulator.">
+      <div class="layer l-jdk">
+        <div class="lh"><span class="name">JDK</span><span class="ver">25 · Android Studio's JBR</span></div>
+        <div class="role">The Java runtime. Gradle is a Java program, so the build needs a JDK.</div>
+        <div class="layer l-gradle">
+          <div class="lh"><span class="name">Gradle</span><span class="ver">9.8.2 · via ./gradlew</span></div>
+          <div class="role">The build engine. It runs tasks, downloads libraries and caches results. On its own it knows nothing about Android.</div>
+          <div class="layer l-agp">
+            <div class="lh"><span class="name">Android Gradle Plugin</span><span class="ver">9.4.1</span></div>
+            <div class="role">Adds Android build steps to Gradle: merging manifests, compiling resources, dexing, packaging and signing.</div>
+            <div class="layer l-kotlin">
+              <div class="lh"><span class="name">Kotlin compiler</span><span class="ver">2.x · built into AGP 9</span></div>
+              <div class="role">Turns your <code>.kt</code> files into JVM bytecode.</div>
+            </div>
+            <div class="inner-tools"><span class="chip">aapt2 · resources</span><span class="chip">D8 · dex</span><span class="chip">R8 · shrink</span><span class="chip">manifest merger</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow"><span class="glyph">→</span>reads<br>sdk.dir</div>
+
+      <div class="layer l-sdk">
+        <div class="lh"><span class="name">Android SDK</span><span class="ver">~/Library/Android/sdk</span></div>
+        <div class="role">A folder of separately versioned packages, managed by <code>sdkmanager</code>.</div>
+        <div class="sdk-list">
+          <div class="sdk-item"><b>platforms/android-37.0</b><span>android.jar, the Android API your code compiles against</span></div>
+          <div class="sdk-item"><b>build-tools/37.0.0</b><span>apksigner, zipalign</span></div>
+          <div class="sdk-item"><b>platform-tools 37.0.1</b><span>adb, for talking to devices</span></div>
+          <div class="sdk-item"><b>cmdline-tools/latest</b><span>sdkmanager, avdmanager</span></div>
+          <div class="sdk-item"><b>emulator 37.2.12</b><span>the virtual-device program</span></div>
+          <div class="sdk-item"><b>system-images/android-37.0</b><span>the Android OS the emulator boots</span></div>
+        </div>
+      </div>
+
+      <div class="down">
+        <div class="apk">↓ app-debug.apk</div><div class="spacer"></div><div class="spacer"></div>
+      </div>
+
+      <div class="device-row layer l-dev">
+        <div class="lh"><span class="name">Emulator running the Pixel_9_API_37 device</span><span class="ver">adb install → emulator-5554</span></div>
+        <div class="role">An Android phone simulated on your Mac. On Apple Silicon it runs arm64 Android natively, so it's fast. The app lands in <code>/data/app</code> like it would on a real phone.</div>
+      </div>
+
+      <div class="device-row layer ide" style="border-color: var(--line); background: var(--surface);">
+        <div class="lh"><span class="name">Android Studio</span><span class="ver">2026.2</span></div>
+        <div class="role">The editor around all of this. Pressing Run in Studio does the same thing as <code>./gradlew installDebug</code> in a terminal. Studio's one hard requirement is that it must recognise your AGP version to sync the project. The old Studio 2024.2 didn't recognise AGP 9, which is why it had to be updated to 2026.2.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="versions">
+    <div class="eyebrow">Every version</div>
+    <h2>Each version, and the file that sets it</h2>
+    <p class="prose">Most confusion comes from versions living in different places. Some are pinned in the project, so everyone who clones the repo gets the same ones. Others are machine-wide and belong only to your Mac.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Piece</th><th>What it does</th><th>Now <span style="text-transform:none">(was)</span></th><th>Where it's set</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="4">Pinned in the project, committed to git</td></tr>
+          <tr><td><span class="swatch" style="background:var(--gradle);border-color:var(--gradle-b)"></span>Gradle</td><td>Build engine</td><td class="v">9.8.2 <s>7.3.3</s></td><td class="f">gradle/wrapper/gradle-wrapper.properties</td></tr>
+          <tr><td><span class="swatch" style="background:var(--agp);border-color:var(--agp-b)"></span>AGP</td><td>Android build logic for Gradle</td><td class="v">9.4.1 <s>7.2.1</s></td><td class="f">build.gradle → plugins { }</td></tr>
+          <tr><td><span class="swatch" style="background:var(--kotlin);border-color:var(--kotlin-b)"></span>Kotlin (your app)</td><td>Compiles your .kt files</td><td class="v">AGP's built-in <s>1.6.10</s></td><td class="f">implicit since AGP 9; was its own plugin</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>compileSdk</td><td>Which android.jar you compile against</td><td class="v">37 <s>32</s></td><td class="f">app/build.gradle</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>targetSdk</td><td>Which Android version's behavior rules the app opts into</td><td class="v">37 <s>32</s></td><td class="f">app/build.gradle</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>minSdk</td><td>Oldest Android version that can install it</td><td class="v">28</td><td class="f">app/build.gradle</td></tr>
+          <tr><td><span class="swatch" style="background:var(--jdk);border-color:var(--jdk-b)"></span>Java target</td><td>Java language and bytecode level of your code</td><td class="v">17 <s>1.8</s></td><td class="f">app/build.gradle → compileOptions</td></tr>
+          <tr><td><span class="swatch" style="background:var(--agp);border-color:var(--agp-b)"></span>Libraries</td><td>AndroidX, Material and other dependencies</td><td class="v">core-ktx 1.19.1 <s>1.7.0</s><br>appcompat 1.8.0 <s>1.4.2</s><br>material 1.14.0 <s>1.6.0</s></td><td class="f">app/build.gradle → dependencies { }</td></tr>
+          <tr class="grp"><td colspan="4">Set up on your Mac only</td></tr>
+          <tr><td><span class="swatch" style="background:var(--jdk);border-color:var(--jdk-b)"></span>JDK</td><td>Runs Gradle</td><td class="v">25.0.3 <s>21.0.5</s></td><td class="f">JAVA_HOME in ~/.zshrc, or Studio → Settings → Gradle JDK</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>SDK location</td><td>Tells AGP where the SDK folder is</td><td class="v">~/Library/Android/sdk</td><td class="f">local.properties (git-ignored) or ANDROID_HOME</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>Platform 37.0</td><td>The android.jar that compileSdk 37 points to</td><td class="v">rev 2 <span class="muted">new</span></td><td class="f">sdkmanager</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>build-tools</td><td>Signing and alignment tools. AGP picks the version itself.</td><td class="v">37.0.0 <span class="muted">new</span></td><td class="f">sdkmanager (or AGP downloads it)</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>platform-tools</td><td>adb</td><td class="v">37.0.1 <s>33.0.2</s></td><td class="f">sdkmanager</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>cmdline-tools</td><td>sdkmanager and avdmanager themselves</td><td class="v">latest <s>missing</s></td><td class="f">manual download, then sdkmanager</td></tr>
+          <tr><td><span class="swatch" style="background:var(--dev);border-color:var(--dev-b)"></span>Emulator</td><td>The program that runs virtual devices</td><td class="v">37.2.12 <s>35.3.12</s></td><td class="f">sdkmanager</td></tr>
+          <tr><td><span class="swatch" style="background:var(--dev);border-color:var(--dev-b)"></span>System image</td><td>The Android OS build the emulator boots</td><td class="v">API 37.0 Play arm64</td><td class="f">sdkmanager</td></tr>
+          <tr><td><span class="swatch" style="background:var(--dev);border-color:var(--dev-b)"></span>AVD</td><td>One virtual phone: hardware profile, system image and its own disk</td><td class="v">Pixel_9_API_37</td><td class="f">avdmanager → ~/.android/avd</td></tr>
+          <tr><td><span class="swatch" style="background:var(--surface);border-color:var(--line)"></span>Android Studio</td><td>The editor</td><td class="v">2026.2 <s>2024.2</s></td><td class="f">Android Studio → Check for Updates</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="callout"><strong>Ignore the "Kotlin 2.4.10" that <code>./gradlew --version</code> prints.</strong> That's the Kotlin Gradle uses to run its own build scripts. It's separate from the compiler that builds your app, which AGP provides.</p>
+  </section>
+
+  <section id="chain">
+    <div class="eyebrow">What forces what</div>
+    <h2>Why one upgrade drags others along</h2>
+    <p class="prose">These tools don't upgrade independently. Each rule below sets a minimum or maximum on another tool. Moving ChessClock from 2022 to now ran into almost all of them.</p>
+    <div class="rules">
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--agp);border-color:var(--agp-b)">AGP 9.4.1</span><span class="rel">needs at least</span><span class="tag" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle 9.x</span></div>
+        <p>Every AGP release states a minimum Gradle version. AGP 9 doesn't load on Gradle 7.3.3, so the two always move together.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--agp);border-color:var(--agp-b)">AGP 9</span><span class="rel">needs at least</span><span class="tag" style="background:var(--jdk);border-color:var(--jdk-b)">JDK 17</span></div>
+        <p>Your Mac had no system Java at all (<code>java -version</code> fails), so the build uses the JDK 25 that ships inside Android Studio.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle 7.3.3</span><span class="rel">can't run on</span><span class="tag" style="background:var(--jdk);border-color:var(--jdk-b)">JDK 21</span></div>
+        <p>Old Gradle doesn't run on newer Java. That's why I edited the wrapper's version by hand instead of asking the old Gradle to upgrade itself.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--surface);border-color:var(--line)">Studio 2024.2</span><span class="rel">can't open</span><span class="tag" style="background:var(--agp);border-color:var(--agp-b)">AGP 9.4.1</span></div>
+        <p>Studio only syncs AGP versions it was released alongside or after. The terminal build worked, but Studio refused the project until it was updated to 2026.2.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--agp);border-color:var(--agp-b)">AndroidX libraries</span><span class="rel">need at least</span><span class="tag" style="background:var(--sdk);border-color:var(--sdk-b)">compileSdk N</span></div>
+        <p>Each library includes metadata listing the compileSdk and AGP it requires, and the build fails if yours is lower. Bumping libraries often forces a compileSdk bump.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--sdk);border-color:var(--sdk-b)">compileSdk 37</span><span class="rel">needs a recent</span><span class="tag" style="background:var(--agp);border-color:var(--agp-b)">AGP</span></div>
+        <p>Each AGP release is tested up to a certain API level. A brand-new API level usually needs a fairly new AGP.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--sdk);border-color:var(--sdk-b)">targetSdk ≥ 35</span><span class="rel">changes</span><span class="tag" style="background:var(--dev);border-color:var(--dev-b)">runtime behavior</span></div>
+        <p>When targetSdk is 35 or higher, Android draws the app edge to edge, behind the status bar. In ChessClock this hid the top of the Settings list under the app bar until both screens were changed to pad for the system bars.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--dev);border-color:var(--dev-b)">System image API</span><span class="rel">must be ≥</span><span class="tag" style="background:var(--sdk);border-color:var(--sdk-b)">minSdk 28</span></div>
+        <p>The app installs on any emulator or phone at API 28 or above, so your API 33 and 35 virtual devices can run it too.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="sdklevels">
+    <div class="eyebrow">min / target / compile</div>
+    <h2>Three SDK numbers that mean different things</h2>
+    <p class="prose">All three are Android API levels, the integer behind each Android release (API 28 is Android 9). They answer three separate questions.</p>
+    <div class="ruler-wrap">
+      <div class="ruler" aria-label="API level scale from 28 to 37">
+        <div class="tick">28</div><div class="tick">29</div><div class="tick">30</div><div class="tick">31</div><div class="tick">32</div><div class="tick">33</div><div class="tick">34</div><div class="tick">35</div><div class="tick">36</div><div class="tick">37</div>
+        <div class="range">ChessClock installs and runs anywhere in this range</div>
+        <div class="mk" style="grid-column:1"><b>minSdk</b>28</div>
+        <div class="mk" style="grid-column:5"><b>old target</b>32</div>
+        <div class="mk" style="grid-column:10"><b>compile + target</b>37</div>
+        <div class="rowlabel">Your virtual devices</div>
+        <div class="avd" style="grid-column:6"><i></i>Pixel 3a</div>
+        <div class="avd" style="grid-column:8"><i></i>Pixel 8</div>
+        <div class="avd" style="grid-column:10"><i></i>Pixel 9</div>
+      </div>
+    </div>
+    <div class="trio">
+      <div class="layer l-sdk"><span class="eyebrow" style="color:var(--ink)">minSdk 28</span><h3>Who can install it?</h3><p>Phones older than this can't install the app. It also limits which APIs you can call without a version check.</p></div>
+      <div class="layer l-sdk"><span class="eyebrow" style="color:var(--ink)">compileSdk 37</span><h3>Which APIs can the code see?</h3><p>This only affects compiling. It decides which <code>android.jar</code> is used, so newer APIs become visible to your code. It doesn't change how the app behaves.</p></div>
+      <div class="layer l-sdk"><span class="eyebrow" style="color:var(--ink)">targetSdk 37</span><h3>Which behavior rules apply?</h3><p>Android keeps old behavior for apps with an older target. Raising it opts into new rules such as edge-to-edge drawing. Google Play requires a recent target for new uploads.</p></div>
+    </div>
+  </section>
+
+  <section id="java">
+    <div class="eyebrow">Three Javas</div>
+    <h2>Java shows up three times, at three different versions</h2>
+    <div class="trio">
+      <div class="layer l-jdk"><div class="big">25</div><h3>The JDK that runs Gradle</h3><p>A program on your Mac, found through <code>JAVA_HOME</code>. Yours is Android Studio's bundled JBR. It only has to be new enough for AGP and not too new for Gradle.</p></div>
+      <div class="layer l-jdk"><div class="big">17</div><h3>The target for your code</h3><p><code>compileOptions</code> sets which Java language features and bytecode level your compiled code uses. AGP keeps Kotlin's <code>jvmTarget</code> matched to it.</p></div>
+      <div class="layer l-dev"><div class="big">ART</div><h3>What the phone actually runs</h3><p>Android doesn't run Java bytecode. D8 converts it to DEX for the Android Runtime (ART), and rewrites newer Java features so older phones can run them. That's why a Java 17 target still works on API 28.</p></div>
+    </div>
+  </section>
+
+  <section id="build">
+    <div class="eyebrow">One build, step by step</div>
+    <h2>What <code>./gradlew installDebug</code> actually does</h2>
+    <ol class="pipe">
+      <li><p><strong>The wrapper picks Gradle.</strong> <code>gradlew</code> reads <code>gradle-wrapper.properties</code>, downloads Gradle 9.8.2 into <code>~/.gradle/wrapper/dists</code> if it's missing, and starts a Gradle background process on your JDK. This is why you never install Gradle globally.</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
+      <li><p><strong>Settings load.</strong> <code>settings.gradle</code> lists where plugins and libraries come from (Google's Maven repository and Maven Central) and which modules exist (<code>:app</code>).</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
+      <li><p><strong>AGP loads and finds the SDK.</strong> AGP is downloaded from Google's Maven repository like any library, then finds the SDK through <code>local.properties</code>.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">AGP</span></li>
+      <li><p><strong>Dependencies resolve.</strong> AndroidX and Material are downloaded once into <code>~/.gradle/caches</code>, and AGP checks each one's compileSdk requirement.</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
+      <li><p><strong>Manifests merge.</strong> Your <code>AndroidManifest.xml</code> is combined with every library's manifest. The <code>namespace</code> setting decides the package name of the generated <code>R</code> class.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">AGP</span></li>
+      <li><p><strong>Resources compile.</strong> aapt2 compiles layouts, strings and icons and generates <code>R.layout.activity_main</code> and friends.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">aapt2</span></li>
+      <li><p><strong>Kotlin compiles.</strong> Your <code>.kt</code> files compile against <code>platforms/android-37.0/android.jar</code> into <code>.class</code> files.</p><span class="who" style="background:var(--kotlin);border-color:var(--kotlin-b)">kotlinc</span></li>
+      <li><p><strong>Code is converted to DEX.</strong> D8 converts your classes and every library's classes into <code>classes.dex</code>.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">D8</span></li>
+      <li><p><strong>The APK is packaged and signed.</strong> Everything is zipped into <code>app-debug.apk</code> and signed with the auto-generated <code>~/.android/debug.keystore</code>.</p><span class="who" style="background:var(--sdk);border-color:var(--sdk-b)">build-tools</span></li>
+      <li><p><strong>The APK installs.</strong> <code>adb</code> pushes the APK to every connected device or running emulator.</p><span class="who" style="background:var(--dev);border-color:var(--dev-b)">adb</span></li>
+    </ol>
+  </section>
+
+  <section id="emulator">
+    <div class="eyebrow">The emulator</div>
+    <h2>Emulator, system image and AVD are three separate things</h2>
+    <div class="two">
+      <div class="layer l-dev"><h3>Emulator <span class="mono muted">37.2.12</span></h3><p>The program, a heavily modified QEMU. It updates on its own schedule and can boot any system image.</p></div>
+      <div class="layer l-dev"><h3>System image <span class="mono muted">API 37.0</span></h3><p>An Android OS build. <code>google_apis_playstore</code> includes the Play Store, while <code>google_apis</code> doesn't but allows root access. Choose <code>arm64-v8a</code> on Apple Silicon.</p></div>
+      <div class="layer l-dev"><h3>AVD <span class="mono muted">Pixel_9_API_37</span></h3><p>One virtual phone: a hardware profile (screen, RAM), a system image and its own disk with installed apps. You can have many AVDs; you now have three.</p></div>
+    </div>
+<pre><span class="c"># list, create, boot</span>
+emulator -list-avds
+avdmanager create avd -n Pixel_9_API_37 -d pixel_9 \
+  -k "system-images;android-37.0;google_apis_playstore;arm64-v8a"
+emulator -avd Pixel_9_API_37
+adb devices                     <span class="c"># → emulator-5554  device</span></pre>
+  </section>
+
+  <section id="disk">
+    <div class="eyebrow">On disk</div>
+    <h2>Where everything lives</h2>
+<pre><span class="k">~/Library/Android/sdk/</span>                     <span class="c">the SDK (sdk.dir / ANDROID_HOME)</span>
+  cmdline-tools/latest/bin/              <span class="c">sdkmanager, avdmanager</span>
+  platform-tools/                        <span class="c">adb</span>
+  platforms/android-37.0/android.jar     <span class="c">what compileSdk 37 means</span>
+  build-tools/37.0.0/                    <span class="c">apksigner, zipalign</span>
+  emulator/                              <span class="c">emulator binary</span>
+  system-images/android-37.0/google_apis_playstore/arm64-v8a/
+
+<span class="k">~/.android/</span>
+  avd/Pixel_9_API_37.avd/                <span class="c">virtual phone config + disk</span>
+  debug.keystore                         <span class="c">signs every debug build</span>
+
+<span class="k">~/.gradle/</span>
+  wrapper/dists/gradle-9.8.2-bin/        <span class="c">Gradle itself, one copy per version</span>
+  caches/                                <span class="c">downloaded AGP + libraries</span>
+
+<span class="k">/Applications/Android Studio.app/Contents/jbr/</span>   <span class="c">the JDK 25 the build uses</span>
+
+<span class="k">~/Dev/ChessClock/</span>
+  gradle/wrapper/gradle-wrapper.properties   <span class="c">Gradle version</span>
+  settings.gradle                            <span class="c">repositories, modules</span>
+  build.gradle                               <span class="c">AGP version</span>
+  app/build.gradle                           <span class="c">SDK levels, Java target, libraries</span>
+  local.properties                           <span class="c">sdk.dir — machine-specific, not in git</span></pre>
+  </section>
+
+  <section id="upgrade">
+    <div class="eyebrow">Upgrade order</div>
+    <h2>How to revive an old project next time</h2>
+    <p class="prose">This is the order used for ChessClock. Each step makes the next one possible.</p>
+    <ol class="steps">
+      <li><strong>Update the SDK tools.</strong> Get <code>cmdline-tools</code> first, then run <code>sdkmanager --update</code> and install the newest platform, build-tools and system image.</li>
+      <li><strong>Point at a modern JDK.</strong> <code>export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"</code>, which your <code>~/.zshrc</code> now sets along with <code>ANDROID_HOME</code> and <code>PATH</code>.</li>
+      <li><strong>Bump Gradle by hand</strong> in <code>gradle-wrapper.properties</code>, then run <code>./gradlew wrapper --gradle-version X</code> to regenerate the wrapper scripts.</li>
+      <li><strong>Bump AGP</strong> and read its release notes for breaking changes. For AGP 9 those were: <code>package</code> moves to <code>namespace</code>, Kotlin is built in, and <code>kotlinOptions</code> is removed.</li>
+      <li><strong>Raise compileSdk and targetSdk</strong>, then libraries. Look up current versions on Google's Maven repository.</li>
+      <li><strong>Build with <code>--warning-mode=all</code></strong> and fix warnings coming from your own code. Warnings coming from inside AGP aren't yours to fix.</li>
+      <li><strong>Run it on an emulator</strong> and check the screens that targetSdk changes, such as edge-to-edge drawing and permissions.</li>
+      <li><strong>Update Android Studio</strong> so it can sync the new AGP.</li>
+    </ol>
+<pre><span class="c"># the everyday loop (JAVA_HOME and PATH come from ~/.zshrc)</span>
+cd ~/Dev/ChessClock
+./gradlew assembleDebug           <span class="c"># build the APK</span>
+./gradlew testDebugUnitTest       <span class="c"># JVM unit tests</span>
+./gradlew installDebug            <span class="c"># build + adb install</span>
+adb shell am start -n com.lab.chessclock/.MainActivity</pre>
+  </section>
+
+  <footer>Versions are from the upgrade on 24 Oct 2026: Gradle 9.8.2, AGP 9.4.1, SDK platform 37.0, emulator 37.2.12 and JDK 25.0.3 (Android Studio 2026.2's JBR).</footer>
+</main>
+
+</html>
