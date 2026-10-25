@@ -150,6 +150,10 @@ tr.grp td { background: var(--bg); font-family: var(--f-mono); font-size: 0.72re
 
 .trio { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
 .trio .layer p { font-size: 0.93rem; }
+.four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.four .layer p { font-size: 0.93rem; }
+@media (max-width: 820px) { .four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .four { grid-template-columns: minmax(0, 1fr); } }
 .big { font-family: var(--f-display); font-size: 2rem; font-weight: 700; line-height: 1; }
 
 /* Pipeline */
@@ -189,6 +193,7 @@ footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--li
       <a href="#build">One build, step by step</a>
       <a href="#emulator">The emulator</a>
       <a href="#disk">On disk</a>
+      <a href="#architecture">App architecture</a>
       <a href="#upgrade">Upgrade order</a>
     </nav>
   </header>
@@ -209,8 +214,8 @@ footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--li
             <div class="lh"><span class="name">Android Gradle Plugin</span><span class="ver">9.4.1</span></div>
             <div class="role">Adds Android build steps to Gradle: merging manifests, compiling resources, dexing, packaging and signing.</div>
             <div class="layer l-kotlin">
-              <div class="lh"><span class="name">Kotlin compiler</span><span class="ver">2.x · built into AGP 9</span></div>
-              <div class="role">Turns your <code>.kt</code> files into JVM bytecode.</div>
+              <div class="lh"><span class="name">Kotlin compiler</span><span class="ver">2.4.21 · built into AGP 9</span></div>
+              <div class="role">Turns your <code>.kt</code> files into JVM bytecode. The Compose compiler plugin runs inside it.</div>
             </div>
             <div class="inner-tools"><span class="chip">aapt2 · resources</span><span class="chip">D8 · dex</span><span class="chip">R8 · shrink</span><span class="chip">manifest merger</span></div>
           </div>
@@ -258,13 +263,13 @@ footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--li
         <tbody>
           <tr class="grp"><td colspan="4">Pinned in the project, committed to git</td></tr>
           <tr><td><span class="swatch" style="background:var(--gradle);border-color:var(--gradle-b)"></span>Gradle</td><td>Build engine</td><td class="v">9.8.2 <s>7.3.3</s></td><td class="f">gradle/wrapper/gradle-wrapper.properties</td></tr>
-          <tr><td><span class="swatch" style="background:var(--agp);border-color:var(--agp-b)"></span>AGP</td><td>Android build logic for Gradle</td><td class="v">9.4.1 <s>7.2.1</s></td><td class="f">build.gradle → plugins { }</td></tr>
-          <tr><td><span class="swatch" style="background:var(--kotlin);border-color:var(--kotlin-b)"></span>Kotlin (your app)</td><td>Compiles your .kt files</td><td class="v">AGP's built-in <s>1.6.10</s></td><td class="f">implicit since AGP 9; was its own plugin</td></tr>
-          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>compileSdk</td><td>Which android.jar you compile against</td><td class="v">37 <s>32</s></td><td class="f">app/build.gradle</td></tr>
-          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>targetSdk</td><td>Which Android version's behavior rules the app opts into</td><td class="v">37 <s>32</s></td><td class="f">app/build.gradle</td></tr>
-          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>minSdk</td><td>Oldest Android version that can install it</td><td class="v">28</td><td class="f">app/build.gradle</td></tr>
-          <tr><td><span class="swatch" style="background:var(--jdk);border-color:var(--jdk-b)"></span>Java target</td><td>Java language and bytecode level of your code</td><td class="v">17 <s>1.8</s></td><td class="f">app/build.gradle → compileOptions</td></tr>
-          <tr><td><span class="swatch" style="background:var(--agp);border-color:var(--agp-b)"></span>Libraries</td><td>AndroidX, Material and other dependencies</td><td class="v">core-ktx 1.19.1 <s>1.7.0</s><br>appcompat 1.8.0 <s>1.4.2</s><br>material 1.14.0 <s>1.6.0</s></td><td class="f">app/build.gradle → dependencies { }</td></tr>
+          <tr><td><span class="swatch" style="background:var(--agp);border-color:var(--agp-b)"></span>AGP</td><td>Android build logic for Gradle</td><td class="v">9.4.1 <s>7.2.1</s></td><td class="f">gradle/libs.versions.toml</td></tr>
+          <tr><td><span class="swatch" style="background:var(--kotlin);border-color:var(--kotlin-b)"></span>Kotlin (your app)</td><td>Compiles your .kt files, plus the Compose compiler plugin</td><td class="v">2.4.21 <s>1.6.10</s></td><td class="f">gradle/libs.versions.toml, pinned in build.gradle.kts</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>compileSdk</td><td>Which android.jar you compile against</td><td class="v">37 <s>32</s></td><td class="f">app/build.gradle.kts</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>targetSdk</td><td>Which Android version's behavior rules the app opts into</td><td class="v">37 <s>32</s></td><td class="f">app/build.gradle.kts</td></tr>
+          <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>minSdk</td><td>Oldest Android version that can install it</td><td class="v">28</td><td class="f">app/build.gradle.kts</td></tr>
+          <tr><td><span class="swatch" style="background:var(--jdk);border-color:var(--jdk-b)"></span>Java target</td><td>Java language and bytecode level of your code</td><td class="v">17 <s>1.8</s></td><td class="f">app/build.gradle.kts → compileOptions</td></tr>
+          <tr><td><span class="swatch" style="background:var(--agp);border-color:var(--agp-b)"></span>Libraries</td><td>Jetpack Compose, Navigation 3, DataStore and other dependencies</td><td class="v">compose-bom 2026.09.00<br>navigation3 1.2.0<br>lifecycle 2.11.0<br>datastore 1.3.0</td><td class="f">gradle/libs.versions.toml, used in app/build.gradle.kts</td></tr>
           <tr class="grp"><td colspan="4">Set up on your Mac only</td></tr>
           <tr><td><span class="swatch" style="background:var(--jdk);border-color:var(--jdk-b)"></span>JDK</td><td>Runs Gradle</td><td class="v">25.0.3 <s>21.0.5</s></td><td class="f">JAVA_HOME in ~/.zshrc, or Studio → Settings → Gradle JDK</td></tr>
           <tr><td><span class="swatch" style="background:var(--sdk);border-color:var(--sdk-b)"></span>SDK location</td><td>Tells AGP where the SDK folder is</td><td class="v">~/Library/Android/sdk</td><td class="f">local.properties (git-ignored) or ANDROID_HOME</td></tr>
@@ -279,7 +284,7 @@ footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--li
         </tbody>
       </table>
     </div>
-    <p class="callout"><strong>Ignore the "Kotlin 2.4.10" that <code>./gradlew --version</code> prints.</strong> That's the Kotlin Gradle uses to run its own build scripts. It's separate from the compiler that builds your app, which AGP provides.</p>
+    <p class="callout"><strong>Ignore the "Kotlin 2.4.10" that <code>./gradlew --version</code> prints.</strong> That's the Kotlin Gradle uses to run its own build scripts. It's separate from the compiler that builds your app, which is pinned to 2.4.21 in the version catalog. Gradle's own Kotlin is also what compiles your <code>.gradle.kts</code> build files.</p>
   </section>
 
   <section id="chain">
@@ -318,6 +323,14 @@ footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--li
       <div class="rule">
         <div class="edge"><span class="tag" style="background:var(--dev);border-color:var(--dev-b)">System image API</span><span class="rel">must be ≥</span><span class="tag" style="background:var(--sdk);border-color:var(--sdk-b)">minSdk 28</span></div>
         <p>The app installs on any emulator or phone at API 28 or above, so your API 33 and 35 virtual devices can run it too.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--kotlin);border-color:var(--kotlin-b)">Compose compiler</span><span class="rel">must equal</span><span class="tag" style="background:var(--kotlin);border-color:var(--kotlin-b)">Kotlin 2.4.21</span></div>
+        <p>The Compose compiler is a Kotlin compiler plugin released with every Kotlin version. In the catalog both point at the same <code>kotlin</code> entry, so bumping Kotlin bumps both.</p>
+      </div>
+      <div class="rule">
+        <div class="edge"><span class="tag" style="background:var(--agp);border-color:var(--agp-b)">Navigation 3</span><span class="rel">needs</span><span class="tag" style="background:var(--kotlin);border-color:var(--kotlin-b)">kotlinx.serialization</span></div>
+        <p>The back stack is saved by serializing each screen key, so the keys are <code>@Serializable</code> and the serialization plugin is applied. That's what lets the app reopen on Settings after Android kills it in the background.</p>
       </div>
     </div>
   </section>
@@ -361,12 +374,12 @@ footer { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--li
     <h2>What <code>./gradlew installDebug</code> actually does</h2>
     <ol class="pipe">
       <li><p><strong>The wrapper picks Gradle.</strong> <code>gradlew</code> reads <code>gradle-wrapper.properties</code>, downloads Gradle 9.8.2 into <code>~/.gradle/wrapper/dists</code> if it's missing, and starts a Gradle background process on your JDK. This is why you never install Gradle globally.</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
-      <li><p><strong>Settings load.</strong> <code>settings.gradle</code> lists where plugins and libraries come from (Google's Maven repository and Maven Central) and which modules exist (<code>:app</code>).</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
+      <li><p><strong>Settings load.</strong> <code>settings.gradle.kts</code> lists where plugins and libraries come from (Google's Maven repository and Maven Central) and which modules exist (<code>:app</code>).</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
       <li><p><strong>AGP loads and finds the SDK.</strong> AGP is downloaded from Google's Maven repository like any library, then finds the SDK through <code>local.properties</code>.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">AGP</span></li>
       <li><p><strong>Dependencies resolve.</strong> AndroidX and Material are downloaded once into <code>~/.gradle/caches</code>, and AGP checks each one's compileSdk requirement.</p><span class="who" style="background:var(--gradle);border-color:var(--gradle-b)">Gradle</span></li>
       <li><p><strong>Manifests merge.</strong> Your <code>AndroidManifest.xml</code> is combined with every library's manifest. The <code>namespace</code> setting decides the package name of the generated <code>R</code> class.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">AGP</span></li>
-      <li><p><strong>Resources compile.</strong> aapt2 compiles layouts, strings and icons and generates <code>R.layout.activity_main</code> and friends.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">aapt2</span></li>
-      <li><p><strong>Kotlin compiles.</strong> Your <code>.kt</code> files compile against <code>platforms/android-37.0/android.jar</code> into <code>.class</code> files.</p><span class="who" style="background:var(--kotlin);border-color:var(--kotlin-b)">kotlinc</span></li>
+      <li><p><strong>Resources compile.</strong> aapt2 compiles layouts, strings and icons and generates the <code>R</code> class (<code>R.string.button_start</code> and friends).</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">aapt2</span></li>
+      <li><p><strong>Kotlin compiles.</strong> Your <code>.kt</code> files compile against <code>platforms/android-37.0/android.jar</code> into <code>.class</code> files. The Compose compiler plugin rewrites every <code>@Composable</code> function along the way.</p><span class="who" style="background:var(--kotlin);border-color:var(--kotlin-b)">kotlinc</span></li>
       <li><p><strong>Code is converted to DEX.</strong> D8 converts your classes and every library's classes into <code>classes.dex</code>.</p><span class="who" style="background:var(--agp);border-color:var(--agp-b)">D8</span></li>
       <li><p><strong>The APK is packaged and signed.</strong> Everything is zipped into <code>app-debug.apk</code> and signed with the auto-generated <code>~/.android/debug.keystore</code>.</p><span class="who" style="background:var(--sdk);border-color:var(--sdk-b)">build-tools</span></li>
       <li><p><strong>The APK installs.</strong> <code>adb</code> pushes the APK to every connected device or running emulator.</p><span class="who" style="background:var(--dev);border-color:var(--dev-b)">adb</span></li>
@@ -412,10 +425,24 @@ adb devices                     <span class="c"># → emulator-5554  device</spa
 
 <span class="k">~/Dev/ChessClock/</span>
   gradle/wrapper/gradle-wrapper.properties   <span class="c">Gradle version</span>
-  settings.gradle                            <span class="c">repositories, modules</span>
-  build.gradle                               <span class="c">AGP version</span>
-  app/build.gradle                           <span class="c">SDK levels, Java target, libraries</span>
+  gradle/libs.versions.toml                  <span class="c">every plugin and library version</span>
+  settings.gradle.kts                        <span class="c">repositories, modules</span>
+  build.gradle.kts                           <span class="c">declares plugins (versions from the catalog)</span>
+  app/build.gradle.kts                       <span class="c">SDK levels, Java target, dependencies</span>
   local.properties                           <span class="c">sdk.dir — machine-specific, not in git</span></pre>
+  </section>
+
+  <section id="architecture">
+    <div class="eyebrow">App architecture</div>
+    <h2>How the ChessClock code is layered</h2>
+    <p class="prose">The app follows Android's recommended architecture. State flows down from storage to the screen, and taps flow up as events. Each layer only talks to the one below it.</p>
+    <div class="four">
+      <div class="layer l-dev"><div class="lh"><span class="name">UI</span><span class="ver">ui/clock, ui/settings</span></div><p>Jetpack Compose screens in a single activity. They draw a state object and report taps. Navigation 3 switches between the clock and settings.</p></div>
+      <div class="layer l-agp"><div class="lh"><span class="name">ViewModels</span><span class="ver">StateFlow</span></div><p><code>ClockViewModel</code> runs the ticking coroutine and exposes <code>ClockUiState</code>. <code>SettingsViewModel</code> reads and saves settings. Both survive screen rotation.</p></div>
+      <div class="layer l-kotlin"><div class="lh"><span class="name">Clock model</span><span class="ver">clock/</span></div><p>Plain Kotlin with no Android code. Every action (press, pause, tick) returns a new immutable state, so it's easy to unit test.</p></div>
+      <div class="layer l-sdk"><div class="lh"><span class="name">Settings data</span><span class="ver">settings/</span></div><p><code>SettingsRepository</code> keeps settings in DataStore and copies over the old SharedPreferences on first launch.</p></div>
+    </div>
+    <p class="prose muted">Dependencies are wired by hand in <code>AppContainer</code>, which <code>ChessClockApplication</code> creates once. Larger apps usually use Hilt for this.</p>
   </section>
 
   <section id="upgrade">
@@ -427,7 +454,7 @@ adb devices                     <span class="c"># → emulator-5554  device</spa
       <li><strong>Point at a modern JDK.</strong> <code>export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"</code>, which your <code>~/.zshrc</code> now sets along with <code>ANDROID_HOME</code> and <code>PATH</code>.</li>
       <li><strong>Bump Gradle by hand</strong> in <code>gradle-wrapper.properties</code>, then run <code>./gradlew wrapper --gradle-version X</code> to regenerate the wrapper scripts.</li>
       <li><strong>Bump AGP</strong> and read its release notes for breaking changes. For AGP 9 those were: <code>package</code> moves to <code>namespace</code>, Kotlin is built in, and <code>kotlinOptions</code> is removed.</li>
-      <li><strong>Raise compileSdk and targetSdk</strong>, then libraries. Look up current versions on Google's Maven repository.</li>
+      <li><strong>Raise compileSdk and targetSdk</strong>, then libraries. Look up current versions on Google's Maven repository. Every version lives in <code>gradle/libs.versions.toml</code>.</li>
       <li><strong>Build with <code>--warning-mode=all</code></strong> and fix warnings coming from your own code. Warnings coming from inside AGP aren't yours to fix.</li>
       <li><strong>Run it on an emulator</strong> and check the screens that targetSdk changes, such as edge-to-edge drawing and permissions.</li>
       <li><strong>Update Android Studio</strong> so it can sync the new AGP.</li>
@@ -440,7 +467,7 @@ cd ~/Dev/ChessClock
 adb shell am start -n com.lab.chessclock/.MainActivity</pre>
   </section>
 
-  <footer>Versions are from the upgrade on 24 Oct 2026: Gradle 9.8.2, AGP 9.4.1, SDK platform 37.0, emulator 37.2.12 and JDK 25.0.3 (Android Studio 2026.2's JBR).</footer>
+  <footer>Versions are from the upgrade on 24 Oct 2026: Gradle 9.8.2, AGP 9.4.1, Kotlin 2.4.21, Compose BOM 2026.09.00, SDK platform 37.0, emulator 37.2.12 and JDK 25.0.3 (Android Studio 2026.2's JBR).</footer>
 </main>
 
 </html>
