@@ -1,0 +1,105 @@
+package com.lab.chessclock.clock
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+class ChessClockTest {
+
+    private val clock = ChessClock(TimeControl(initial = 5.minutes, increment = 2.seconds))
+
+    @Test
+    fun newClockIsNotStarted() {
+        assertEquals(ClockStatus.NotStarted, clock.status)
+        assertEquals(5.minutes, clock.first.remaining)
+        assertEquals(5.minutes, clock.second.remaining)
+        assertNull(clock.active)
+    }
+
+    @Test
+    fun toggleStartsSecondPlayer() {
+        val started = clock.toggle()
+        assertEquals(ClockStatus.Running, started.status)
+        assertEquals(Player.Second, started.active)
+    }
+
+    @Test
+    fun pressingYourClockStartsOpponentWithoutIncrementOnFirstMove() {
+        val started = clock.press(Player.First)
+        assertEquals(Player.Second, started.active)
+        assertEquals(5.minutes, started.first.remaining)
+    }
+
+    @Test
+    fun endingATurnAwardsIncrementAndSwitchesPlayer() {
+        val afterMove = clock.press(Player.First)
+            .tick(10.seconds)
+            .press(Player.Second)
+
+        assertEquals(Player.First, afterMove.active)
+        assertEquals(5.minutes - 10.seconds + 2.seconds, afterMove.second.remaining)
+    }
+
+    @Test
+    fun incrementCanRaiseMaxTime() {
+        val afterMove = clock.press(Player.First).press(Player.Second)
+        assertEquals(5.minutes + 2.seconds, afterMove.second.max)
+        assertEquals(1f, afterMove.second.progress)
+    }
+
+    @Test
+    fun pressingWhileOpponentRunsDoesNothing() {
+        val running = clock.press(Player.First)
+        assertEquals(running, running.press(Player.First))
+    }
+
+    @Test
+    fun tickOnlyChargesActivePlayer() {
+        val ticked = clock.press(Player.First).tick(3.seconds)
+        assertEquals(5.minutes, ticked.first.remaining)
+        assertEquals(5.minutes - 3.seconds, ticked.second.remaining)
+    }
+
+    @Test
+    fun tickWhenStoppedDoesNothing() {
+        assertEquals(clock, clock.tick(3.seconds))
+    }
+
+    @Test
+    fun pauseStopsClockAndResumeHasNoIncrement() {
+        val paused = clock.press(Player.First).tick(1.seconds).toggle()
+        assertEquals(ClockStatus.Paused, paused.status)
+        assertNull(paused.active)
+
+        val resumed = paused.press(Player.First)
+        assertEquals(Player.Second, resumed.active)
+        assertEquals(5.minutes - 1.seconds, resumed.second.remaining)
+    }
+
+    @Test
+    fun runningOutOfTimeFinishesAtZero() {
+        val finished = clock.press(Player.First).tick(10.minutes)
+        assertEquals(ClockStatus.Finished, finished.status)
+        assertEquals(Duration.ZERO, finished.second.remaining)
+        assertEquals(finished, finished.press(Player.Second))
+        assertEquals(finished, finished.tick(1.seconds))
+    }
+
+    @Test
+    fun toggleResetsWhenPausedOrFinished() {
+        val paused = clock.press(Player.First).tick(1.seconds).pause()
+        assertEquals(clock, paused.toggle())
+
+        val finished = clock.press(Player.First).tick(10.minutes)
+        assertEquals(clock, finished.toggle())
+    }
+
+    @Test
+    fun zeroTimeControlIsFinishedImmediately() {
+        val empty = ChessClock(TimeControl(Duration.ZERO, Duration.ZERO))
+        assertEquals(ClockStatus.Finished, empty.status)
+    }
+}
