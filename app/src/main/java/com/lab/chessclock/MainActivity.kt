@@ -26,24 +26,24 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         supportActionBar?.hide()
 
-        timerView1 = findViewById<TextView?>(R.id.timer1).apply {
+        timerView1 = findViewById<TextView>(R.id.timer1).apply {
             setOnClickListener {
                 clockManager.start(firstTimer = false, useIncrement = true)
             }
         }
-        timerView2 = findViewById<TextView?>(R.id.timer2).apply {
+        timerView2 = findViewById<TextView>(R.id.timer2).apply {
             setOnClickListener {
                 clockManager.start(firstTimer = true, useIncrement = true)
             }
         }
         progressIndicator1 = findViewById(R.id.progress1)
         progressIndicator2 = findViewById(R.id.progress2)
-        controlButton = findViewById<Button?>(R.id.controlButton).apply {
+        controlButton = findViewById<Button>(R.id.controlButton).apply {
             setOnClickListener {
                 clockManager.pauseOrReset()
             }
         }
-        settingsButton = findViewById<FloatingActionButton?>(R.id.settings_button).apply {
+        settingsButton = findViewById<FloatingActionButton>(R.id.settings_button).apply {
             setOnClickListener {
                 startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
             }
