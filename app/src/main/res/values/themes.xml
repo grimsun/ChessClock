@@ -15,6 +15,11 @@
         <item name="circularProgressIndicatorStyle">@style/Widget.App.CircularProgressIndicator</item>
     </style>
 
+    <style name="Theme.ChessClock.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <style name="Widget.App.CircularProgressIndicator" parent="Widget.Material3.CircularProgressIndicator">
         <item name="trackThickness">15dp</item>
         <item name="trackCornerRadius">8dp</item>
