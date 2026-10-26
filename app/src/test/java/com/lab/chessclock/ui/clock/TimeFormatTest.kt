@@ -22,4 +22,17 @@ class TimeFormatTest {
         assertEquals("00:59.90", formatClockTime(59_950.milliseconds))
         assertEquals("00:00.00", formatClockTime(Duration.ZERO))
     }
+
+    @Test
+    fun switchesFormatAtTheMinuteAndHourBoundaries() {
+        assertEquals("01:00", formatClockTime(60_001.milliseconds))
+        assertEquals("59:59", formatClockTime(1.hours - 1.milliseconds))
+        assertEquals("1:00:00", formatClockTime(1.hours))
+    }
+
+    @Test
+    fun hoursAreNotPadded() = assertEquals("12:00:00", formatClockTime(12.hours))
+
+    @Test
+    fun partialSecondsRoundDown() = assertEquals("04:59", formatClockTime(5.minutes - 1.milliseconds))
 }
