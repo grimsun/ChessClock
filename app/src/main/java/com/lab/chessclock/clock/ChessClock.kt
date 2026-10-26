@@ -20,6 +20,13 @@ data class PlayerTime(val remaining: Duration, val max: Duration) {
     val progress: Float
         get() = if (max == Duration.ZERO) 0f else (remaining / max).toFloat()
 
+    /** The player's flag has fallen: out of time. */
+    val isExpired: Boolean
+        get() = remaining == Duration.ZERO
+
+    internal val isUsed: Boolean
+        get() = remaining < max
+
     internal fun add(time: Duration): PlayerTime {
         val newRemaining = remaining + time
         return PlayerTime(newRemaining, maxOf(max, newRemaining))
@@ -45,9 +52,9 @@ data class ChessClock(
 ) {
     val status: ClockStatus
         get() = when {
-            first.remaining == Duration.ZERO || second.remaining == Duration.ZERO -> ClockStatus.Finished
+            first.isExpired || second.isExpired -> ClockStatus.Finished
             active != null -> ClockStatus.Running
-            first.remaining < first.max || second.remaining < second.max -> ClockStatus.Paused
+            first.isUsed || second.isUsed -> ClockStatus.Paused
             else -> ClockStatus.NotStarted
         }
 
@@ -60,8 +67,7 @@ data class ChessClock(
     fun press(player: Player): ChessClock = when (status) {
         ClockStatus.Finished -> this
         ClockStatus.Running ->
-            if (active == player) withTime(player, timeOf(player).add(timeControl.increment))
-                .copy(active = player.opponent)
+            if (active == player) update(player) { it.add(timeControl.increment) }.copy(active = player.opponent)
             else this
         ClockStatus.NotStarted, ClockStatus.Paused -> copy(active = player.opponent)
     }
@@ -81,9 +87,11 @@ data class ChessClock(
     fun tick(elapsed: Duration): ChessClock {
         val player = active ?: return this
         if (status == ClockStatus.Finished) return this
-        return withTime(player, timeOf(player).subtract(elapsed))
+        return update(player) { it.subtract(elapsed) }
     }
 
-    private fun withTime(player: Player, time: PlayerTime): ChessClock =
-        if (player == Player.First) copy(first = time) else copy(second = time)
+    private fun update(player: Player, transform: (PlayerTime) -> PlayerTime): ChessClock {
+        val time = transform(timeOf(player))
+        return if (player == Player.First) copy(first = time) else copy(second = time)
+    }
 }

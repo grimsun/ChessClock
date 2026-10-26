@@ -48,7 +48,6 @@ import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import com.lab.chessclock.ui.theme.ClockColors
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -83,32 +82,20 @@ fun ClockScreen(
 ) {
     Box(modifier.fillMaxSize()) {
         if (uiState is ClockUiState.Ready) {
-            val rotations = uiState.orientation.rotations()
+            val (clock, orientation) = uiState
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                PlayerClockFace(
-                    clock = uiState.clock,
-                    player = Player.First,
-                    rotation = rotations.first,
-                    onClick = { onPlayerPressed(Player.First) },
-                    modifier = Modifier.weight(1f),
-                )
+                PlayerClockFace(clock, Player.First, orientation, onPlayerPressed, Modifier.weight(1f))
                 ControlButton(
-                    status = uiState.clock.status,
+                    status = clock.status,
                     onClick = onControlPressed,
-                    modifier = Modifier.rotate(rotations.control),
+                    modifier = Modifier.rotate(orientation.controlRotation),
                 )
-                PlayerClockFace(
-                    clock = uiState.clock,
-                    player = Player.Second,
-                    rotation = rotations.second,
-                    onClick = { onPlayerPressed(Player.Second) },
-                    modifier = Modifier.weight(1f),
-                )
+                PlayerClockFace(clock, Player.Second, orientation, onPlayerPressed, Modifier.weight(1f))
             }
         }
 
@@ -134,8 +121,8 @@ fun ClockScreen(
 private fun PlayerClockFace(
     clock: ChessClock,
     player: Player,
-    rotation: Float,
-    onClick: () -> Unit,
+    orientation: Orientation,
+    onPress: (Player) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val time = clock.timeOf(player)
@@ -150,7 +137,7 @@ private fun PlayerClockFace(
         label = "progress",
     )
     val color = when {
-        finished && time.remaining == Duration.ZERO -> ClockColors.Loss
+        finished && time.isExpired -> ClockColors.Loss
         finished -> ClockColors.Win
         clock.active == player -> MaterialTheme.colorScheme.primary
         else -> ClockColors.Inactive
@@ -164,7 +151,7 @@ private fun PlayerClockFace(
                 interactionSource = null,
                 indication = null,
                 onClickLabel = stringResource(R.string.end_turn),
-                onClick = onClick,
+                onClick = { onPress(player) },
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -173,7 +160,7 @@ private fun PlayerClockFace(
                 .padding(16.dp)
                 .sizeIn(maxWidth = 300.dp, maxHeight = 300.dp)
                 .aspectRatio(1f)
-                .rotate(rotation),
+                .rotate(orientation.rotationOf(player)),
             contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator(
@@ -214,13 +201,18 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
     }
 }
 
-private data class Rotations(val first: Float, val second: Float, val control: Float)
+/** The second player (bottom) always reads the screen the right way up for their side. */
+private val Orientation.controlRotation: Float
+    get() = when (this) {
+        Orientation.HorizontalSame, Orientation.HorizontalOpposite -> 0f
+        Orientation.VerticalSame, Orientation.VerticalOpposite -> 90f
+    }
 
-private fun Orientation.rotations(): Rotations = when (this) {
-    Orientation.HorizontalSame -> Rotations(first = 0f, second = 0f, control = 0f)
-    Orientation.HorizontalOpposite -> Rotations(first = 180f, second = 0f, control = 0f)
-    Orientation.VerticalSame -> Rotations(first = 90f, second = 90f, control = 90f)
-    Orientation.VerticalOpposite -> Rotations(first = 270f, second = 90f, control = 90f)
+/** Facing each other turns the first player's face half a turn from the second's. */
+private fun Orientation.rotationOf(player: Player): Float = when (this) {
+    Orientation.HorizontalSame, Orientation.VerticalSame -> controlRotation
+    Orientation.HorizontalOpposite, Orientation.VerticalOpposite ->
+        if (player == Player.First) controlRotation + 180f else controlRotation
 }
 
 @Preview(showBackground = true)
