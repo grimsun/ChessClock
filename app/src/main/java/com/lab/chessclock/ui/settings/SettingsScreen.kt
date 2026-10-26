@@ -42,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import kotlin.math.roundToInt
 
@@ -56,10 +57,7 @@ fun SettingsRoute(
         settings = settings,
         onBack = onBack,
         onOrientationChange = viewModel::setOrientation,
-        onHoursChange = viewModel::setHours,
-        onMinutesChange = viewModel::setMinutes,
-        onSecondsChange = viewModel::setSeconds,
-        onIncrementChange = viewModel::setIncrementSeconds,
+        onTimerChange = viewModel::setTimer,
     )
 }
 
@@ -69,10 +67,7 @@ fun SettingsScreen(
     settings: ClockSettings?,
     onBack: () -> Unit,
     onOrientationChange: (Orientation) -> Unit,
-    onHoursChange: (Int) -> Unit,
-    onMinutesChange: (Int) -> Unit,
-    onSecondsChange: (Int) -> Unit,
-    onIncrementChange: (Int) -> Unit,
+    onTimerChange: (TimerSetting, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -113,15 +108,14 @@ fun SettingsScreen(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             SectionHeader(R.string.timer_section)
-            SettingSlider(R.string.setting_hours, settings.hours, ClockSettings.MAX_HOURS, onHoursChange)
-            SettingSlider(R.string.setting_minutes, settings.minutes, ClockSettings.MAX_MINUTES, onMinutesChange)
-            SettingSlider(R.string.setting_seconds, settings.seconds, ClockSettings.MAX_SECONDS, onSecondsChange)
-            SettingSlider(
-                R.string.setting_increment,
-                settings.incrementSeconds,
-                ClockSettings.MAX_INCREMENT_SECONDS,
-                onIncrementChange,
-            )
+            TimerSetting.entries.forEach { setting ->
+                SettingSlider(
+                    label = setting.label,
+                    value = setting.valueIn(settings),
+                    max = setting.max,
+                    onValueChange = { onTimerChange(setting, it) },
+                )
+            }
         }
     }
 }
@@ -190,6 +184,14 @@ private val Orientation.label: Int
         Orientation.VerticalOpposite -> R.string.orientation_vertical_opposite
     }
 
+private val TimerSetting.label: Int
+    @StringRes get() = when (this) {
+        TimerSetting.Hours -> R.string.setting_hours
+        TimerSetting.Minutes -> R.string.setting_minutes
+        TimerSetting.Seconds -> R.string.setting_seconds
+        TimerSetting.Increment -> R.string.setting_increment
+    }
+
 @Preview(showBackground = true)
 @Composable
 private fun SettingsScreenPreview() {
@@ -198,10 +200,7 @@ private fun SettingsScreenPreview() {
             settings = ClockSettings(minutes = 3, incrementSeconds = 2),
             onBack = {},
             onOrientationChange = {},
-            onHoursChange = {},
-            onMinutesChange = {},
-            onSecondsChange = {},
-            onIncrementChange = {},
+            onTimerChange = { _, _ -> },
         )
     }
 }
