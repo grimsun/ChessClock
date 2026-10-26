@@ -49,7 +49,12 @@ data class ClockSettings(
 ) {
     val timeControl: TimeControl
         get() = TimeControl(
-            initial = hours.hours + minutes.minutes + seconds.seconds,
+            // All-zero settings would give a game that is over before it starts and can't be reset.
+            initial = (hours.hours + minutes.minutes + seconds.seconds).coerceAtLeast(MIN_INITIAL_TIME),
             increment = incrementSeconds.seconds,
         )
+
+    companion object {
+        val MIN_INITIAL_TIME = 1.seconds
+    }
 }
