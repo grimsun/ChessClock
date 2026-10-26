@@ -1,5 +1,6 @@
 package com.lab.chessclock
 
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -31,5 +32,41 @@ class ChessClockAppTest {
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.onNodeWithText("Start").assertExists()
+    }
+
+    @Test
+    fun doubleTappingSettingsOpensItOnce() {
+        doubleTap(composeRule.onNodeWithContentDescription("Settings"))
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.onNodeWithText("Start").assertExists()
+    }
+
+    @Test
+    fun doubleTappingBackReturnsToTheClock() {
+        composeRule.onNodeWithContentDescription("Settings").performClick()
+
+        doubleTap(composeRule.onNodeWithContentDescription("Back"))
+
+        composeRule.onNodeWithText("Start").assertExists()
+    }
+
+    @Test
+    fun rotatingKeepsTheClockRunning() {
+        composeRule.onNodeWithText("Start").performClick()
+
+        composeRule.activityRule.scenario.recreate()
+
+        composeRule.onNodeWithText("Pause").performClick()
+        composeRule.onNodeWithText("Reset").assertExists()
+    }
+
+    /** Taps twice without letting the screen transition run in between, like a quick double tap. */
+    private fun doubleTap(node: SemanticsNodeInteraction) {
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = false
+        node.performClick()
+        node.performClick()
+        composeRule.mainClock.autoAdvance = true
     }
 }

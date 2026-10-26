@@ -1,5 +1,6 @@
 package com.lab.chessclock.ui.clock
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -58,8 +59,12 @@ fun ClockRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Stop the clock when the app goes to the background.
-    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { viewModel.pause() }
+    // Stop the clock when the app goes to the background, but not when the screen just rotates:
+    // the ViewModel and its ticker survive that.
+    val activity = LocalActivity.current
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        if (activity?.isChangingConfigurations != true) viewModel.pause()
+    }
 
     ClockScreen(
         uiState = uiState,
