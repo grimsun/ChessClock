@@ -24,9 +24,19 @@ sealed interface Screen : NavKey {
 fun ChessClockApp() {
     val backStack = rememberNavBackStack(Screen.Clock)
 
+    // The outgoing screen stays tappable during its transition, so ignore repeated taps instead
+    // of stacking a screen twice or popping the last one (NavDisplay requires a non-empty stack).
+    fun open(screen: Screen) {
+        if (backStack.lastOrNull() != screen) backStack.add(screen)
+    }
+
+    fun close(screen: Screen) {
+        if (backStack.size > 1 && backStack.lastOrNull() == screen) backStack.removeLastOrNull()
+    }
+
     NavDisplay(
         backStack = backStack,
-        onBack = { backStack.removeLastOrNull() },
+        onBack = { if (backStack.size > 1) backStack.removeLastOrNull() },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             // Scopes each screen's ViewModel to its back stack entry.
@@ -34,10 +44,10 @@ fun ChessClockApp() {
         ),
         entryProvider = entryProvider {
             entry<Screen.Clock> {
-                ClockRoute(onOpenSettings = { backStack.add(Screen.Settings) })
+                ClockRoute(onOpenSettings = { open(Screen.Settings) })
             }
             entry<Screen.Settings> {
-                SettingsRoute(onBack = { backStack.removeLastOrNull() })
+                SettingsRoute(onBack = { close(Screen.Settings) })
             }
         },
     )
