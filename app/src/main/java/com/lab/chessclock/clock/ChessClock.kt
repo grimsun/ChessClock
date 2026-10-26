@@ -24,9 +24,6 @@ data class PlayerTime(val remaining: Duration, val max: Duration) {
     val isExpired: Boolean
         get() = remaining == Duration.ZERO
 
-    internal val isUsed: Boolean
-        get() = remaining < max
-
     internal fun add(time: Duration): PlayerTime {
         val newRemaining = remaining + time
         return PlayerTime(newRemaining, maxOf(max, newRemaining))
@@ -49,12 +46,14 @@ data class ChessClock(
     val second: PlayerTime = PlayerTime.full(timeControl.initial),
     /** The player whose time is running, or null when the clock is stopped. */
     val active: Player? = null,
+    /** Whether the game has begun, even if neither player has used any time yet. */
+    val started: Boolean = false,
 ) {
     val status: ClockStatus
         get() = when {
             first.isExpired || second.isExpired -> ClockStatus.Finished
             active != null -> ClockStatus.Running
-            first.isUsed || second.isUsed -> ClockStatus.Paused
+            started -> ClockStatus.Paused
             else -> ClockStatus.NotStarted
         }
 
@@ -69,12 +68,12 @@ data class ChessClock(
         ClockStatus.Running ->
             if (active == player) update(player) { it.add(timeControl.increment) }.copy(active = player.opponent)
             else this
-        ClockStatus.NotStarted, ClockStatus.Paused -> copy(active = player.opponent)
+        ClockStatus.NotStarted, ClockStatus.Paused -> copy(active = player.opponent, started = true)
     }
 
     /** The main button: start the game, pause it, or reset it once paused or finished. */
     fun toggle(): ChessClock = when (status) {
-        ClockStatus.NotStarted -> copy(active = Player.Second)
+        ClockStatus.NotStarted -> press(Player.First)
         ClockStatus.Running -> pause()
         ClockStatus.Paused, ClockStatus.Finished -> reset()
     }

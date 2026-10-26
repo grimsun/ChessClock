@@ -1,7 +1,9 @@
 package com.lab.chessclock.clock
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -101,5 +103,53 @@ class ChessClockTest {
     fun zeroTimeControlIsFinishedImmediately() {
         val empty = ChessClock(TimeControl(Duration.ZERO, Duration.ZERO))
         assertEquals(ClockStatus.Finished, empty.status)
+    }
+
+    @Test
+    fun pausingAfterMovesWithNoTimeUsedStillCountsAsPaused() {
+        // Both players moved instantly, so the increments left each of them at full time.
+        val paused = clock.press(Player.First).press(Player.Second).press(Player.First).pause()
+
+        assertEquals(ClockStatus.Paused, paused.status)
+        assertEquals(clock, paused.toggle())
+    }
+
+    @Test
+    fun incrementsAccumulateOverAGame() {
+        val game = clock.press(Player.First)
+            .tick(3.seconds).press(Player.Second)
+            .tick(1.seconds).press(Player.First)
+            .tick(5.seconds).press(Player.Second)
+
+        assertEquals(5.minutes - 1.seconds + 2.seconds, game.first.remaining)
+        assertEquals(5.minutes - 8.seconds + 4.seconds, game.second.remaining)
+        assertEquals(Player.First, game.active)
+    }
+
+    @Test
+    fun firstPlayerCanRunOutOfTime() {
+        val finished = clock.press(Player.Second).tick(5.minutes)
+
+        assertEquals(ClockStatus.Finished, finished.status)
+        assertTrue(finished.first.isExpired)
+        assertFalse(finished.second.isExpired)
+    }
+
+    @Test
+    fun pauseKeepsAFinishedGameFinished() {
+        val finished = clock.press(Player.First).tick(10.minutes)
+        assertEquals(finished, finished.pause())
+    }
+
+    @Test
+    fun pauseBeforeStartDoesNothing() {
+        assertEquals(clock, clock.pause())
+    }
+
+    @Test
+    fun progressIsTheShareOfTimeLeft() {
+        assertEquals(0.25f, PlayerTime(15.seconds, 60.seconds).progress)
+        assertEquals(1f, PlayerTime.full(60.seconds).progress)
+        assertEquals(0f, PlayerTime.full(Duration.ZERO).progress)
     }
 }
