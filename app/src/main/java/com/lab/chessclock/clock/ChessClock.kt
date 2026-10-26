@@ -44,31 +44,36 @@ data class ChessClock(
     val timeControl: TimeControl,
     val first: PlayerTime = PlayerTime.full(timeControl.initial),
     val second: PlayerTime = PlayerTime.full(timeControl.initial),
-    /** The player whose time is running, or null when the clock is stopped. */
-    val active: Player? = null,
-    /** Whether the game has begun, even if neither player has used any time yet. */
-    val started: Boolean = false,
+    /** The player on move, kept while paused; null before the game starts. */
+    val turn: Player? = null,
+    val running: Boolean = false,
 ) {
     val status: ClockStatus
         get() = when {
             first.isExpired || second.isExpired -> ClockStatus.Finished
-            active != null -> ClockStatus.Running
-            started -> ClockStatus.Paused
+            running -> ClockStatus.Running
+            turn != null -> ClockStatus.Paused
             else -> ClockStatus.NotStarted
         }
+
+    /** The player whose time is running, or null when the clock is stopped. */
+    val active: Player?
+        get() = turn.takeIf { running }
 
     fun timeOf(player: Player): PlayerTime = if (player == Player.First) first else second
 
     /**
      * [player] presses their clock: the opponent's time starts running. Ending a running turn
-     * awards the increment; starting or resuming does not.
+     * awards the increment. Pressing either side of a paused clock resumes the player on move,
+     * so a pause can't change whose turn it is.
      */
     fun press(player: Player): ChessClock = when (status) {
         ClockStatus.Finished -> this
         ClockStatus.Running ->
-            if (active == player) update(player) { it.add(timeControl.increment) }.copy(active = player.opponent)
+            if (turn == player) update(player) { it.add(timeControl.increment) }.copy(turn = player.opponent)
             else this
-        ClockStatus.NotStarted, ClockStatus.Paused -> copy(active = player.opponent, started = true)
+        ClockStatus.Paused -> copy(running = true)
+        ClockStatus.NotStarted -> copy(turn = player.opponent, running = true)
     }
 
     /** The main button: start the game, pause it, or reset it once paused or finished. */
@@ -78,7 +83,7 @@ data class ChessClock(
         ClockStatus.Paused, ClockStatus.Finished -> reset()
     }
 
-    fun pause(): ChessClock = if (status == ClockStatus.Finished) this else copy(active = null)
+    fun pause(): ChessClock = if (status == ClockStatus.Finished) this else copy(running = false)
 
     fun reset(): ChessClock = ChessClock(timeControl)
 
