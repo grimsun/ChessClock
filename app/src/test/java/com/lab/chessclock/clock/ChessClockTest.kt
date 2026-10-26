@@ -106,6 +106,26 @@ class ChessClockTest {
     }
 
     @Test
+    fun resumingKeepsTheTurnWhicheverSideIsTapped() {
+        val paused = clock.press(Player.First).tick(1.seconds).pause()
+
+        listOf(Player.First, Player.Second).forEach { tapped ->
+            val resumed = paused.press(tapped)
+            assertEquals(ClockStatus.Running, resumed.status)
+            assertEquals(Player.Second, resumed.active)
+            assertEquals(paused.first, resumed.first)
+            assertEquals(paused.second, resumed.second)
+        }
+    }
+
+    @Test
+    fun pauseKeepsTheTurn() {
+        val paused = clock.press(Player.First).press(Player.Second).pause()
+        assertNull(paused.active)
+        assertEquals(Player.First, paused.turn)
+    }
+
+    @Test
     fun pausingAfterMovesWithNoTimeUsedStillCountsAsPaused() {
         // Both players moved instantly, so the increments left each of them at full time.
         val paused = clock.press(Player.First).press(Player.Second).press(Player.First).pause()
