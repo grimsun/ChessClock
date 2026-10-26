@@ -18,6 +18,28 @@ enum class Orientation(val storageKey: String) {
     }
 }
 
+/** The numeric settings that make up the time control, so screens and storage can treat them alike. */
+enum class TimerSetting(val storageKey: String, val max: Int) {
+    Hours("timer_h", 12),
+    Minutes("timer_m", 60),
+    Seconds("timer_s", 60),
+    Increment("increment", 60);
+
+    fun valueIn(settings: ClockSettings): Int = when (this) {
+        Hours -> settings.hours
+        Minutes -> settings.minutes
+        Seconds -> settings.seconds
+        Increment -> settings.incrementSeconds
+    }
+
+    fun update(settings: ClockSettings, value: Int): ClockSettings = when (this) {
+        Hours -> settings.copy(hours = value)
+        Minutes -> settings.copy(minutes = value)
+        Seconds -> settings.copy(seconds = value)
+        Increment -> settings.copy(incrementSeconds = value)
+    }
+}
+
 data class ClockSettings(
     val hours: Int = 0,
     val minutes: Int = 5,
@@ -30,11 +52,4 @@ data class ClockSettings(
             initial = hours.hours + minutes.minutes + seconds.seconds,
             increment = incrementSeconds.seconds,
         )
-
-    companion object {
-        const val MAX_HOURS = 12
-        const val MAX_MINUTES = 60
-        const val MAX_SECONDS = 60
-        const val MAX_INCREMENT_SECONDS = 60
-    }
 }

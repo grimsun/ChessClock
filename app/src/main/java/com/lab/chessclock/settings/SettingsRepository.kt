@@ -29,31 +29,20 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     override suspend fun update(transform: (ClockSettings) -> ClockSettings) {
         dataStore.edit { preferences ->
             val updated = transform(preferences.toSettings())
-            preferences[Keys.HOURS] = updated.hours
-            preferences[Keys.MINUTES] = updated.minutes
-            preferences[Keys.SECONDS] = updated.seconds
-            preferences[Keys.INCREMENT] = updated.incrementSeconds
-            preferences[Keys.ORIENTATION] = updated.orientation.storageKey
+            TimerSetting.entries.forEach { preferences[it.key] = it.valueIn(updated) }
+            preferences[ORIENTATION] = updated.orientation.storageKey
         }
     }
 
-    private fun Preferences.toSettings(): ClockSettings {
-        val defaults = ClockSettings()
-        return ClockSettings(
-            hours = this[Keys.HOURS] ?: defaults.hours,
-            minutes = this[Keys.MINUTES] ?: defaults.minutes,
-            seconds = this[Keys.SECONDS] ?: defaults.seconds,
-            incrementSeconds = this[Keys.INCREMENT] ?: defaults.incrementSeconds,
-            orientation = Orientation.fromStorageKey(this[Keys.ORIENTATION]),
-        )
-    }
+    private fun Preferences.toSettings(): ClockSettings =
+        TimerSetting.entries.fold(
+            ClockSettings(orientation = Orientation.fromStorageKey(this[ORIENTATION])),
+        ) { settings, setting -> this[setting.key]?.let { setting.update(settings, it) } ?: settings }
 
     // Same keys the old preference screen used, so migrated values are picked up as-is.
-    private object Keys {
-        val HOURS = intPreferencesKey("timer_h")
-        val MINUTES = intPreferencesKey("timer_m")
-        val SECONDS = intPreferencesKey("timer_s")
-        val INCREMENT = intPreferencesKey("increment")
+    private val TimerSetting.key get() = intPreferencesKey(storageKey)
+
+    private companion object {
         val ORIENTATION = stringPreferencesKey("orientation")
     }
 }

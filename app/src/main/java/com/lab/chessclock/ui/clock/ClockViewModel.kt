@@ -1,20 +1,17 @@
 package com.lab.chessclock.ui.clock
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.lab.chessclock.ChessClockApplication
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
+import com.lab.chessclock.ui.appViewModelFactory
+import com.lab.chessclock.ui.stateInUi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -22,7 +19,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
@@ -48,7 +44,7 @@ class ClockViewModel(
     val uiState: StateFlow<ClockUiState> =
         combine(clock.filterNotNull(), settingsRepository.settings) { clock, settings ->
             ClockUiState.Ready(clock, settings.orientation)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ClockUiState.Loading)
+        }.stateInUi(this, ClockUiState.Loading)
 
     init {
         // A new time control starts a fresh game; other setting changes leave the game alone.
@@ -105,11 +101,6 @@ class ClockViewModel(
     companion object {
         val TICK_INTERVAL = 100.milliseconds
 
-        val Factory = viewModelFactory {
-            initializer {
-                val app = this[APPLICATION_KEY] as ChessClockApplication
-                ClockViewModel(app.container.settingsRepository)
-            }
-        }
+        val Factory = appViewModelFactory { ClockViewModel(settingsRepository) }
     }
 }
