@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.clock.TimeControl
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import org.junit.Assert.assertEquals
@@ -91,6 +92,22 @@ class ClockScreenTest {
 
         composeRule.onNode(hasText("00:00.00") and hasStateDescription("Out of time")).assertExists()
         composeRule.onNode(hasText("05:00") and hasStateDescription("On move")).assertDoesNotExist()
+    }
+
+    @Test
+    fun panelsWorkLikeRingsInEveryOrientation() {
+        val clock = newGame.press(Player.First).tick(30.seconds)
+        var orientation by mutableStateOf(Orientation.HorizontalSame)
+        val pressed = mutableListOf<Player>()
+        setScreen({ ClockUiState.Ready(clock, orientation, FaceStyle.Panels) }, onPlayerPressed = pressed::add)
+
+        Orientation.entries.forEach {
+            orientation = it
+            composeRule.onNode(hasText("04:30") and hasStateDescription("On move")).performClick()
+            composeRule.onNodeWithText("05:00").performClick()
+        }
+
+        assertEquals(List(Orientation.entries.size) { listOf(Player.Second, Player.First) }.flatten(), pressed)
     }
 
     @Test
