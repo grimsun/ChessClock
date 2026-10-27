@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,6 +36,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -172,18 +175,27 @@ private fun PlayerClockFace(
                 progress = { progress },
                 modifier = Modifier.fillMaxSize(),
                 color = color,
-                strokeWidth = 15.dp,
+                strokeWidth = RING_STROKE,
                 trackColor = Color.Transparent,
                 strokeCap = StrokeCap.Round,
                 gapSize = 0.dp,
             )
-            Text(
+            BasicText(
                 text = formatClockTime(time.remaining),
-                color = ClockColors.Text,
+                // Inside the ring's stroke, shrinking the text when the face is small or the
+                // system font is large instead of letting it overflow the ring.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = RING_STROKE + 12.dp),
+                style = TextStyle(
+                    color = ClockColors.Text,
+                    textAlign = TextAlign.Center,
+                    // Fixed-width digits so the text doesn't jitter as it counts down.
+                    fontFeatureSettings = "tnum",
+                ),
                 maxLines = 1,
                 softWrap = false,
-                // Fixed-width digits so the text doesn't jitter as it counts down.
-                style = TextStyle(fontSize = 60.sp, fontFeatureSettings = "tnum"),
+                autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 60.sp),
             )
         }
     }
@@ -205,6 +217,8 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
         Text(stringResource(label), fontSize = 18.sp)
     }
 }
+
+private val RING_STROKE = 15.dp
 
 /** The second player (bottom) always reads the screen the right way up for their side. */
 private val Orientation.controlRotation: Float
