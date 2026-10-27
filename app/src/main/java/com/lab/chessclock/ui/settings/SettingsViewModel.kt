@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.appViewModelFactory
 import com.lab.chessclock.ui.stateInUi
@@ -19,6 +20,8 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     fun setOrientation(orientation: Orientation) = update { it.copy(orientation = orientation) }
 
     fun setTimer(setting: TimerSetting, value: Int) = update { setting.update(it, value) }
+
+    fun applyPreset(preset: TimePreset) = update(preset::appliedTo)
 
     private fun update(transform: (ClockSettings) -> ClockSettings) {
         viewModelScope.launch { repository.update(transform) }

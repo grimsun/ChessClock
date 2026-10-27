@@ -10,6 +10,9 @@
     <string name="open_settings">Settings</string>
     <string name="navigate_up">Back</string>
     <string name="settings_title">Settings</string>
+    <string name="presets_title">Time control</string>
+    <!-- A time control as players write it: minutes, then seconds added per move, e.g. "3 + 2". -->
+    <string name="preset_label">%1$d + %2$d</string>
     <string name="orientation_title">Orientation</string>
     <string name="orientation_horizontal_same">Horizontal, Same direction</string>
     <string name="orientation_horizontal_opposite">Horizontal, Opposite directions</string>

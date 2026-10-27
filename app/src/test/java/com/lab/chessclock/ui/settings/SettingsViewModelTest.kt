@@ -3,6 +3,7 @@ package com.lab.chessclock.ui.settings
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.testing.FakeSettingsRepository
 import com.lab.chessclock.testing.MainDispatcherRule
@@ -52,6 +53,19 @@ class SettingsViewModelTest {
         viewModel.setOrientation(Orientation.VerticalOpposite)
 
         assertEquals(Orientation.VerticalOpposite, repository.settings.value.orientation)
+    }
+
+    @Test
+    fun applyPresetSavesItsTimeControl() = runTest {
+        repository.settings.value = ClockSettings(hours = 1, seconds = 30, orientation = Orientation.VerticalSame)
+        val viewModel = createViewModel()
+
+        viewModel.applyPreset(TimePreset(10, 5))
+
+        assertEquals(
+            ClockSettings(minutes = 10, incrementSeconds = 5, orientation = Orientation.VerticalSame),
+            repository.settings.value,
+        )
     }
 
     private fun TestScope.createViewModel(source: SettingsRepository = repository): SettingsViewModel {
