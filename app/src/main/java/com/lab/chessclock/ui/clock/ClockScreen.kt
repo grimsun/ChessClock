@@ -9,8 +9,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -91,19 +93,36 @@ fun ClockScreen(
     Box(modifier.fillMaxSize()) {
         if (uiState is ClockUiState.Ready) {
             val (clock, orientation) = uiState
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                PlayerClockFace(clock, Player.First, orientation, onPlayerPressed, Modifier.weight(1f))
+            val face = @Composable { player: Player, modifier: Modifier ->
+                PlayerClockFace(clock, player, orientation, onPlayerPressed, modifier)
+            }
+            val control = @Composable {
                 ControlButton(
                     status = clock.status,
                     onClick = onControlPressed,
                     modifier = Modifier.rotate(orientation.controlRotation),
                 )
-                PlayerClockFace(clock, Player.Second, orientation, onPlayerPressed, Modifier.weight(1f))
+            }
+
+            // Faces stacked on a tall screen, side by side on a wide one, so each gets half the room.
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(),
+            ) {
+                if (maxWidth > maxHeight) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        face(Player.First, Modifier.weight(1f))
+                        control()
+                        face(Player.Second, Modifier.weight(1f))
+                    }
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        face(Player.First, Modifier.weight(1f))
+                        control()
+                        face(Player.Second, Modifier.weight(1f))
+                    }
+                }
             }
         }
 
@@ -154,7 +173,7 @@ private fun PlayerClockFace(
     // The whole half of the screen is the player's button, like a physical clock.
     Box(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .clickable(
                 interactionSource = null,
                 indication = null,
@@ -235,6 +254,8 @@ private fun Orientation.rotationOf(player: Player): Float = when (this) {
 }
 
 @Preview(showBackground = true)
+@Preview(name = "Landscape", showBackground = true, widthDp = 891, heightDp = 411)
+@Preview(name = "Small, large font", showBackground = true, widthDp = 320, heightDp = 568, fontScale = 2f)
 @Composable
 private fun ClockScreenPreview() {
     val clock = ChessClock(TimeControl(5.minutes, 2.seconds)).press(Player.First).tick(42.seconds)
