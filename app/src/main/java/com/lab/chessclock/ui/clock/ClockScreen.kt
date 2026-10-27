@@ -134,20 +134,25 @@ fun ClockScreen(
             }
         }
 
-        SmallFloatingActionButton(
-            onClick = onOpenSettings,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .safeDrawingPadding()
-                .padding(16.dp),
-            containerColor = ClockColors.Inactive,
-            contentColor = Color.White,
-            elevation = FloatingActionButtonDefaults.elevation(1.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_baseline_settings_24),
-                contentDescription = stringResource(R.string.open_settings),
-            )
+        // The button sits on the second player's half: hide it during play so a hard tap near the
+        // corner ends the turn instead of opening settings and pausing the game.
+        val running = uiState is ClockUiState.Ready && uiState.clock.status == ClockStatus.Running
+        if (!running) {
+            SmallFloatingActionButton(
+                onClick = onOpenSettings,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .safeDrawingPadding()
+                    .padding(16.dp),
+                containerColor = ClockColors.Inactive,
+                contentColor = Color.White,
+                elevation = FloatingActionButtonDefaults.elevation(1.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_baseline_settings_24),
+                    contentDescription = stringResource(R.string.open_settings),
+                )
+            }
         }
     }
 }

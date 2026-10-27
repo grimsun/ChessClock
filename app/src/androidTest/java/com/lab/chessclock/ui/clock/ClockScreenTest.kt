@@ -94,6 +94,19 @@ class ClockScreenTest {
     }
 
     @Test
+    fun settingsAreHiddenOnlyWhileRunning() {
+        var state by mutableStateOf<ClockUiState>(ClockUiState.Ready(newGame, Orientation.HorizontalSame))
+        setScreen({ state })
+        val settings = composeRule.onNodeWithContentDescription("Settings")
+
+        settings.assertExists()
+        state = ClockUiState.Ready(newGame.toggle(), Orientation.HorizontalSame)
+        settings.assertDoesNotExist()
+        state = ClockUiState.Ready(newGame.toggle().pause(), Orientation.HorizontalSame)
+        settings.assertExists()
+    }
+
+    @Test
     fun loadingShowsOnlySettings() {
         var opened = false
         setScreen(ClockUiState.Loading, onOpenSettings = { opened = true })
