@@ -1,6 +1,7 @@
 package com.lab.chessclock.ui.settings
 
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
 import com.lab.chessclock.settings.TimePreset
@@ -53,6 +54,15 @@ class SettingsViewModelTest {
         viewModel.setOrientation(Orientation.VerticalOpposite)
 
         assertEquals(Orientation.VerticalOpposite, repository.settings.value.orientation)
+    }
+
+    @Test
+    fun setFaceStyleSavesIt() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setFaceStyle(FaceStyle.Panels)
+
+        assertEquals(ClockSettings(minutes = 5, faceStyle = FaceStyle.Panels), repository.settings.value)
     }
 
     @Test

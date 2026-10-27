@@ -31,12 +31,16 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             val updated = transform(preferences.toSettings())
             TimerSetting.entries.forEach { preferences[it.key] = it.valueIn(updated) }
             preferences[ORIENTATION] = updated.orientation.storageKey
+            preferences[FACE_STYLE] = updated.faceStyle.storageKey
         }
     }
 
     private fun Preferences.toSettings(): ClockSettings =
         TimerSetting.entries.fold(
-            ClockSettings(orientation = Orientation.fromStorageKey(this[ORIENTATION])),
+            ClockSettings(
+                orientation = Orientation.fromStorageKey(this[ORIENTATION]),
+                faceStyle = FaceStyle.fromStorageKey(this[FACE_STYLE]),
+            ),
         ) { settings, setting -> this[setting.key]?.let { setting.update(settings, it) } ?: settings }
 
     // Same keys the old preference screen used, so migrated values are picked up as-is.
@@ -44,6 +48,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
 
     private companion object {
         val ORIENTATION = stringPreferencesKey("orientation")
+        val FACE_STYLE = stringPreferencesKey("face_style")
     }
 }
 
