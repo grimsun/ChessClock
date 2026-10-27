@@ -1,11 +1,16 @@
 package com.lab.chessclock
 
+import android.view.View
+import android.view.ViewGroup
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.core.view.children
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,6 +57,17 @@ class ChessClockAppTest {
     }
 
     @Test
+    fun screenStaysOnOnlyWhileTheClockRuns() {
+        assertFalse(keepsScreenOn())
+
+        composeRule.onNodeWithText("Start").performClick()
+        assertTrue(keepsScreenOn())
+
+        composeRule.onNodeWithText("Pause").performClick()
+        assertFalse(keepsScreenOn())
+    }
+
+    @Test
     fun rotatingKeepsTheClockRunning() {
         composeRule.onNodeWithText("Start").performClick()
 
@@ -69,4 +85,12 @@ class ChessClockAppTest {
         node.performClick()
         composeRule.mainClock.autoAdvance = true
     }
+
+    private fun keepsScreenOn(): Boolean {
+        composeRule.waitForIdle()
+        return composeRule.activity.window.decorView.anyView { it.keepScreenOn }
+    }
+
+    private fun View.anyView(predicate: (View) -> Boolean): Boolean =
+        predicate(this) || (this is ViewGroup && children.any { it.anyView(predicate) })
 }
