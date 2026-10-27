@@ -1,7 +1,10 @@
 package com.lab.chessclock.ui.settings
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -33,6 +36,14 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun slidersAreLabelledWithTheirValue() {
+        setScreen(ClockSettings(minutes = 45, incrementSeconds = 7))
+
+        composeRule.onNode(hasContentDescription("Minutes") and hasStateDescription("45")).assertExists()
+        composeRule.onNode(hasContentDescription("Increment Seconds") and hasStateDescription("7")).assertExists()
+    }
+
+    @Test
     fun choosingAnOrientationReportsIt() {
         val chosen = mutableListOf<Orientation>()
         setScreen(ClockSettings(), onOrientationChange = chosen::add)
@@ -59,6 +70,9 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Settings").assertExists()
         composeRule.onNodeWithText("Orientation").assertDoesNotExist()
     }
+
+    private fun hasStateDescription(value: String) =
+        SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
 
     private fun setScreen(
         settings: ClockSettings?,

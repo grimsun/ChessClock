@@ -34,6 +34,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -149,9 +152,10 @@ private fun OrientationOption(orientation: Orientation, selected: Boolean, onSel
 private fun SettingSlider(@StringRes label: Int, value: Int, max: Int, onValueChange: (Int) -> Unit) {
     // Follow the finger locally and save once the drag ends, instead of on every step.
     var position by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    val labelText = stringResource(label)
 
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
+        Text(labelText, style = MaterialTheme.typography.bodyLarge)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Slider(
                 value = position,
@@ -159,7 +163,13 @@ private fun SettingSlider(@StringRes label: Int, value: Int, max: Int, onValueCh
                 onValueChangeFinished = { onValueChange(position.roundToInt()) },
                 valueRange = 0f..max.toFloat(),
                 steps = max - 1,
-                modifier = Modifier.weight(1f),
+                // Without these TalkBack reads an unnamed percentage instead of "Minutes, 30".
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics {
+                        contentDescription = labelText
+                        stateDescription = position.roundToInt().toString()
+                    },
                 // Up to 60 steps: tick marks would just be a row of dots.
                 colors = SliderDefaults.colors(
                     activeTickColor = Color.Transparent,
