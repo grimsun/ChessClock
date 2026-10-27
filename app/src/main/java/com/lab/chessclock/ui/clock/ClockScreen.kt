@@ -189,6 +189,7 @@ private fun PlayerClockFace(
     val color = when {
         finished && time.isExpired -> ClockColors.Loss
         finished -> ClockColors.Win
+        clock.isLowOnTime(player) -> ClockColors.Loss
         // While paused too, so it's clear whose move it is when play resumes.
         clock.turn == player -> MaterialTheme.colorScheme.primary
         else -> ClockColors.Inactive
@@ -367,6 +368,13 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
 }
 
 private val RING_STROKE = 15.dp
+
+/** Below this the player on move sees their face turn red. */
+internal val LOW_TIME = 10.seconds
+
+/** Whether [player] is on move in an unfinished game with less than [LOW_TIME] left. */
+internal fun ChessClock.isLowOnTime(player: Player): Boolean =
+    status != ClockStatus.Finished && turn == player && timeOf(player).remaining < LOW_TIME
 
 /** The second player (bottom) always reads the screen the right way up for their side. */
 private val Orientation.controlRotation: Float
