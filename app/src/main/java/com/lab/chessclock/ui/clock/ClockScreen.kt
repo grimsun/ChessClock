@@ -29,12 +29,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -93,6 +95,10 @@ fun ClockScreen(
     Box(modifier.fillMaxSize()) {
         if (uiState is ClockUiState.Ready) {
             val (clock, orientation) = uiState
+            // A player thinking longer than the screen timeout would otherwise see the screen turn
+            // off, which pauses the app and with it the clock.
+            if (clock.status == ClockStatus.Running) KeepScreenOn()
+
             val face = @Composable { player: Player, modifier: Modifier ->
                 PlayerClockFace(clock, player, orientation, onPlayerPressed, modifier)
             }
@@ -217,6 +223,15 @@ private fun PlayerClockFace(
                 autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 60.sp),
             )
         }
+    }
+}
+
+@Composable
+private fun KeepScreenOn() {
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
     }
 }
 
