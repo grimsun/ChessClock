@@ -39,6 +39,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -172,8 +174,14 @@ private fun PlayerClockFace(
     val color = when {
         finished && time.isExpired -> ClockColors.Loss
         finished -> ClockColors.Win
-        clock.active == player -> MaterialTheme.colorScheme.primary
+        // While paused too, so it's clear whose move it is when play resumes.
+        clock.turn == player -> MaterialTheme.colorScheme.primary
         else -> ClockColors.Inactive
+    }
+    val state = when {
+        time.isExpired -> stringResource(R.string.state_out_of_time)
+        !finished && clock.turn == player -> stringResource(R.string.state_on_move)
+        else -> null
     }
 
     // The whole half of the screen is the player's button, like a physical clock.
@@ -185,7 +193,8 @@ private fun PlayerClockFace(
                 indication = null,
                 onClickLabel = stringResource(R.string.end_turn),
                 onClick = { onPress(player) },
-            ),
+            )
+            .semantics { if (state != null) stateDescription = state },
         contentAlignment = Alignment.Center,
     ) {
         Box(

@@ -3,7 +3,10 @@ package com.lab.chessclock.ui.clock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -75,6 +78,22 @@ class ClockScreenTest {
     }
 
     @Test
+    fun pausedGameStillMarksThePlayerOnMove() {
+        setScreen(ClockUiState.Ready(newGame.press(Player.First).tick(30.seconds).pause(), Orientation.HorizontalSame))
+
+        composeRule.onNode(hasText("04:30") and hasStateDescription("On move")).assertExists()
+        composeRule.onNode(hasText("05:00") and hasStateDescription("On move")).assertDoesNotExist()
+    }
+
+    @Test
+    fun finishedGameMarksWhoRanOutOfTime() {
+        setScreen(ClockUiState.Ready(newGame.toggle().tick(10.minutes), Orientation.HorizontalSame))
+
+        composeRule.onNode(hasText("00:00.00") and hasStateDescription("Out of time")).assertExists()
+        composeRule.onNode(hasText("05:00") and hasStateDescription("On move")).assertDoesNotExist()
+    }
+
+    @Test
     fun loadingShowsOnlySettings() {
         var opened = false
         setScreen(ClockUiState.Loading, onOpenSettings = { opened = true })
@@ -84,6 +103,9 @@ class ClockScreenTest {
 
         assertTrue(opened)
     }
+
+    private fun hasStateDescription(value: String) =
+        SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
 
     private fun setScreen(
         uiState: ClockUiState,
