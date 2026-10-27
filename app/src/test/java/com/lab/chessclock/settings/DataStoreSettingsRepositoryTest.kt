@@ -30,12 +30,18 @@ class DataStoreSettingsRepositoryTest {
     fun updatesArePersisted() = runTest {
         val repository = createRepository()
         repository.update {
-            it.copy(minutes = 3, incrementSeconds = 2, orientation = Orientation.VerticalOpposite)
+            it.copy(
+                minutes = 3,
+                incrementSeconds = 2,
+                orientation = Orientation.VerticalOpposite,
+                faceStyle = FaceStyle.Panels,
+            )
         }
 
         val settings = repository.settings.first()
         assertEquals(3, settings.minutes)
         assertEquals(Orientation.VerticalOpposite, settings.orientation)
+        assertEquals(FaceStyle.Panels, settings.faceStyle)
         assertEquals(3.minutes, settings.timeControl.initial)
         assertEquals(2.seconds, settings.timeControl.increment)
     }
@@ -72,6 +78,7 @@ class DataStoreSettingsRepositoryTest {
         dataStore.edit {
             it[intPreferencesKey("timer_s")] = 20
             it[stringPreferencesKey("orientation")] = "diagonal"
+            it[stringPreferencesKey("face_style")] = "hexagons"
         }
 
         val settings = DataStoreSettingsRepository(dataStore).settings.first()

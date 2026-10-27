@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
@@ -63,6 +64,7 @@ fun SettingsRoute(
         settings = settings,
         onBack = onBack,
         onOrientationChange = viewModel::setOrientation,
+        onFaceStyleChange = viewModel::setFaceStyle,
         onTimerChange = viewModel::setTimer,
         onPresetSelect = viewModel::applyPreset,
     )
@@ -74,6 +76,7 @@ fun SettingsScreen(
     settings: ClockSettings?,
     onBack: () -> Unit,
     onOrientationChange: (Orientation) -> Unit,
+    onFaceStyleChange: (FaceStyle) -> Unit,
     onTimerChange: (TimerSetting, Int) -> Unit,
     onPresetSelect: (TimePreset) -> Unit,
     modifier: Modifier = Modifier,
@@ -122,10 +125,23 @@ fun SettingsScreen(
             SectionHeader(R.string.orientation_title)
             Column(Modifier.selectableGroup()) {
                 Orientation.entries.forEach { orientation ->
-                    OrientationOption(
-                        orientation = orientation,
+                    RadioOption(
+                        label = orientation.label,
                         selected = orientation == settings.orientation,
                         onSelect = { onOrientationChange(orientation) },
+                    )
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            SectionHeader(R.string.face_style_title)
+            Column(Modifier.selectableGroup()) {
+                FaceStyle.entries.forEach { faceStyle ->
+                    RadioOption(
+                        label = faceStyle.label,
+                        selected = faceStyle == settings.faceStyle,
+                        onSelect = { onFaceStyleChange(faceStyle) },
                     )
                 }
             }
@@ -156,7 +172,7 @@ private fun SectionHeader(@StringRes title: Int) {
 }
 
 @Composable
-private fun OrientationOption(orientation: Orientation, selected: Boolean, onSelect: () -> Unit) {
+private fun RadioOption(@StringRes label: Int, selected: Boolean, onSelect: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -166,7 +182,7 @@ private fun OrientationOption(orientation: Orientation, selected: Boolean, onSel
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         RadioButton(selected = selected, onClick = null)
-        Text(stringResource(orientation.label), style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -216,6 +232,12 @@ private val Orientation.label: Int
         Orientation.VerticalOpposite -> R.string.orientation_vertical_opposite
     }
 
+private val FaceStyle.label: Int
+    @StringRes get() = when (this) {
+        FaceStyle.Rings -> R.string.face_style_rings
+        FaceStyle.Panels -> R.string.face_style_panels
+    }
+
 private val TimerSetting.label: Int
     @StringRes get() = when (this) {
         TimerSetting.Hours -> R.string.setting_hours
@@ -232,6 +254,7 @@ private fun SettingsScreenPreview() {
             settings = ClockSettings(minutes = 3, incrementSeconds = 2),
             onBack = {},
             onOrientationChange = {},
+            onFaceStyleChange = {},
             onTimerChange = { _, _ -> },
             onPresetSelect = {},
         )

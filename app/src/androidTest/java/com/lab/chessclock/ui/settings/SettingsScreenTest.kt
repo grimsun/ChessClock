@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
@@ -52,6 +53,17 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("Vertical, Opposite directions").performClick()
 
         assertEquals(listOf(Orientation.VerticalOpposite), chosen)
+    }
+
+    @Test
+    fun choosingAFaceStyleReportsIt() {
+        val chosen = mutableListOf<FaceStyle>()
+        setScreen(ClockSettings(), onFaceStyleChange = chosen::add)
+
+        composeRule.onNodeWithText("Rings").assertIsSelected()
+        composeRule.onNodeWithText("Full-color panels").assertIsNotSelected().performClick()
+
+        assertEquals(listOf(FaceStyle.Panels), chosen)
     }
 
     @Test
@@ -97,12 +109,13 @@ class SettingsScreenTest {
         settings: ClockSettings?,
         onBack: () -> Unit = {},
         onOrientationChange: (Orientation) -> Unit = {},
+        onFaceStyleChange: (FaceStyle) -> Unit = {},
         onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
         onPresetSelect: (TimePreset) -> Unit = {},
     ) {
         composeRule.setContent {
             ChessClockTheme {
-                SettingsScreen(settings, onBack, onOrientationChange, onTimerChange, onPresetSelect)
+                SettingsScreen(settings, onBack, onOrientationChange, onFaceStyleChange, onTimerChange, onPresetSelect)
             }
         }
     }

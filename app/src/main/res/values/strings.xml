@@ -18,6 +18,9 @@
     <string name="orientation_horizontal_opposite">Horizontal, Opposite directions</string>
     <string name="orientation_vertical_same">Vertical, Same direction</string>
     <string name="orientation_vertical_opposite">Vertical, Opposite directions</string>
+    <string name="face_style_title">Clock face</string>
+    <string name="face_style_rings">Rings</string>
+    <string name="face_style_panels">Full-color panels</string>
     <string name="timer_section">Timer</string>
     <string name="setting_hours">Hours</string>
     <string name="setting_minutes">Minutes</string>

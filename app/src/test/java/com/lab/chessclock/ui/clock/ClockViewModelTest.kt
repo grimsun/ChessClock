@@ -3,6 +3,7 @@ package com.lab.chessclock.ui.clock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.testing.FakeSettingsRepository
 import com.lab.chessclock.testing.MainDispatcherRule
@@ -78,14 +79,15 @@ class ClockViewModelTest {
     }
 
     @Test
-    fun changingOrientationKeepsTheGame() = runTest {
+    fun changingOrientationOrFaceStyleKeepsTheGame() = runTest {
         val viewModel = createViewModel()
         viewModel.onControlPressed()
 
-        settings.update { it.copy(orientation = Orientation.VerticalOpposite) }
+        settings.update { it.copy(orientation = Orientation.VerticalOpposite, faceStyle = FaceStyle.Panels) }
 
         val state = viewModel.ready()
         assertEquals(Orientation.VerticalOpposite, state.orientation)
+        assertEquals(FaceStyle.Panels, state.faceStyle)
         assertEquals(ClockStatus.Running, state.clock.status)
         viewModel.pause()
     }
