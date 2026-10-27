@@ -58,3 +58,21 @@ data class ClockSettings(
         val MIN_INITIAL_TIME = 1.seconds
     }
 }
+
+/** A common time control: whole minutes plus a per-move increment, written "3 + 2". */
+data class TimePreset(val minutes: Int, val incrementSeconds: Int) {
+    /** The settings with this time control, keeping everything else such as the orientation. */
+    fun appliedTo(settings: ClockSettings): ClockSettings =
+        settings.copy(hours = 0, minutes = minutes, seconds = 0, incrementSeconds = incrementSeconds)
+
+    /** Whether the settings already are this time control, so the screen can mark it. */
+    fun matches(settings: ClockSettings): Boolean = appliedTo(settings) == settings
+
+    companion object {
+        /** Bullet, blitz, rapid and classical controls, shortest first. */
+        val All = listOf(
+            TimePreset(1, 0), TimePreset(2, 1), TimePreset(3, 0), TimePreset(3, 2), TimePreset(5, 0),
+            TimePreset(5, 3), TimePreset(10, 0), TimePreset(10, 5), TimePreset(15, 10), TimePreset(30, 0),
+        )
+    }
+}

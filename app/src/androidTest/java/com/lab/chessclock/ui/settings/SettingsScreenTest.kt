@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import org.junit.Assert.assertEquals
@@ -54,6 +55,24 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun marksThePresetMatchingTheSettings() {
+        setScreen(ClockSettings(minutes = 3, incrementSeconds = 2))
+
+        composeRule.onNodeWithText("3 + 2").assertIsSelected()
+        composeRule.onNodeWithText("3 + 0").assertIsNotSelected()
+    }
+
+    @Test
+    fun choosingAPresetReportsIt() {
+        val chosen = mutableListOf<TimePreset>()
+        setScreen(ClockSettings(), onPresetSelect = chosen::add)
+
+        composeRule.onNodeWithText("10 + 5").performClick()
+
+        assertEquals(listOf(TimePreset(10, 5)), chosen)
+    }
+
+    @Test
     fun backButtonNavigatesBack() {
         var back = false
         setScreen(ClockSettings(), onBack = { back = true })
@@ -79,10 +98,11 @@ class SettingsScreenTest {
         onBack: () -> Unit = {},
         onOrientationChange: (Orientation) -> Unit = {},
         onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
+        onPresetSelect: (TimePreset) -> Unit = {},
     ) {
         composeRule.setContent {
             ChessClockTheme {
-                SettingsScreen(settings, onBack, onOrientationChange, onTimerChange)
+                SettingsScreen(settings, onBack, onOrientationChange, onTimerChange, onPresetSelect)
             }
         }
     }

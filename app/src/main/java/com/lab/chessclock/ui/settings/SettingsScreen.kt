@@ -3,6 +3,7 @@ package com.lab.chessclock.ui.settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import kotlin.math.roundToInt
@@ -61,6 +64,7 @@ fun SettingsRoute(
         onBack = onBack,
         onOrientationChange = viewModel::setOrientation,
         onTimerChange = viewModel::setTimer,
+        onPresetSelect = viewModel::applyPreset,
     )
 }
 
@@ -71,6 +75,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOrientationChange: (Orientation) -> Unit,
     onTimerChange: (TimerSetting, Int) -> Unit,
+    onPresetSelect: (TimePreset) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -97,6 +102,23 @@ fun SettingsScreen(
                 .padding(contentPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            // One tap for the usual time controls; the sliders below stay for anything else.
+            SectionHeader(R.string.presets_title)
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TimePreset.All.forEach { preset ->
+                    FilterChip(
+                        selected = preset.matches(settings),
+                        onClick = { onPresetSelect(preset) },
+                        label = { Text(stringResource(R.string.preset_label, preset.minutes, preset.incrementSeconds)) },
+                    )
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             SectionHeader(R.string.orientation_title)
             Column(Modifier.selectableGroup()) {
                 Orientation.entries.forEach { orientation ->
@@ -211,6 +233,7 @@ private fun SettingsScreenPreview() {
             onBack = {},
             onOrientationChange = {},
             onTimerChange = { _, _ -> },
+            onPresetSelect = {},
         )
     }
 }
