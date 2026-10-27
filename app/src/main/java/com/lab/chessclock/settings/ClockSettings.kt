@@ -18,6 +18,19 @@ enum class Orientation(val storageKey: String) {
     }
 }
 
+/** How each player's remaining time is drawn on the clock screen. */
+enum class FaceStyle(val storageKey: String) {
+    /** The time inside a ring that empties as it runs down. */
+    Rings("rings"),
+
+    /** Each half a solid colored panel with large digits, readable from across the table. */
+    Panels("panels");
+
+    companion object {
+        fun fromStorageKey(key: String?): FaceStyle = entries.firstOrNull { it.storageKey == key } ?: Rings
+    }
+}
+
 /** The numeric settings that make up the time control, so screens and storage can treat them alike. */
 enum class TimerSetting(val storageKey: String, val max: Int) {
     Hours("timer_h", 12),
@@ -46,6 +59,7 @@ data class ClockSettings(
     val seconds: Int = 0,
     val incrementSeconds: Int = 0,
     val orientation: Orientation = Orientation.HorizontalSame,
+    val faceStyle: FaceStyle = FaceStyle.Rings,
 ) {
     val timeControl: TimeControl
         get() = TimeControl(

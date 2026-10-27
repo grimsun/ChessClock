@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
 import com.lab.chessclock.ui.appViewModelFactory
@@ -29,7 +30,11 @@ import kotlin.time.TimeSource
 sealed interface ClockUiState {
     data object Loading : ClockUiState
 
-    data class Ready(val clock: ChessClock, val orientation: Orientation) : ClockUiState
+    data class Ready(
+        val clock: ChessClock,
+        val orientation: Orientation,
+        val faceStyle: FaceStyle = FaceStyle.Rings,
+    ) : ClockUiState
 }
 
 class ClockViewModel(
@@ -43,7 +48,7 @@ class ClockViewModel(
 
     val uiState: StateFlow<ClockUiState> =
         combine(clock.filterNotNull(), settingsRepository.settings) { clock, settings ->
-            ClockUiState.Ready(clock, settings.orientation)
+            ClockUiState.Ready(clock, settings.orientation, settings.faceStyle)
         }.stateInUi(this, ClockUiState.Loading)
 
     init {

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
@@ -21,10 +22,12 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
@@ -33,17 +36,22 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -55,6 +63,7 @@ import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.clock.TimeControl
+import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import com.lab.chessclock.ui.theme.ClockColors
@@ -96,13 +105,13 @@ fun ClockScreen(
 ) {
     Box(modifier.fillMaxSize()) {
         if (uiState is ClockUiState.Ready) {
-            val (clock, orientation) = uiState
+            val (clock, orientation, faceStyle) = uiState
             // A player thinking longer than the screen timeout would otherwise see the screen turn
             // off, which pauses the app and with it the clock.
             if (clock.status == ClockStatus.Running) KeepScreenOn()
 
             val face = @Composable { player: Player, modifier: Modifier ->
-                PlayerClockFace(clock, player, orientation, onPlayerPressed, modifier)
+                PlayerClockFace(clock, player, orientation, faceStyle, onPlayerPressed, modifier)
             }
             val control = @Composable {
                 ControlButton(
@@ -162,6 +171,7 @@ private fun PlayerClockFace(
     clock: ChessClock,
     player: Player,
     orientation: Orientation,
+    faceStyle: FaceStyle,
     onPress: (Player) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -202,40 +212,130 @@ private fun PlayerClockFace(
             .semantics { if (state != null) stateDescription = state },
         contentAlignment = Alignment.Center,
     ) {
+        val text = formatClockTime(time.remaining)
+        val rotation = orientation.rotationOf(player)
+        when (faceStyle) {
+            FaceStyle.Rings -> RingFace(text, { progress }, color, rotation)
+            FaceStyle.Panels -> PanelFace(text, { progress }, color, rotation)
+        }
+    }
+}
+
+@Composable
+private fun RingFace(text: String, progress: () -> Float, color: Color, rotation: Float) {
+    Box(
+        modifier = Modifier
+            .padding(16.dp)
+            .sizeIn(maxWidth = 300.dp, maxHeight = 300.dp)
+            .aspectRatio(1f)
+            .rotate(rotation),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(
+            progress = progress,
+            modifier = Modifier.fillMaxSize(),
+            color = color,
+            strokeWidth = RING_STROKE,
+            trackColor = Color.Transparent,
+            strokeCap = StrokeCap.Round,
+            gapSize = 0.dp,
+        )
+        ClockText(
+            text = text,
+            color = ClockColors.Text,
+            maxFontSize = 60.sp,
+            // Inside the ring's stroke, shrinking the text when the face is small or the
+            // system font is large instead of letting it overflow the ring.
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = RING_STROKE + 12.dp),
+        )
+    }
+}
+
+@Composable
+private fun PanelFace(text: String, progress: () -> Float, color: Color, rotation: Float) {
+    val onPanel = if (color == ClockColors.Inactive) ClockColors.Text else Color.White
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(color),
+    ) {
+        // Turned with the player's seat, and laid out for the turned box so the digits fill the
+        // panel's long side when the players sit at its ends.
         Box(
             modifier = Modifier
-                .padding(16.dp)
-                .sizeIn(maxWidth = 300.dp, maxHeight = 300.dp)
-                .aspectRatio(1f)
-                .rotate(orientation.rotationOf(player)),
+                .fillMaxSize()
+                .rotateFitted(rotation)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxSize(),
-                color = color,
-                strokeWidth = RING_STROKE,
-                trackColor = Color.Transparent,
-                strokeCap = StrokeCap.Round,
-                gapSize = 0.dp,
+            ClockText(
+                text = text,
+                color = onPanel,
+                maxFontSize = 112.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.fillMaxWidth(),
             )
-            BasicText(
-                text = formatClockTime(time.remaining),
-                // Inside the ring's stroke, shrinking the text when the face is small or the
-                // system font is large instead of letting it overflow the ring.
+            // The remaining share of the player's time, as a thin bar below the digits.
+            LinearProgressIndicator(
+                progress = progress,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = RING_STROKE + 12.dp),
-                style = TextStyle(
-                    color = ClockColors.Text,
-                    textAlign = TextAlign.Center,
-                    // Fixed-width digits so the text doesn't jitter as it counts down.
-                    fontFeatureSettings = "tnum",
-                ),
-                maxLines = 1,
-                softWrap = false,
-                autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 60.sp),
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+                color = onPanel,
+                trackColor = onPanel.copy(alpha = 0.25f),
+                gapSize = 0.dp,
+                drawStopIndicator = {},
             )
+        }
+    }
+}
+
+@Composable
+private fun ClockText(
+    text: String,
+    color: Color,
+    maxFontSize: TextUnit,
+    modifier: Modifier = Modifier,
+    fontWeight: FontWeight? = null,
+) {
+    BasicText(
+        text = text,
+        modifier = modifier,
+        style = TextStyle(
+            color = color,
+            textAlign = TextAlign.Center,
+            fontWeight = fontWeight,
+            // Fixed-width digits so the text doesn't jitter as it counts down.
+            fontFeatureSettings = "tnum",
+        ),
+        maxLines = 1,
+        softWrap = false,
+        autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = maxFontSize),
+    )
+}
+
+/**
+ * Rotates the content like [rotate], but for a quarter turn measures it with width and height
+ * swapped, so it fills the box the way it is seen instead of being clipped to the unturned shape.
+ */
+private fun Modifier.rotateFitted(degrees: Float): Modifier = layout { measurable, constraints ->
+    val sideways = degrees % 180f != 0f
+    val placeable = measurable.measure(
+        if (sideways) {
+            Constraints(constraints.minHeight, constraints.maxHeight, constraints.minWidth, constraints.maxWidth)
+        } else {
+            constraints
+        },
+    )
+    val width = if (sideways) placeable.height else placeable.width
+    val height = if (sideways) placeable.width else placeable.height
+    layout(width, height) {
+        placeable.placeWithLayer((width - placeable.width) / 2, (height - placeable.height) / 2) {
+            rotationZ = degrees
         }
     }
 }
@@ -287,10 +387,28 @@ private fun Orientation.rotationOf(player: Player): Float = when (this) {
 @Preview(name = "Small, large font", showBackground = true, widthDp = 320, heightDp = 568, fontScale = 2f)
 @Composable
 private fun ClockScreenPreview() {
+    ClockScreenPreview(FaceStyle.Rings, Orientation.HorizontalOpposite)
+}
+
+@Preview(showBackground = true)
+@Preview(name = "Landscape", showBackground = true, widthDp = 891, heightDp = 411)
+@Composable
+private fun PanelsPreview() {
+    ClockScreenPreview(FaceStyle.Panels, Orientation.HorizontalOpposite)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PanelsVerticalPreview() {
+    ClockScreenPreview(FaceStyle.Panels, Orientation.VerticalOpposite)
+}
+
+@Composable
+private fun ClockScreenPreview(faceStyle: FaceStyle, orientation: Orientation) {
     val clock = ChessClock(TimeControl(5.minutes, 2.seconds)).press(Player.First).tick(42.seconds)
     ChessClockTheme {
         ClockScreen(
-            uiState = ClockUiState.Ready(clock, Orientation.HorizontalOpposite),
+            uiState = ClockUiState.Ready(clock, orientation, faceStyle),
             onPlayerPressed = {},
             onControlPressed = {},
             onOpenSettings = {},
