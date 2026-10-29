@@ -1,5 +1,6 @@
 package com.lab.chessclock.ui.clock
 
+import android.content.res.Configuration
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -66,7 +67,7 @@ import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.ui.theme.ChessClockTheme
-import com.lab.chessclock.ui.theme.ClockColors
+import com.lab.chessclock.ui.theme.clockColors
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -103,7 +104,11 @@ fun ClockScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.fillMaxSize()) {
+    Box(
+        modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
         if (uiState is ClockUiState.Ready) {
             val (clock, orientation, faceStyle) = uiState
             // A player thinking longer than the screen timeout would otherwise see the screen turn
@@ -153,8 +158,8 @@ fun ClockScreen(
                     .align(Alignment.BottomEnd)
                     .safeDrawingPadding()
                     .padding(16.dp),
-                containerColor = ClockColors.Inactive,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.clockColors.inactive,
+                contentColor = MaterialTheme.clockColors.onInactive,
                 elevation = FloatingActionButtonDefaults.elevation(1.dp),
             ) {
                 Icon(
@@ -186,13 +191,15 @@ private fun PlayerClockFace(
         },
         label = "progress",
     )
-    val color = when {
-        finished && time.isExpired -> ClockColors.Loss
-        finished -> ClockColors.Win
-        clock.isLowOnTime(player) -> ClockColors.Loss
+    val colors = MaterialTheme.clockColors
+    // The face color, and the color of a panel's content drawn on it.
+    val (color, onColor) = when {
+        finished && time.isExpired -> colors.loss to colors.onLoss
+        finished -> colors.win to colors.onWin
+        clock.isLowOnTime(player) -> colors.loss to colors.onLoss
         // While paused too, so it's clear whose move it is when play resumes.
-        clock.turn == player -> MaterialTheme.colorScheme.primary
-        else -> ClockColors.Inactive
+        clock.turn == player -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
+        else -> colors.inactive to colors.onInactive
     }
     val state = when {
         time.isExpired -> stringResource(R.string.state_out_of_time)
@@ -217,7 +224,7 @@ private fun PlayerClockFace(
         val rotation = orientation.rotationOf(player)
         when (faceStyle) {
             FaceStyle.Rings -> RingFace(text, { progress }, color, rotation)
-            FaceStyle.Panels -> PanelFace(text, { progress }, color, rotation)
+            FaceStyle.Panels -> PanelFace(text, { progress }, color, onColor, rotation)
         }
     }
 }
@@ -243,7 +250,7 @@ private fun RingFace(text: String, progress: () -> Float, color: Color, rotation
         )
         ClockText(
             text = text,
-            color = ClockColors.Text,
+            color = MaterialTheme.clockColors.text,
             maxFontSize = 60.sp,
             // Inside the ring's stroke, shrinking the text when the face is small or the
             // system font is large instead of letting it overflow the ring.
@@ -255,8 +262,7 @@ private fun RingFace(text: String, progress: () -> Float, color: Color, rotation
 }
 
 @Composable
-private fun PanelFace(text: String, progress: () -> Float, color: Color, rotation: Float) {
-    val onPanel = if (color == ClockColors.Inactive) ClockColors.Text else Color.White
+private fun PanelFace(text: String, progress: () -> Float, color: Color, onPanel: Color, rotation: Float) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -393,6 +399,7 @@ private fun Orientation.rotationOf(player: Player): Float = when (this) {
 @Preview(showBackground = true)
 @Preview(name = "Landscape", showBackground = true, widthDp = 891, heightDp = 411)
 @Preview(name = "Small, large font", showBackground = true, widthDp = 320, heightDp = 568, fontScale = 2f)
+@Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun ClockScreenPreview() {
     ClockScreenPreview(FaceStyle.Rings, Orientation.HorizontalOpposite)
@@ -400,6 +407,7 @@ private fun ClockScreenPreview() {
 
 @Preview(showBackground = true)
 @Preview(name = "Landscape", showBackground = true, widthDp = 891, heightDp = 411)
+@Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun PanelsPreview() {
     ClockScreenPreview(FaceStyle.Panels, Orientation.HorizontalOpposite)

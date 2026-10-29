@@ -1,5 +1,6 @@
 package com.lab.chessclock.ui.settings
 
+import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -247,6 +248,7 @@ private val TimerSetting.label: Int
     }
 
 @Preview(showBackground = true)
+@Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun SettingsScreenPreview() {
     ChessClockTheme {
