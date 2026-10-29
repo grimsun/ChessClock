@@ -13,6 +13,18 @@
     <string name="presets_title">Time control</string>
     <!-- A time control as players write it: minutes, then seconds added per move, e.g. "3 + 2". -->
     <string name="preset_label">%1$d + %2$d</string>
+    <!-- Spoken form of a preset, e.g. "3 minutes, plus 2 seconds per move". -->
+    <string name="preset_description">%1$s, plus %2$s per move</string>
+    <string name="presets_explanation">Minutes each, plus seconds added after every move. Pick one or set your own.</string>
+    <string name="time_change_restarts">Changing the time starts a new game.</string>
+    <plurals name="minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
     <string name="orientation_title">Orientation</string>
     <string name="orientation_horizontal_same">Horizontal, Same direction</string>
     <string name="orientation_horizontal_opposite">Horizontal, Opposite directions</string>
@@ -30,9 +42,8 @@
     <string name="palette_forest">Forest</string>
     <string name="palette_ocean">Ocean (color-blind friendly)</string>
     <string name="palette_graphite">Graphite (high contrast)</string>
-    <string name="timer_section">Timer</string>
     <string name="setting_hours">Hours</string>
     <string name="setting_minutes">Minutes</string>
     <string name="setting_seconds">Seconds</string>
-    <string name="setting_increment">Increment Seconds</string>
+    <string name="setting_increment">Increment per move (seconds)</string>
 </resources>

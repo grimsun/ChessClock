@@ -41,7 +41,7 @@ class ChessClockAppTest {
     fun settingsOpensAndReturns() {
         composeRule.onNodeWithContentDescription("Settings").performClick()
         composeRule.onNodeWithText("Orientation").assertExists()
-        composeRule.onNodeWithText("Increment Seconds").assertExists()
+        composeRule.onNodeWithText("Increment per move (seconds)").assertExists()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.onNodeWithText("Start").assertExists()

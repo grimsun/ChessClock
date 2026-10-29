@@ -45,7 +45,7 @@ class SettingsScreenTest {
         setScreen(ClockSettings(minutes = 45, incrementSeconds = 7))
 
         composeRule.onNode(hasContentDescription("Minutes") and hasStateDescription("45")).assertExists()
-        composeRule.onNode(hasContentDescription("Increment Seconds") and hasStateDescription("7")).assertExists()
+        composeRule.onNode(hasContentDescription("Increment per move (seconds)") and hasStateDescription("7")).assertExists()
     }
 
     @Test
@@ -53,7 +53,7 @@ class SettingsScreenTest {
         val chosen = mutableListOf<Orientation>()
         setScreen(ClockSettings(), onOrientationChange = chosen::add)
 
-        composeRule.onNodeWithText("Vertical, Opposite directions").performClick()
+        composeRule.onNodeWithText("Vertical, Opposite directions").performScrollTo().performClick()
 
         assertEquals(listOf(Orientation.VerticalOpposite), chosen)
     }
@@ -64,7 +64,7 @@ class SettingsScreenTest {
         setScreen(ClockSettings(), onFaceStyleChange = chosen::add)
 
         composeRule.onNodeWithText("Rings").assertIsSelected()
-        composeRule.onNodeWithText("Full-color panels").assertIsNotSelected().performClick()
+        composeRule.onNodeWithText("Full-color panels").performScrollTo().assertIsNotSelected().performClick()
 
         assertEquals(listOf(FaceStyle.Panels), chosen)
     }
@@ -97,6 +97,15 @@ class SettingsScreenTest {
 
         composeRule.onNodeWithText("3 + 2").assertIsSelected()
         composeRule.onNodeWithText("3 + 0").assertIsNotSelected()
+    }
+
+    @Test
+    fun presetsAreSpelledOutForTalkBack() {
+        setScreen(ClockSettings())
+
+        composeRule.onNode(hasContentDescription("1 minute, plus 0 seconds per move")).assertExists()
+        composeRule.onNode(hasContentDescription("3 minutes, plus 2 seconds per move")).assertExists()
+        composeRule.onNode(hasContentDescription("2 minutes, plus 1 second per move")).assertExists()
     }
 
     @Test
