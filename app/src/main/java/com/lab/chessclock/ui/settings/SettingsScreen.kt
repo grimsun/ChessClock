@@ -49,6 +49,7 @@ import com.lab.chessclock.R
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
@@ -66,6 +67,7 @@ fun SettingsRoute(
         onBack = onBack,
         onOrientationChange = viewModel::setOrientation,
         onFaceStyleChange = viewModel::setFaceStyle,
+        onThemeChange = viewModel::setTheme,
         onTimerChange = viewModel::setTimer,
         onPresetSelect = viewModel::applyPreset,
     )
@@ -78,6 +80,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOrientationChange: (Orientation) -> Unit,
     onFaceStyleChange: (FaceStyle) -> Unit,
+    onThemeChange: (ThemeMode) -> Unit,
     onTimerChange: (TimerSetting, Int) -> Unit,
     onPresetSelect: (TimePreset) -> Unit,
     modifier: Modifier = Modifier,
@@ -143,6 +146,19 @@ fun SettingsScreen(
                         label = faceStyle.label,
                         selected = faceStyle == settings.faceStyle,
                         onSelect = { onFaceStyleChange(faceStyle) },
+                    )
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            SectionHeader(R.string.theme_title)
+            Column(Modifier.selectableGroup()) {
+                ThemeMode.entries.forEach { theme ->
+                    RadioOption(
+                        label = theme.label,
+                        selected = theme == settings.theme,
+                        onSelect = { onThemeChange(theme) },
                     )
                 }
             }
@@ -239,6 +255,13 @@ private val FaceStyle.label: Int
         FaceStyle.Panels -> R.string.face_style_panels
     }
 
+private val ThemeMode.label: Int
+    @StringRes get() = when (this) {
+        ThemeMode.System -> R.string.theme_system
+        ThemeMode.Light -> R.string.theme_light
+        ThemeMode.Dark -> R.string.theme_dark
+    }
+
 private val TimerSetting.label: Int
     @StringRes get() = when (this) {
         TimerSetting.Hours -> R.string.setting_hours
@@ -257,6 +280,7 @@ private fun SettingsScreenPreview() {
             onBack = {},
             onOrientationChange = {},
             onFaceStyleChange = {},
+            onThemeChange = {},
             onTimerChange = { _, _ -> },
             onPresetSelect = {},
         )

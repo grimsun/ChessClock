@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -11,6 +12,7 @@ import androidx.core.view.children
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,6 +22,12 @@ class ChessClockAppTest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun waitForStoredSettings() {
+        // Nothing is drawn until the settings load from disk, which Compose's idling doesn't track.
+        composeRule.waitUntil { composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty() }
+    }
 
     @Test
     fun controlButtonStartsPausesAndResets() {

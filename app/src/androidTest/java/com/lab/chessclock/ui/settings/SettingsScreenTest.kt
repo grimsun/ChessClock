@@ -9,10 +9,12 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
@@ -67,6 +69,17 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun choosingAThemeReportsIt() {
+        val chosen = mutableListOf<ThemeMode>()
+        setScreen(ClockSettings(), onThemeChange = chosen::add)
+
+        composeRule.onNodeWithText("System default").assertIsSelected()
+        composeRule.onNodeWithText("Dark").performScrollTo().assertIsNotSelected().performClick()
+
+        assertEquals(listOf(ThemeMode.Dark), chosen)
+    }
+
+    @Test
     fun marksThePresetMatchingTheSettings() {
         setScreen(ClockSettings(minutes = 3, incrementSeconds = 2))
 
@@ -110,12 +123,21 @@ class SettingsScreenTest {
         onBack: () -> Unit = {},
         onOrientationChange: (Orientation) -> Unit = {},
         onFaceStyleChange: (FaceStyle) -> Unit = {},
+        onThemeChange: (ThemeMode) -> Unit = {},
         onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
         onPresetSelect: (TimePreset) -> Unit = {},
     ) {
         composeRule.setContent {
             ChessClockTheme {
-                SettingsScreen(settings, onBack, onOrientationChange, onFaceStyleChange, onTimerChange, onPresetSelect)
+                SettingsScreen(
+                    settings = settings,
+                    onBack = onBack,
+                    onOrientationChange = onOrientationChange,
+                    onFaceStyleChange = onFaceStyleChange,
+                    onThemeChange = onThemeChange,
+                    onTimerChange = onTimerChange,
+                    onPresetSelect = onPresetSelect,
+                )
             }
         }
     }

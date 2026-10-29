@@ -4,6 +4,7 @@ import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
+import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.testing.FakeSettingsRepository
@@ -63,6 +64,15 @@ class SettingsViewModelTest {
         viewModel.setFaceStyle(FaceStyle.Panels)
 
         assertEquals(ClockSettings(minutes = 5, faceStyle = FaceStyle.Panels), repository.settings.value)
+    }
+
+    @Test
+    fun setThemeSavesIt() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setTheme(ThemeMode.Dark)
+
+        assertEquals(ClockSettings(minutes = 5, theme = ThemeMode.Dark), repository.settings.value)
     }
 
     @Test

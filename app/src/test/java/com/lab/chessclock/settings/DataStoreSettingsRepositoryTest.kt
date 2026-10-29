@@ -35,6 +35,7 @@ class DataStoreSettingsRepositoryTest {
                 incrementSeconds = 2,
                 orientation = Orientation.VerticalOpposite,
                 faceStyle = FaceStyle.Panels,
+                theme = ThemeMode.Dark,
             )
         }
 
@@ -42,6 +43,7 @@ class DataStoreSettingsRepositoryTest {
         assertEquals(3, settings.minutes)
         assertEquals(Orientation.VerticalOpposite, settings.orientation)
         assertEquals(FaceStyle.Panels, settings.faceStyle)
+        assertEquals(ThemeMode.Dark, settings.theme)
         assertEquals(3.minutes, settings.timeControl.initial)
         assertEquals(2.seconds, settings.timeControl.increment)
     }
@@ -79,6 +81,7 @@ class DataStoreSettingsRepositoryTest {
             it[intPreferencesKey("timer_s")] = 20
             it[stringPreferencesKey("orientation")] = "diagonal"
             it[stringPreferencesKey("face_style")] = "hexagons"
+            it[stringPreferencesKey("theme")] = "sepia"
         }
 
         val settings = DataStoreSettingsRepository(dataStore).settings.first()

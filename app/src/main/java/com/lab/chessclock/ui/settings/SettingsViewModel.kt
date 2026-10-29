@@ -6,6 +6,7 @@ import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
+import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.appViewModelFactory
@@ -21,6 +22,8 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     fun setOrientation(orientation: Orientation) = update { it.copy(orientation = orientation) }
 
     fun setFaceStyle(faceStyle: FaceStyle) = update { it.copy(faceStyle = faceStyle) }
+
+    fun setTheme(theme: ThemeMode) = update { it.copy(theme = theme) }
 
     fun setTimer(setting: TimerSetting, value: Int) = update { setting.update(it, value) }
 
