@@ -21,6 +21,10 @@
     <string name="face_style_title">Clock face</string>
     <string name="face_style_rings">Rings</string>
     <string name="face_style_panels">Full-color panels</string>
+    <string name="theme_title">Theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
     <string name="timer_section">Timer</string>
     <string name="setting_hours">Hours</string>
     <string name="setting_minutes">Minutes</string>

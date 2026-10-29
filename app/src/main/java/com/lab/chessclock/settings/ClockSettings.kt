@@ -31,6 +31,18 @@ enum class FaceStyle(val storageKey: String) {
     }
 }
 
+/** Whether the app is light or dark. */
+enum class ThemeMode(val storageKey: String) {
+    /** Light or dark following the system setting. */
+    System("system"),
+    Light("light"),
+    Dark("dark");
+
+    companion object {
+        fun fromStorageKey(key: String?): ThemeMode = entries.firstOrNull { it.storageKey == key } ?: System
+    }
+}
+
 /** The numeric settings that make up the time control, so screens and storage can treat them alike. */
 enum class TimerSetting(val storageKey: String, val max: Int) {
     Hours("timer_h", 12),
@@ -60,6 +72,7 @@ data class ClockSettings(
     val incrementSeconds: Int = 0,
     val orientation: Orientation = Orientation.HorizontalSame,
     val faceStyle: FaceStyle = FaceStyle.Rings,
+    val theme: ThemeMode = ThemeMode.System,
 ) {
     val timeControl: TimeControl
         get() = TimeControl(

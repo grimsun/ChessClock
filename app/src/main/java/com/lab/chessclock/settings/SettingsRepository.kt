@@ -32,6 +32,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             TimerSetting.entries.forEach { preferences[it.key] = it.valueIn(updated) }
             preferences[ORIENTATION] = updated.orientation.storageKey
             preferences[FACE_STYLE] = updated.faceStyle.storageKey
+            preferences[THEME] = updated.theme.storageKey
         }
     }
 
@@ -40,6 +41,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             ClockSettings(
                 orientation = Orientation.fromStorageKey(this[ORIENTATION]),
                 faceStyle = FaceStyle.fromStorageKey(this[FACE_STYLE]),
+                theme = ThemeMode.fromStorageKey(this[THEME]),
             ),
         ) { settings, setting -> this[setting.key]?.let { setting.update(settings, it) } ?: settings }
 
@@ -49,6 +51,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     private companion object {
         val ORIENTATION = stringPreferencesKey("orientation")
         val FACE_STYLE = stringPreferencesKey("face_style")
+        val THEME = stringPreferencesKey("theme")
     }
 }
 
