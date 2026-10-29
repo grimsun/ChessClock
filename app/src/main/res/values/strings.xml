@@ -34,11 +34,12 @@
     <string name="orientation_vertical_same_description">Both times read from the same long side</string>
     <string name="orientation_vertical_opposite">Facing each other at the sides</string>
     <string name="orientation_vertical_opposite_description">Players at the left and right, each time turned to its player</string>
+    <string name="appearance_title">Appearance</string>
     <string name="face_style_title">Clock face</string>
     <string name="face_style_rings">Rings</string>
-    <string name="face_style_panels">Full-color panels</string>
+    <string name="face_style_panels">Panels</string>
     <string name="theme_title">Theme</string>
-    <string name="theme_system">System default</string>
+    <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="palette_title">Colors</string>

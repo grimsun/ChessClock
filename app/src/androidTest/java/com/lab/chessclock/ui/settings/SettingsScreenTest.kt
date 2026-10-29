@@ -64,7 +64,7 @@ class SettingsScreenTest {
         setScreen(ClockSettings(), onFaceStyleChange = chosen::add)
 
         composeRule.onNodeWithText("Rings").assertIsSelected()
-        composeRule.onNodeWithText("Full-color panels").performScrollTo().assertIsNotSelected().performClick()
+        composeRule.onNodeWithText("Panels").performScrollTo().assertIsNotSelected().performClick()
 
         assertEquals(listOf(FaceStyle.Panels), chosen)
     }
@@ -74,7 +74,7 @@ class SettingsScreenTest {
         val chosen = mutableListOf<ThemeMode>()
         setScreen(ClockSettings(), onThemeChange = chosen::add)
 
-        composeRule.onNodeWithText("System default").assertIsSelected()
+        composeRule.onNodeWithText("System").assertIsSelected()
         composeRule.onNodeWithText("Dark").performScrollTo().assertIsNotSelected().performClick()
 
         assertEquals(listOf(ThemeMode.Dark), chosen)
