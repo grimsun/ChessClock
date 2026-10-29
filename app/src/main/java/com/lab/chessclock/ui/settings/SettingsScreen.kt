@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -115,11 +116,15 @@ fun SettingsScreen(
     ) { contentPadding ->
         if (settings == null) return@Scaffold
 
+        // Scrolls across the whole width, but keeps the settings in a readable column on tablets
+        // and in landscape instead of stretching rows and sliders edge to edge.
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .wrapContentWidth()
+                .widthIn(max = 600.dp),
         ) {
             // One tap for the usual time controls, with the sliders right below for anything else.
             SectionHeader(R.string.presets_title)
@@ -389,6 +394,7 @@ private val TimerSetting.label: Int
 
 @Preview(showBackground = true)
 @Preview(name = "Whole page", showBackground = true, heightDp = 1500)
+@Preview(name = "Landscape", showBackground = true, widthDp = 891, heightDp = 411)
 @Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun SettingsScreenPreview() {
