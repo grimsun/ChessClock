@@ -24,6 +24,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -155,33 +158,23 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            SectionHeader(R.string.face_style_title)
-            Column(Modifier.selectableGroup()) {
-                FaceStyle.entries.forEach { faceStyle ->
-                    RadioOption(
-                        label = faceStyle.label,
-                        selected = faceStyle == settings.faceStyle,
-                        onSelect = { onFaceStyleChange(faceStyle) },
-                    )
-                }
-            }
-
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            SectionHeader(R.string.theme_title)
-            Column(Modifier.selectableGroup()) {
-                ThemeMode.entries.forEach { theme ->
-                    RadioOption(
-                        label = theme.label,
-                        selected = theme == settings.theme,
-                        onSelect = { onThemeChange(theme) },
-                    )
-                }
-            }
-
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            SectionHeader(R.string.palette_title)
+            SectionHeader(R.string.appearance_title)
+            // Two or three short choices: segmented buttons show them all at a glance.
+            SegmentedSetting(
+                title = R.string.face_style_title,
+                options = FaceStyle.entries,
+                selected = settings.faceStyle,
+                label = { it.label },
+                onSelect = onFaceStyleChange,
+            )
+            SegmentedSetting(
+                title = R.string.theme_title,
+                options = ThemeMode.entries,
+                selected = settings.theme,
+                label = { it.label },
+                onSelect = onThemeChange,
+            )
+            SettingTitle(R.string.palette_title)
             Column(Modifier.selectableGroup()) {
                 ColorPalette.entries.forEach { palette ->
                     RadioOption(
@@ -205,6 +198,40 @@ private fun SectionHeader(@StringRes title: Int) {
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.secondary,
     )
+}
+
+@Composable
+private fun SettingTitle(@StringRes title: Int) {
+    Text(
+        text = stringResource(title),
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.bodyLarge,
+    )
+}
+
+@Composable
+private fun <T> SegmentedSetting(
+    @StringRes title: Int,
+    options: List<T>,
+    selected: T,
+    label: (T) -> Int,
+    onSelect: (T) -> Unit,
+) {
+    SettingTitle(title)
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+    ) {
+        options.forEachIndexed { index, option ->
+            SegmentedButton(
+                selected = option == selected,
+                onClick = { onSelect(option) },
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                label = { Text(stringResource(label(option))) },
+            )
+        }
+    }
 }
 
 @Composable
@@ -361,6 +388,7 @@ private val TimerSetting.label: Int
     }
 
 @Preview(showBackground = true)
+@Preview(name = "Whole page", showBackground = true, heightDp = 1500)
 @Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun SettingsScreenPreview() {
