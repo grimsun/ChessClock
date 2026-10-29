@@ -1,0 +1,8 @@
+com.lab.chessclock.baselineprofile-pngs-0 /Users/vlad/Dev/ChessClock/baselineprofile/build/generated/res/pngs/nonMinifiedRelease
+com.lab.chessclock.baselineprofile-updated_navigation_xml-1 /Users/vlad/Dev/ChessClock/baselineprofile/build/generated/updated_navigation_xml/nonMinifiedRelease
+com.lab.chessclock.baselineprofile-packageNonMinifiedReleaseResources-2 /Users/vlad/Dev/ChessClock/baselineprofile/build/intermediates/incremental/nonMinifiedRelease/packageNonMinifiedReleaseResources/merged.dir
+com.lab.chessclock.baselineprofile-packageNonMinifiedReleaseResources-3 /Users/vlad/Dev/ChessClock/baselineprofile/build/intermediates/incremental/nonMinifiedRelease/packageNonMinifiedReleaseResources/stripped.dir
+com.lab.chessclock.baselineprofile-nonMinifiedRelease-4 /Users/vlad/Dev/ChessClock/baselineprofile/build/intermediates/merged_res/nonMinifiedRelease/mergeNonMinifiedReleaseResources
+com.lab.chessclock.baselineprofile-main-5 /Users/vlad/Dev/ChessClock/baselineprofile/src/main/res
+com.lab.chessclock.baselineprofile-nonMinifiedRelease-6 /Users/vlad/Dev/ChessClock/baselineprofile/src/nonMinifiedRelease/res
+gradleHome-0 /Users/vlad/.gradle

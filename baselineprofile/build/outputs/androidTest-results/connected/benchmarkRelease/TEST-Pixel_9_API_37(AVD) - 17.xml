@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="2" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T04:33:52" hostname="localhost">
+  <testsuite name="com.lab.chessclock.baselineprofile.StartupBenchmark" tests="2" failures="0" errors="0" skipped="0" time="95.828" timestamp="2026-10-29T04:33:52" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="startupWithBaselineProfile" classname="com.lab.chessclock.baselineprofile.StartupBenchmark" time="49.429" />
+    <testcase name="startupWithoutCompilation" classname="com.lab.chessclock.baselineprofile.StartupBenchmark" time="46.399" />
+  </testsuite>
+</testsuites>

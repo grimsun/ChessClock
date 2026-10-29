@@ -2,6 +2,7 @@ package com.lab.chessclock.ui.clock
 
 import android.content.res.Configuration
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -78,6 +79,8 @@ fun ClockRoute(
     viewModel: ClockViewModel = viewModel(factory = ClockViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // Startup is done once the clock shows, not at the first frame, which is still loading.
+    ReportDrawnWhen { uiState is ClockUiState.Ready }
 
     // Stop the clock when the app goes to the background, but not when the screen just rotates:
     // the ViewModel and its ticker survive that.
