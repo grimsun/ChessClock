@@ -21,9 +21,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Wait for the stored theme rather than flash the system one first; the window
             // background shows for the few milliseconds the first read takes.
-            val settings by settingsFlow.collectAsStateWithLifecycle(initialValue = null)
-            val theme = settings?.theme ?: return@setContent
-            val darkTheme = when (theme) {
+            val stored by settingsFlow.collectAsStateWithLifecycle(initialValue = null)
+            val settings = stored ?: return@setContent
+            val darkTheme = when (settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
                 ThemeMode.Dark -> true
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
-            ChessClockTheme(darkTheme) {
+            ChessClockTheme(darkTheme, settings.palette) {
                 ChessClockApp()
             }
         }

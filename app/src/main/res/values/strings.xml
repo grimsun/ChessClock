@@ -25,6 +25,11 @@
     <string name="theme_system">System default</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="palette_title">Colors</string>
+    <string name="palette_walnut">Walnut</string>
+    <string name="palette_forest">Forest</string>
+    <string name="palette_ocean">Ocean (color-blind friendly)</string>
+    <string name="palette_graphite">Graphite (high contrast)</string>
     <string name="timer_section">Timer</string>
     <string name="setting_hours">Hours</string>
     <string name="setting_minutes">Minutes</string>

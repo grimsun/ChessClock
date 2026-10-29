@@ -1,6 +1,7 @@
 package com.lab.chessclock.ui.settings
 
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
@@ -73,6 +74,15 @@ class SettingsViewModelTest {
         viewModel.setTheme(ThemeMode.Dark)
 
         assertEquals(ClockSettings(minutes = 5, theme = ThemeMode.Dark), repository.settings.value)
+    }
+
+    @Test
+    fun setPaletteSavesIt() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setPalette(ColorPalette.Graphite)
+
+        assertEquals(ClockSettings(minutes = 5, palette = ColorPalette.Graphite), repository.settings.value)
     }
 
     @Test

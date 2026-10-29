@@ -64,6 +64,7 @@ import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.clock.TimeControl
+import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.ui.theme.ChessClockTheme
@@ -417,6 +418,31 @@ private fun PanelsPreview() {
 @Composable
 private fun PanelsVerticalPreview() {
     ClockScreenPreview(FaceStyle.Panels, Orientation.VerticalOpposite)
+}
+
+@Preview(name = "Palettes", widthDp = 1200, heightDp = 600)
+@Preview(
+    name = "Palettes, dark",
+    widthDp = 1200,
+    heightDp = 600,
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
+)
+@Composable
+private fun PalettesPreview() {
+    val clock = ChessClock(TimeControl(5.minutes, 2.seconds)).press(Player.First).tick(42.seconds)
+    Row {
+        ColorPalette.entries.forEach { palette ->
+            ChessClockTheme(palette = palette) {
+                ClockScreen(
+                    uiState = ClockUiState.Ready(clock, Orientation.HorizontalOpposite, FaceStyle.Panels),
+                    onPlayerPressed = {},
+                    onControlPressed = {},
+                    onOpenSettings = {},
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
 }
 
 @Composable

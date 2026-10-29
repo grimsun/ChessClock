@@ -33,6 +33,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             preferences[ORIENTATION] = updated.orientation.storageKey
             preferences[FACE_STYLE] = updated.faceStyle.storageKey
             preferences[THEME] = updated.theme.storageKey
+            preferences[PALETTE] = updated.palette.storageKey
         }
     }
 
@@ -42,6 +43,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
                 orientation = Orientation.fromStorageKey(this[ORIENTATION]),
                 faceStyle = FaceStyle.fromStorageKey(this[FACE_STYLE]),
                 theme = ThemeMode.fromStorageKey(this[THEME]),
+                palette = ColorPalette.fromStorageKey(this[PALETTE]),
             ),
         ) { settings, setting -> this[setting.key]?.let { setting.update(settings, it) } ?: settings }
 
@@ -52,6 +54,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         val ORIENTATION = stringPreferencesKey("orientation")
         val FACE_STYLE = stringPreferencesKey("face_style")
         val THEME = stringPreferencesKey("theme")
+        val PALETTE = stringPreferencesKey("palette")
     }
 }
 

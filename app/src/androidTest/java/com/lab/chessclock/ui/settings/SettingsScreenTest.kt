@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.ThemeMode
@@ -80,6 +81,17 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun choosingAPaletteReportsIt() {
+        val chosen = mutableListOf<ColorPalette>()
+        setScreen(ClockSettings(), onPaletteChange = chosen::add)
+
+        composeRule.onNodeWithText("Walnut").performScrollTo().assertIsSelected()
+        composeRule.onNodeWithText("Ocean (color-blind friendly)").performScrollTo().assertIsNotSelected().performClick()
+
+        assertEquals(listOf(ColorPalette.Ocean), chosen)
+    }
+
+    @Test
     fun marksThePresetMatchingTheSettings() {
         setScreen(ClockSettings(minutes = 3, incrementSeconds = 2))
 
@@ -124,6 +136,7 @@ class SettingsScreenTest {
         onOrientationChange: (Orientation) -> Unit = {},
         onFaceStyleChange: (FaceStyle) -> Unit = {},
         onThemeChange: (ThemeMode) -> Unit = {},
+        onPaletteChange: (ColorPalette) -> Unit = {},
         onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
         onPresetSelect: (TimePreset) -> Unit = {},
     ) {
@@ -135,6 +148,7 @@ class SettingsScreenTest {
                     onOrientationChange = onOrientationChange,
                     onFaceStyleChange = onFaceStyleChange,
                     onThemeChange = onThemeChange,
+                    onPaletteChange = onPaletteChange,
                     onTimerChange = onTimerChange,
                     onPresetSelect = onPresetSelect,
                 )
