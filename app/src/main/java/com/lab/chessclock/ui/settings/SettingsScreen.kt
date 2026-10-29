@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -117,20 +118,26 @@ fun SettingsScreen(
                 .padding(contentPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // One tap for the usual time controls; the sliders below stay for anything else.
+            // One tap for the usual time controls, with the sliders right below for anything else.
             SectionHeader(R.string.presets_title)
+            SupportingText(R.string.presets_explanation)
             FlowRow(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TimePreset.All.forEach { preset ->
-                    FilterChip(
-                        selected = preset.matches(settings),
-                        onClick = { onPresetSelect(preset) },
-                        label = { Text(stringResource(R.string.preset_label, preset.minutes, preset.incrementSeconds)) },
-                    )
+                    PresetChip(preset, selected = preset.matches(settings), onClick = { onPresetSelect(preset) })
                 }
             }
+            TimerSetting.entries.forEach { setting ->
+                SettingSlider(
+                    label = setting.label,
+                    value = setting.valueIn(settings),
+                    max = setting.max,
+                    onValueChange = { onTimerChange(setting, it) },
+                )
+            }
+            SupportingText(R.string.time_change_restarts)
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -185,18 +192,6 @@ fun SettingsScreen(
                     }
                 }
             }
-
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            SectionHeader(R.string.timer_section)
-            TimerSetting.entries.forEach { setting ->
-                SettingSlider(
-                    label = setting.label,
-                    value = setting.valueIn(settings),
-                    max = setting.max,
-                    onValueChange = { onTimerChange(setting, it) },
-                )
-            }
         }
     }
 }
@@ -208,6 +203,32 @@ private fun SectionHeader(@StringRes title: Int) {
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.secondary,
+    )
+}
+
+@Composable
+private fun SupportingText(@StringRes text: Int) {
+    Text(
+        text = stringResource(text),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun PresetChip(preset: TimePreset, selected: Boolean, onClick: () -> Unit) {
+    // "3 + 2" is how players write it, but read aloud it means little: spell it out for TalkBack.
+    val description = stringResource(
+        R.string.preset_description,
+        pluralStringResource(R.plurals.minutes, preset.minutes, preset.minutes),
+        pluralStringResource(R.plurals.seconds, preset.incrementSeconds, preset.incrementSeconds),
+    )
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(stringResource(R.string.preset_label, preset.minutes, preset.incrementSeconds)) },
+        modifier = Modifier.semantics { contentDescription = description },
     )
 }
 
