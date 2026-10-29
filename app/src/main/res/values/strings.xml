@@ -25,11 +25,15 @@
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>
     </plurals>
-    <string name="orientation_title">Orientation</string>
-    <string name="orientation_horizontal_same">Horizontal, Same direction</string>
-    <string name="orientation_horizontal_opposite">Horizontal, Opposite directions</string>
-    <string name="orientation_vertical_same">Vertical, Same direction</string>
-    <string name="orientation_vertical_opposite">Vertical, Opposite directions</string>
+    <string name="orientation_title">Where players sit</string>
+    <string name="orientation_horizontal_same">Upright</string>
+    <string name="orientation_horizontal_same_description">Both times read from the bottom of the screen</string>
+    <string name="orientation_horizontal_opposite">Facing each other at the ends</string>
+    <string name="orientation_horizontal_opposite_description">Players at the top and bottom, each time turned to its player</string>
+    <string name="orientation_vertical_same">Sideways</string>
+    <string name="orientation_vertical_same_description">Both times read from the same long side</string>
+    <string name="orientation_vertical_opposite">Facing each other at the sides</string>
+    <string name="orientation_vertical_opposite_description">Players at the left and right, each time turned to its player</string>
     <string name="face_style_title">Clock face</string>
     <string name="face_style_rings">Rings</string>
     <string name="face_style_panels">Full-color panels</string>

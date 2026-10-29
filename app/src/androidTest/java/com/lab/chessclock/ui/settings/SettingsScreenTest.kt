@@ -35,8 +35,8 @@ class SettingsScreenTest {
     fun showsCurrentOrientationAndTimerValues() {
         setScreen(ClockSettings(hours = 2, minutes = 45, seconds = 30, incrementSeconds = 7))
 
-        composeRule.onNodeWithText("Horizontal, Same direction").assertIsSelected()
-        composeRule.onNodeWithText("Vertical, Opposite directions").assertIsNotSelected()
+        composeRule.onNodeWithText("Upright").assertIsSelected()
+        composeRule.onNodeWithText("Facing each other at the sides").assertIsNotSelected()
         listOf("2", "45", "30", "7").forEach { composeRule.onNodeWithText(it).assertExists() }
     }
 
@@ -53,7 +53,7 @@ class SettingsScreenTest {
         val chosen = mutableListOf<Orientation>()
         setScreen(ClockSettings(), onOrientationChange = chosen::add)
 
-        composeRule.onNodeWithText("Vertical, Opposite directions").performScrollTo().performClick()
+        composeRule.onNodeWithText("Facing each other at the sides").performScrollTo().performClick()
 
         assertEquals(listOf(Orientation.VerticalOpposite), chosen)
     }
@@ -133,7 +133,7 @@ class SettingsScreenTest {
         setScreen(null)
 
         composeRule.onNodeWithText("Settings").assertExists()
-        composeRule.onNodeWithText("Orientation").assertDoesNotExist()
+        composeRule.onNodeWithText("Where players sit").assertDoesNotExist()
     }
 
     private fun hasStateDescription(value: String) =

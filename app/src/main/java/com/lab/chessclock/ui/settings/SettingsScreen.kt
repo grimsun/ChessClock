@@ -146,6 +146,7 @@ fun SettingsScreen(
                 Orientation.entries.forEach { orientation ->
                     RadioOption(
                         label = orientation.label,
+                        description = orientation.description,
                         selected = orientation == settings.orientation,
                         onSelect = { onOrientationChange(orientation) },
                     )
@@ -236,6 +237,7 @@ private fun PresetChip(preset: TimePreset, selected: Boolean, onClick: () -> Uni
 private fun RadioOption(
     @StringRes label: Int,
     selected: Boolean,
+    @StringRes description: Int? = null,
     onSelect: () -> Unit,
     trailing: @Composable () -> Unit = {},
 ) {
@@ -248,7 +250,16 @@ private fun RadioOption(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         RadioButton(selected = selected, onClick = null)
-        Text(stringResource(label), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
+            if (description != null) {
+                Text(
+                    text = stringResource(description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         trailing()
     }
 }
@@ -310,6 +321,14 @@ private val Orientation.label: Int
         Orientation.HorizontalOpposite -> R.string.orientation_horizontal_opposite
         Orientation.VerticalSame -> R.string.orientation_vertical_same
         Orientation.VerticalOpposite -> R.string.orientation_vertical_opposite
+    }
+
+private val Orientation.description: Int
+    @StringRes get() = when (this) {
+        Orientation.HorizontalSame -> R.string.orientation_horizontal_same_description
+        Orientation.HorizontalOpposite -> R.string.orientation_horizontal_opposite_description
+        Orientation.VerticalSame -> R.string.orientation_vertical_same_description
+        Orientation.VerticalOpposite -> R.string.orientation_vertical_opposite_description
     }
 
 private val FaceStyle.label: Int
