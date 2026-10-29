@@ -40,6 +40,13 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun startsWithAlreadyLoadedSettings() = runTest {
+        val loaded = ClockSettings(minutes = 3)
+        val viewModel = createViewModel(NeverLoadingSettingsRepository, initialSettings = loaded)
+        assertEquals(loaded, viewModel.settings.value)
+    }
+
+    @Test
     fun setTimerSavesOnlyThatSetting() = runTest {
         val viewModel = createViewModel()
 
@@ -98,8 +105,11 @@ class SettingsViewModelTest {
         )
     }
 
-    private fun TestScope.createViewModel(source: SettingsRepository = repository): SettingsViewModel {
-        val viewModel = SettingsViewModel(source)
+    private fun TestScope.createViewModel(
+        source: SettingsRepository = repository,
+        initialSettings: ClockSettings? = null,
+    ): SettingsViewModel {
+        val viewModel = SettingsViewModel(source, initialSettings)
         // settings is only produced while someone collects it, as the UI would.
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.settings.collect {} }
         return viewModel

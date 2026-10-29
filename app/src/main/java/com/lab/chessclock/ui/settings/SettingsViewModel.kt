@@ -15,10 +15,14 @@ import com.lab.chessclock.ui.stateInUi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val repository: SettingsRepository) : ViewModel() {
+/** [initialSettings], when already loaded, let the screen show them on its first frame. */
+class SettingsViewModel(
+    private val repository: SettingsRepository,
+    initialSettings: ClockSettings? = null,
+) : ViewModel() {
 
     /** Null until the stored settings have loaded. */
-    val settings: StateFlow<ClockSettings?> = repository.settings.stateInUi(this, null)
+    val settings: StateFlow<ClockSettings?> = repository.settings.stateInUi(this, initialSettings)
 
     fun setOrientation(orientation: Orientation) = update { it.copy(orientation = orientation) }
 
@@ -37,6 +41,8 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     }
 
     companion object {
-        val Factory = appViewModelFactory { SettingsViewModel(settingsRepository) }
+        val Factory = appViewModelFactory {
+            SettingsViewModel(settingsRepository, initialSettings = currentSettings.value)
+        }
     }
 }

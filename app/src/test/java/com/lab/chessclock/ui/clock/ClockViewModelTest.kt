@@ -175,6 +175,32 @@ class ClockViewModelTest {
         assertEquals(ClockUiState.Loading, viewModel.uiState.value)
     }
 
+    @Test
+    fun startsReadyWhenTheSettingsAreAlreadyLoaded() = runTest {
+        val loaded = ClockSettings(minutes = 3, faceStyle = FaceStyle.Panels)
+        val viewModel = ClockViewModel(NeverLoadingSettingsRepository, initialSettings = loaded)
+
+        // Before anyone collects: the screen's first frame already has the clock.
+        val state = viewModel.uiState.value as ClockUiState.Ready
+        assertEquals(3.minutes, state.clock.timeControl.initial)
+        assertEquals(FaceStyle.Panels, state.faceStyle)
+    }
+
+    @Test
+    fun storedSettingsMatchingTheInitialOnesKeepTheGame() = runTest {
+        val viewModel = ClockViewModel(
+            settings,
+            timeSource = testScheduler.timeSource,
+            initialSettings = settings.settings.value,
+        )
+        viewModel.onControlPressed()
+
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
+
+        assertEquals(ClockStatus.Running, viewModel.ready().clock.status)
+        viewModel.pause()
+    }
+
     private fun TestScope.createViewModel(): ClockViewModel {
         val viewModel = ClockViewModel(settings, timeSource = testScheduler.timeSource)
         // uiState is only produced while someone collects it, as the UI would.

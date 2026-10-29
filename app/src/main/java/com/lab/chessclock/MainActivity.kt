@@ -17,11 +17,11 @@ import com.lab.chessclock.ui.theme.ChessClockTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val settingsFlow = (application as ChessClockApplication).container.settingsRepository.settings
+        val currentSettings = (application as ChessClockApplication).container.currentSettings
         setContent {
-            // Wait for the stored theme rather than flash the system one first; the window
-            // background shows for the few milliseconds the first read takes.
-            val stored by settingsFlow.collectAsStateWithLifecycle(initialValue = null)
+            // Normally loaded by now. If not, wait for the stored theme rather than flash the
+            // system one first; the window background shows for the few milliseconds left.
+            val stored by currentSettings.collectAsStateWithLifecycle()
             val settings = stored ?: return@setContent
             val darkTheme = when (settings.theme) {
                 ThemeMode.System -> isSystemInDarkTheme()
