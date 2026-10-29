@@ -2,6 +2,7 @@ package com.lab.chessclock.ui.settings
 
 import android.content.res.Configuration
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -34,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -47,12 +51,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
+import com.lab.chessclock.ui.theme.paletteSwatch
 import kotlin.math.roundToInt
 
 @Composable
@@ -68,6 +74,7 @@ fun SettingsRoute(
         onOrientationChange = viewModel::setOrientation,
         onFaceStyleChange = viewModel::setFaceStyle,
         onThemeChange = viewModel::setTheme,
+        onPaletteChange = viewModel::setPalette,
         onTimerChange = viewModel::setTimer,
         onPresetSelect = viewModel::applyPreset,
     )
@@ -81,6 +88,7 @@ fun SettingsScreen(
     onOrientationChange: (Orientation) -> Unit,
     onFaceStyleChange: (FaceStyle) -> Unit,
     onThemeChange: (ThemeMode) -> Unit,
+    onPaletteChange: (ColorPalette) -> Unit,
     onTimerChange: (TimerSetting, Int) -> Unit,
     onPresetSelect: (TimePreset) -> Unit,
     modifier: Modifier = Modifier,
@@ -165,6 +173,21 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
+            SectionHeader(R.string.palette_title)
+            Column(Modifier.selectableGroup()) {
+                ColorPalette.entries.forEach { palette ->
+                    RadioOption(
+                        label = palette.label,
+                        selected = palette == settings.palette,
+                        onSelect = { onPaletteChange(palette) },
+                    ) {
+                        PaletteSwatch(palette)
+                    }
+                }
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             SectionHeader(R.string.timer_section)
             TimerSetting.entries.forEach { setting ->
                 SettingSlider(
@@ -189,7 +212,12 @@ private fun SectionHeader(@StringRes title: Int) {
 }
 
 @Composable
-private fun RadioOption(@StringRes label: Int, selected: Boolean, onSelect: () -> Unit) {
+private fun RadioOption(
+    @StringRes label: Int,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    trailing: @Composable () -> Unit = {},
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,7 +227,21 @@ private fun RadioOption(@StringRes label: Int, selected: Boolean, onSelect: () -
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         RadioButton(selected = selected, onClick = null)
-        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(label), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        trailing()
+    }
+}
+
+/** The palette's on-move color beside its waiting color, in the theme's current light or dark. */
+@Composable
+private fun PaletteSwatch(palette: ColorPalette) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val (active, inactive) = paletteSwatch(palette, dark)
+    val outline = MaterialTheme.colorScheme.outlineVariant
+    Canvas(Modifier.size(32.dp)) {
+        drawArc(active, startAngle = 90f, sweepAngle = 180f, useCenter = true)
+        drawArc(inactive, startAngle = -90f, sweepAngle = 180f, useCenter = true)
+        drawCircle(outline, style = Stroke(1.dp.toPx()))
     }
 }
 
@@ -262,6 +304,14 @@ private val ThemeMode.label: Int
         ThemeMode.Dark -> R.string.theme_dark
     }
 
+private val ColorPalette.label: Int
+    @StringRes get() = when (this) {
+        ColorPalette.Walnut -> R.string.palette_walnut
+        ColorPalette.Forest -> R.string.palette_forest
+        ColorPalette.Ocean -> R.string.palette_ocean
+        ColorPalette.Graphite -> R.string.palette_graphite
+    }
+
 private val TimerSetting.label: Int
     @StringRes get() = when (this) {
         TimerSetting.Hours -> R.string.setting_hours
@@ -281,6 +331,7 @@ private fun SettingsScreenPreview() {
             onOrientationChange = {},
             onFaceStyleChange = {},
             onThemeChange = {},
+            onPaletteChange = {},
             onTimerChange = { _, _ -> },
             onPresetSelect = {},
         )

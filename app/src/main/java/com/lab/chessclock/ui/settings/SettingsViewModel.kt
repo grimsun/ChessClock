@@ -3,6 +3,7 @@ package com.lab.chessclock.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lab.chessclock.settings.ClockSettings
+import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
@@ -24,6 +25,8 @@ class SettingsViewModel(private val repository: SettingsRepository) : ViewModel(
     fun setFaceStyle(faceStyle: FaceStyle) = update { it.copy(faceStyle = faceStyle) }
 
     fun setTheme(theme: ThemeMode) = update { it.copy(theme = theme) }
+
+    fun setPalette(palette: ColorPalette) = update { it.copy(palette = palette) }
 
     fun setTimer(setting: TimerSetting, value: Int) = update { setting.update(it, value) }
 

@@ -43,6 +43,18 @@ enum class ThemeMode(val storageKey: String) {
     }
 }
 
+/** The app's set of colors, each with a light and a dark variant. */
+enum class ColorPalette(val storageKey: String) {
+    Walnut("walnut"),
+    Forest("forest"),
+    Ocean("ocean"),
+    Graphite("graphite");
+
+    companion object {
+        fun fromStorageKey(key: String?): ColorPalette = entries.firstOrNull { it.storageKey == key } ?: Walnut
+    }
+}
+
 /** The numeric settings that make up the time control, so screens and storage can treat them alike. */
 enum class TimerSetting(val storageKey: String, val max: Int) {
     Hours("timer_h", 12),
@@ -73,6 +85,7 @@ data class ClockSettings(
     val orientation: Orientation = Orientation.HorizontalSame,
     val faceStyle: FaceStyle = FaceStyle.Rings,
     val theme: ThemeMode = ThemeMode.System,
+    val palette: ColorPalette = ColorPalette.Walnut,
 ) {
     val timeControl: TimeControl
         get() = TimeControl(
