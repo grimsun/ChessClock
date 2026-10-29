@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
+import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
@@ -37,19 +38,24 @@ sealed interface ClockUiState {
     ) : ClockUiState
 }
 
+/** [initialSettings], when already loaded, let the screen show the clock on its first frame. */
 class ClockViewModel(
     settingsRepository: SettingsRepository,
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
+    initialSettings: ClockSettings? = null,
 ) : ViewModel() {
 
-    private val clock = MutableStateFlow<ChessClock?>(null)
+    private val clock = MutableStateFlow(initialSettings?.let { ChessClock(it.timeControl) })
     private var ticker: Job? = null
     private var lastTick: ComparableTimeMark? = null
 
     val uiState: StateFlow<ClockUiState> =
         combine(clock.filterNotNull(), settingsRepository.settings) { clock, settings ->
-            ClockUiState.Ready(clock, settings.orientation, settings.faceStyle)
-        }.stateInUi(this, ClockUiState.Loading)
+            readyState(clock, settings)
+        }.stateInUi(
+            this,
+            initialSettings?.let { settings -> clock.value?.let { readyState(it, settings) } } ?: ClockUiState.Loading,
+        )
 
     init {
         // A new time control starts a fresh game; other setting changes leave the game alone.
@@ -64,6 +70,9 @@ class ClockViewModel(
             }
             .launchIn(viewModelScope)
     }
+
+    private fun readyState(clock: ChessClock, settings: ClockSettings) =
+        ClockUiState.Ready(clock, settings.orientation, settings.faceStyle)
 
     fun onPlayerPressed(player: Player) = update { it.press(player) }
 
@@ -106,6 +115,8 @@ class ClockViewModel(
     companion object {
         val TICK_INTERVAL = 100.milliseconds
 
-        val Factory = appViewModelFactory { ClockViewModel(settingsRepository) }
+        val Factory = appViewModelFactory {
+            ClockViewModel(settingsRepository, initialSettings = currentSettings.value)
+        }
     }
 }
