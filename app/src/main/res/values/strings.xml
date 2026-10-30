@@ -7,6 +7,8 @@
     <string name="end_turn">End turn</string>
     <string name="state_on_move">On move</string>
     <string name="state_out_of_time">Out of time</string>
+    <!-- Shown on the face of the player on move while a simple delay holds their clock, e.g. "Delay 3 s". -->
+    <string name="delay_remaining">Delay %1$d s</string>
     <string name="open_settings">Settings</string>
     <string name="navigate_up">Back</string>
     <string name="settings_title">Settings</string>

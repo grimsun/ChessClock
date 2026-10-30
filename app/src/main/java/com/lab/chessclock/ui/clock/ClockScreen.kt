@@ -63,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.ColorPalette
@@ -70,6 +71,8 @@ import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import com.lab.chessclock.ui.theme.clockColors
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -225,16 +228,19 @@ private fun PlayerClockFace(
         contentAlignment = Alignment.Center,
     ) {
         val text = formatClockTime(time.remaining)
+        // With a simple delay, the seconds the player on move can still think before their time runs.
+        val delay = clock.delayRemaining.takeIf { clock.turn == player && it > Duration.ZERO }
+            ?.let { stringResource(R.string.delay_remaining, it.inWholeSecondsRoundedUp) }
         val rotation = orientation.rotationOf(player)
         when (faceStyle) {
-            FaceStyle.Rings -> RingFace(text, { progress }, color, rotation)
-            FaceStyle.Panels -> PanelFace(text, { progress }, color, onColor, rotation)
+            FaceStyle.Rings -> RingFace(text, delay, { progress }, color, rotation)
+            FaceStyle.Panels -> PanelFace(text, delay, { progress }, color, onColor, rotation)
         }
     }
 }
 
 @Composable
-private fun RingFace(text: String, progress: () -> Float, color: Color, rotation: Float) {
+private fun RingFace(text: String, caption: String?, progress: () -> Float, color: Color, rotation: Float) {
     Box(
         modifier = Modifier
             .padding(16.dp)
@@ -262,11 +268,28 @@ private fun RingFace(text: String, progress: () -> Float, color: Color, rotation
                 .fillMaxWidth()
                 .padding(horizontal = RING_STROKE + 12.dp),
         )
+        if (caption != null) {
+            Text(
+                text = caption,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = RING_STROKE + 16.dp),
+                color = MaterialTheme.clockColors.text,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
     }
 }
 
 @Composable
-private fun PanelFace(text: String, progress: () -> Float, color: Color, onPanel: Color, rotation: Float) {
+private fun PanelFace(
+    text: String,
+    caption: String?,
+    progress: () -> Float,
+    color: Color,
+    onPanel: Color,
+    rotation: Float,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -290,6 +313,14 @@ private fun PanelFace(text: String, progress: () -> Float, color: Color, onPanel
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (caption != null) {
+                Text(
+                    text = caption,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    color = onPanel,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
             // The remaining share of the player's time, as a thin bar below the digits.
             LinearProgressIndicator(
                 progress = progress,
@@ -386,6 +417,10 @@ internal val LOW_TIME = 10.seconds
 internal fun ChessClock.isLowOnTime(player: Player): Boolean =
     status != ClockStatus.Finished && turn == player && timeOf(player).remaining < LOW_TIME
 
+/** Whole seconds, counting a started second as a whole one, as a countdown shows them. */
+private val Duration.inWholeSecondsRoundedUp: Long
+    get() = (this + 999.milliseconds).inWholeSeconds
+
 /** The second player (bottom) always reads the screen the right way up for their side. */
 private val Orientation.controlRotation: Float
     get() = when (this) {
@@ -421,6 +456,26 @@ private fun PanelsPreview() {
 @Composable
 private fun PanelsVerticalPreview() {
     ClockScreenPreview(FaceStyle.Panels, Orientation.VerticalOpposite)
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DelayPreview() {
+    val clock = ChessClock(TimeControl(5.minutes, 5.seconds, IncrementMode.SimpleDelay))
+        .press(Player.First).tick(1.seconds).press(Player.Second).tick(2.seconds)
+    ChessClockTheme {
+        Row {
+            FaceStyle.entries.forEach { faceStyle ->
+                ClockScreen(
+                    uiState = ClockUiState.Ready(clock, Orientation.HorizontalOpposite, faceStyle),
+                    onPlayerPressed = {},
+                    onControlPressed = {},
+                    onOpenSettings = {},
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
 }
 
 @Preview(name = "Palettes", widthDp = 1200, heightDp = 600)

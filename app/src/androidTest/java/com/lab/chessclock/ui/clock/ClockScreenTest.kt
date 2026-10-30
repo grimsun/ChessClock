@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.clock.ChessClock
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.FaceStyle
@@ -24,6 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -41,6 +43,22 @@ class ClockScreenTest {
 
         composeRule.onAllNodesWithText("05:00").assertCountEquals(2)
         composeRule.onNodeWithText("Start").assertExists()
+    }
+
+    @Test
+    fun simpleDelayCountsDownOnThePlayerOnMove() {
+        val clock = ChessClock(TimeControl(5.minutes, 5.seconds, IncrementMode.SimpleDelay))
+            .press(Player.First).tick(1500.milliseconds)
+        var state by mutableStateOf<ClockUiState>(ClockUiState.Loading)
+        setScreen({ state })
+
+        FaceStyle.entries.forEach { faceStyle ->
+            state = ClockUiState.Ready(clock, Orientation.HorizontalSame, faceStyle)
+            composeRule.onAllNodesWithText("Delay", substring = true).assertCountEquals(1)
+            composeRule.onNodeWithText("Delay 4 s").assertExists()
+            state = ClockUiState.Ready(clock.tick(4.seconds), Orientation.HorizontalSame, faceStyle)
+            composeRule.onAllNodesWithText("Delay", substring = true).assertCountEquals(0)
+        }
     }
 
     @Test
