@@ -2,6 +2,7 @@ package com.lab.chessclock.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
@@ -33,6 +34,8 @@ class SettingsViewModel(
     fun setPalette(palette: ColorPalette) = update { it.copy(palette = palette) }
 
     fun setTimer(setting: TimerSetting, value: Int) = update { setting.update(it, value) }
+
+    fun setIncrementMode(mode: IncrementMode) = update { it.copy(incrementMode = mode) }
 
     fun applyPreset(preset: TimePreset) = update(preset::appliedTo)
 

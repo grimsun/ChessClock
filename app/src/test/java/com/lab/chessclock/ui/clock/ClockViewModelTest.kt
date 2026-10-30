@@ -1,6 +1,7 @@
 package com.lab.chessclock.ui.clock
 
 import com.lab.chessclock.clock.ClockStatus
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.Player
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
@@ -76,6 +77,19 @@ class ClockViewModelTest {
         val clock = viewModel.ready().clock
         assertEquals(ClockStatus.NotStarted, clock.status)
         assertEquals(1.minutes, clock.second.remaining)
+    }
+
+    @Test
+    fun changingIncrementModeStartsAFreshGame() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onControlPressed()
+        advanceTimeBy(1_000)
+
+        settings.update { it.copy(incrementMode = IncrementMode.Bronstein) }
+
+        val clock = viewModel.ready().clock
+        assertEquals(ClockStatus.NotStarted, clock.status)
+        assertEquals(IncrementMode.Bronstein, clock.timeControl.mode)
     }
 
     @Test

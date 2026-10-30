@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.lab.chessclock.clock.IncrementMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -33,6 +34,7 @@ class DataStoreSettingsRepositoryTest {
             it.copy(
                 minutes = 3,
                 incrementSeconds = 2,
+                incrementMode = IncrementMode.Bronstein,
                 orientation = Orientation.VerticalOpposite,
                 faceStyle = FaceStyle.Panels,
                 theme = ThemeMode.Dark,
@@ -48,6 +50,7 @@ class DataStoreSettingsRepositoryTest {
         assertEquals(ColorPalette.Ocean, settings.palette)
         assertEquals(3.minutes, settings.timeControl.initial)
         assertEquals(2.seconds, settings.timeControl.increment)
+        assertEquals(IncrementMode.Bronstein, settings.timeControl.mode)
     }
 
     @Test

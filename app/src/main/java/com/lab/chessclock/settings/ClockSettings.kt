@@ -1,5 +1,6 @@
 package com.lab.chessclock.settings
 
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.TimeControl
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -55,6 +56,17 @@ enum class ColorPalette(val storageKey: String) {
     }
 }
 
+/** The key an [IncrementMode] is stored under. */
+val IncrementMode.storageKey: String
+    get() = when (this) {
+        IncrementMode.Fischer -> "fischer"
+        IncrementMode.Bronstein -> "bronstein"
+        IncrementMode.SimpleDelay -> "delay"
+    }
+
+fun incrementModeFromStorageKey(key: String?): IncrementMode =
+    IncrementMode.entries.firstOrNull { it.storageKey == key } ?: IncrementMode.Fischer
+
 /** The numeric settings that make up the time control, so screens and storage can treat them alike. */
 enum class TimerSetting(val storageKey: String, val max: Int) {
     Hours("timer_h", 12),
@@ -82,6 +94,7 @@ data class ClockSettings(
     val minutes: Int = 5,
     val seconds: Int = 0,
     val incrementSeconds: Int = 0,
+    val incrementMode: IncrementMode = IncrementMode.Fischer,
     val orientation: Orientation = Orientation.HorizontalSame,
     val faceStyle: FaceStyle = FaceStyle.Rings,
     val theme: ThemeMode = ThemeMode.System,
@@ -92,6 +105,7 @@ data class ClockSettings(
             // All-zero settings would give a game that is over before it starts and can't be reset.
             initial = (hours.hours + minutes.minutes + seconds.seconds).coerceAtLeast(MIN_INITIAL_TIME),
             increment = incrementSeconds.seconds,
+            mode = incrementMode,
         )
 
     companion object {
@@ -101,7 +115,10 @@ data class ClockSettings(
 
 /** A common time control: whole minutes plus a per-move increment, written "3 + 2". */
 data class TimePreset(val minutes: Int, val incrementSeconds: Int) {
-    /** The settings with this time control, keeping everything else such as the orientation. */
+    /**
+     * The settings with this time control, keeping everything else such as the orientation. The
+     * increment mode is kept too, so a preset reads "3 + 2" whether the 2 is an increment or a delay.
+     */
     fun appliedTo(settings: ClockSettings): ClockSettings =
         settings.copy(hours = 0, minutes = minutes, seconds = 0, incrementSeconds = incrementSeconds)
 

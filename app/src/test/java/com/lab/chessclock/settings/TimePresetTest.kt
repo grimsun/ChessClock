@@ -1,5 +1,6 @@
 package com.lab.chessclock.settings
 
+import com.lab.chessclock.clock.IncrementMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -18,6 +19,14 @@ class TimePresetTest {
         assertEquals(ClockSettings(minutes = 3, incrementSeconds = 2, orientation = Orientation.VerticalSame), applied)
         assertEquals(3.minutes, applied.timeControl.initial)
         assertEquals(2.seconds, applied.timeControl.increment)
+    }
+
+    @Test
+    fun appliedKeepsTheIncrementMode() {
+        val applied = TimePreset(3, 2).appliedTo(ClockSettings(incrementMode = IncrementMode.SimpleDelay))
+
+        assertEquals(IncrementMode.SimpleDelay, applied.timeControl.mode)
+        assertTrue(TimePreset(3, 2).matches(applied))
     }
 
     @Test

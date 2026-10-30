@@ -30,6 +30,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         dataStore.edit { preferences ->
             val updated = transform(preferences.toSettings())
             TimerSetting.entries.forEach { preferences[it.key] = it.valueIn(updated) }
+            preferences[INCREMENT_MODE] = updated.incrementMode.storageKey
             preferences[ORIENTATION] = updated.orientation.storageKey
             preferences[FACE_STYLE] = updated.faceStyle.storageKey
             preferences[THEME] = updated.theme.storageKey
@@ -40,6 +41,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     private fun Preferences.toSettings(): ClockSettings =
         TimerSetting.entries.fold(
             ClockSettings(
+                incrementMode = incrementModeFromStorageKey(this[INCREMENT_MODE]),
                 orientation = Orientation.fromStorageKey(this[ORIENTATION]),
                 faceStyle = FaceStyle.fromStorageKey(this[FACE_STYLE]),
                 theme = ThemeMode.fromStorageKey(this[THEME]),
@@ -51,6 +53,7 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
     private val TimerSetting.key get() = intPreferencesKey(storageKey)
 
     private companion object {
+        val INCREMENT_MODE = stringPreferencesKey("increment_mode")
         val ORIENTATION = stringPreferencesKey("orientation")
         val FACE_STYLE = stringPreferencesKey("face_style")
         val THEME = stringPreferencesKey("theme")
