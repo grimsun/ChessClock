@@ -11,6 +11,7 @@ A two-player chess clock for Android. Tap your half of the screen to end your tu
 ## Features
 
 - **Time controls** – one-tap presets from bullet to classical (`1 + 0` … `30 + 0`), or your own hours, minutes and seconds with an increment of up to a minute per move
+- **Increment or delay** – the seconds per move can be a Fischer increment, a Bronstein increment that gives back only the time a move took, or a simple delay that holds the clock at the start of each move, counted down on the face
 - **Seating** – times can face both players, whether they sit at the ends of the phone or at its sides
 - **Two clock faces** – rings that empty as time runs down, or full-color panels with large digits you can read from across the table
 - **Light and dark** – follows the system, or pick one in settings
