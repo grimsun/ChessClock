@@ -1,5 +1,6 @@
 package com.lab.chessclock.ui.settings
 
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
@@ -54,6 +55,15 @@ class SettingsViewModelTest {
 
         assertEquals(ClockSettings(minutes = 5, incrementSeconds = 7), repository.settings.value)
         assertEquals(repository.settings.value, viewModel.settings.value)
+    }
+
+    @Test
+    fun setIncrementModeSavesIt() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setIncrementMode(IncrementMode.SimpleDelay)
+
+        assertEquals(ClockSettings(minutes = 5, incrementMode = IncrementMode.SimpleDelay), repository.settings.value)
     }
 
     @Test
