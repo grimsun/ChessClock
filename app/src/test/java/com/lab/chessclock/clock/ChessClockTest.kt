@@ -172,4 +172,66 @@ class ChessClockTest {
         assertEquals(1f, PlayerTime.full(60.seconds).progress)
         assertEquals(0f, PlayerTime.full(Duration.ZERO).progress)
     }
+
+    private val bronstein = ChessClock(TimeControl(5.minutes, 3.seconds, IncrementMode.Bronstein))
+    private val delay = ChessClock(TimeControl(5.minutes, 3.seconds, IncrementMode.SimpleDelay))
+
+    @Test
+    fun bronsteinGivesBackTheTimeUsedUpToTheIncrement() {
+        val quick = bronstein.press(Player.First).tick(1.seconds).press(Player.Second)
+        assertEquals(5.minutes, quick.second.remaining)
+
+        val slow = bronstein.press(Player.First).tick(10.seconds).press(Player.Second)
+        assertEquals(5.minutes - 10.seconds + 3.seconds, slow.second.remaining)
+    }
+
+    @Test
+    fun bronsteinNeverRaisesTheTime() {
+        val game = bronstein.press(Player.First).press(Player.Second).press(Player.First)
+        assertEquals(PlayerTime.full(5.minutes), game.first)
+        assertEquals(PlayerTime.full(5.minutes), game.second)
+    }
+
+    @Test
+    fun bronsteinCountsAMoveAcrossAPause() {
+        val game = bronstein.press(Player.First)
+            .tick(1.seconds).pause().press(Player.First)
+            .tick(1.seconds).press(Player.Second)
+
+        assertEquals(5.minutes, game.second.remaining)
+    }
+
+    @Test
+    fun simpleDelayStartsCountingAfterTheDelay() {
+        val thinking = delay.press(Player.First).tick(2.seconds)
+        assertEquals(5.minutes, thinking.second.remaining)
+        assertEquals(1.seconds, thinking.delayRemaining)
+
+        val past = thinking.tick(5.seconds)
+        assertEquals(5.minutes - 4.seconds, past.second.remaining)
+        assertEquals(Duration.ZERO, past.delayRemaining)
+    }
+
+    @Test
+    fun simpleDelayRestartsEachMoveAndAddsNothing() {
+        val game = delay.press(Player.First).tick(10.seconds).press(Player.Second)
+
+        assertEquals(5.minutes - 7.seconds, game.second.remaining)
+        assertEquals(5.minutes, game.second.max)
+        assertEquals(3.seconds, game.delayRemaining)
+        assertEquals(5.minutes, game.tick(3.seconds).first.remaining)
+    }
+
+    @Test
+    fun simpleDelayIsKeptAcrossAPause() {
+        val resumed = delay.press(Player.First).tick(2.seconds).pause().press(Player.Second)
+        assertEquals(1.seconds, resumed.delayRemaining)
+        assertEquals(5.minutes - 1.seconds, resumed.tick(2.seconds).second.remaining)
+    }
+
+    @Test
+    fun fischerAndBronsteinHaveNoDelay() {
+        assertEquals(Duration.ZERO, clock.press(Player.First).delayRemaining)
+        assertEquals(Duration.ZERO, bronstein.press(Player.First).delayRemaining)
+    }
 }
