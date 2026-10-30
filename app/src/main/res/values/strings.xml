@@ -15,7 +15,18 @@
     <string name="preset_label">%1$d + %2$d</string>
     <!-- Spoken form of a preset, e.g. "3 minutes, plus 2 seconds per move". -->
     <string name="preset_description">%1$s, plus %2$s per move</string>
-    <string name="presets_explanation">Minutes each, plus seconds added after every move. Pick one or set your own.</string>
+    <!-- Spoken form of a preset with a Bronstein increment, e.g. "3 minutes, plus up to 2 seconds back per move". -->
+    <string name="preset_description_bronstein">%1$s, plus up to %2$s back per move</string>
+    <!-- Spoken form of a preset with a simple delay, e.g. "3 minutes, 2 seconds delay per move". -->
+    <string name="preset_description_delay">%1$s, %2$s delay per move</string>
+    <string name="presets_explanation">Minutes each, plus seconds per move. Pick one or set your own.</string>
+    <string name="increment_mode_title">Seconds per move</string>
+    <string name="increment_mode_fischer">Increment</string>
+    <string name="increment_mode_fischer_description">Fischer: added after every move, so time can grow.</string>
+    <string name="increment_mode_bronstein">Bronstein</string>
+    <string name="increment_mode_bronstein_description">The time a move took is given back, up to these seconds, so time never grows.</string>
+    <string name="increment_mode_delay">Delay</string>
+    <string name="increment_mode_delay_description">Simple delay: each move, the clock waits these seconds before counting down.</string>
     <string name="time_change_restarts">Changing the time starts a new game.</string>
     <plurals name="minutes">
         <item quantity="one">%d minute</item>
@@ -51,4 +62,5 @@
     <string name="setting_minutes">Minutes</string>
     <string name="setting_seconds">Seconds</string>
     <string name="setting_increment">Increment per move (seconds)</string>
+    <string name="setting_delay">Delay per move (seconds)</string>
 </resources>

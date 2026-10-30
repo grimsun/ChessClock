@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
@@ -81,6 +82,7 @@ fun SettingsRoute(
         onThemeChange = viewModel::setTheme,
         onPaletteChange = viewModel::setPalette,
         onTimerChange = viewModel::setTimer,
+        onIncrementModeChange = viewModel::setIncrementMode,
         onPresetSelect = viewModel::applyPreset,
     )
 }
@@ -95,6 +97,7 @@ fun SettingsScreen(
     onThemeChange: (ThemeMode) -> Unit,
     onPaletteChange: (ColorPalette) -> Unit,
     onTimerChange: (TimerSetting, Int) -> Unit,
+    onIncrementModeChange: (IncrementMode) -> Unit,
     onPresetSelect: (TimePreset) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -134,12 +137,28 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TimePreset.All.forEach { preset ->
-                    PresetChip(preset, selected = preset.matches(settings), onClick = { onPresetSelect(preset) })
+                    PresetChip(
+                        preset = preset,
+                        mode = settings.incrementMode,
+                        selected = preset.matches(settings),
+                        onClick = { onPresetSelect(preset) },
+                    )
                 }
             }
             TimerSetting.entries.forEach { setting ->
+                // The mode sits right above the slider whose seconds it gives a meaning to.
+                if (setting == TimerSetting.Increment) {
+                    SegmentedSetting(
+                        title = R.string.increment_mode_title,
+                        options = IncrementMode.entries,
+                        selected = settings.incrementMode,
+                        label = { it.label },
+                        onSelect = onIncrementModeChange,
+                    )
+                    SupportingText(settings.incrementMode.description)
+                }
                 SettingSlider(
-                    label = setting.label,
+                    label = if (setting == TimerSetting.Increment) settings.incrementMode.sliderLabel else setting.label,
                     value = setting.valueIn(settings),
                     max = setting.max,
                     onValueChange = { onTimerChange(setting, it) },
@@ -250,10 +269,10 @@ private fun SupportingText(@StringRes text: Int) {
 }
 
 @Composable
-private fun PresetChip(preset: TimePreset, selected: Boolean, onClick: () -> Unit) {
+private fun PresetChip(preset: TimePreset, mode: IncrementMode, selected: Boolean, onClick: () -> Unit) {
     // "3 + 2" is how players write it, but read aloud it means little: spell it out for TalkBack.
     val description = stringResource(
-        R.string.preset_description,
+        mode.presetDescription,
         pluralStringResource(R.plurals.minutes, preset.minutes, preset.minutes),
         pluralStringResource(R.plurals.seconds, preset.incrementSeconds, preset.incrementSeconds),
     )
@@ -347,6 +366,33 @@ private fun SettingSlider(@StringRes label: Int, value: Int, max: Int, onValueCh
     }
 }
 
+private val IncrementMode.label: Int
+    @StringRes get() = when (this) {
+        IncrementMode.Fischer -> R.string.increment_mode_fischer
+        IncrementMode.Bronstein -> R.string.increment_mode_bronstein
+        IncrementMode.SimpleDelay -> R.string.increment_mode_delay
+    }
+
+private val IncrementMode.description: Int
+    @StringRes get() = when (this) {
+        IncrementMode.Fischer -> R.string.increment_mode_fischer_description
+        IncrementMode.Bronstein -> R.string.increment_mode_bronstein_description
+        IncrementMode.SimpleDelay -> R.string.increment_mode_delay_description
+    }
+
+private val IncrementMode.sliderLabel: Int
+    @StringRes get() = when (this) {
+        IncrementMode.Fischer, IncrementMode.Bronstein -> R.string.setting_increment
+        IncrementMode.SimpleDelay -> R.string.setting_delay
+    }
+
+private val IncrementMode.presetDescription: Int
+    @StringRes get() = when (this) {
+        IncrementMode.Fischer -> R.string.preset_description
+        IncrementMode.Bronstein -> R.string.preset_description_bronstein
+        IncrementMode.SimpleDelay -> R.string.preset_description_delay
+    }
+
 private val Orientation.label: Int
     @StringRes get() = when (this) {
         Orientation.HorizontalSame -> R.string.orientation_horizontal_same
@@ -407,6 +453,7 @@ private fun SettingsScreenPreview() {
             onThemeChange = {},
             onPaletteChange = {},
             onTimerChange = { _, _ -> },
+            onIncrementModeChange = {},
             onPresetSelect = {},
         )
     }

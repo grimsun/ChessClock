@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
@@ -92,6 +93,26 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun choosingAnIncrementModeReportsIt() {
+        val chosen = mutableListOf<IncrementMode>()
+        setScreen(ClockSettings(), onIncrementModeChange = chosen::add)
+
+        composeRule.onNodeWithText("Increment").performScrollTo().assertIsSelected()
+        composeRule.onNodeWithText("Delay").performScrollTo().assertIsNotSelected().performClick()
+
+        assertEquals(listOf(IncrementMode.SimpleDelay), chosen)
+    }
+
+    @Test
+    fun delayModeExplainsItselfAndRelabelsTheSlider() {
+        setScreen(ClockSettings(incrementSeconds = 5, incrementMode = IncrementMode.SimpleDelay))
+
+        composeRule.onNodeWithText("each move, the clock waits", substring = true).assertExists()
+        composeRule.onNode(hasContentDescription("Delay per move (seconds)") and hasStateDescription("5")).assertExists()
+        composeRule.onNode(hasContentDescription("3 minutes, 2 seconds delay per move")).assertExists()
+    }
+
+    @Test
     fun marksThePresetMatchingTheSettings() {
         setScreen(ClockSettings(minutes = 3, incrementSeconds = 2))
 
@@ -147,6 +168,7 @@ class SettingsScreenTest {
         onThemeChange: (ThemeMode) -> Unit = {},
         onPaletteChange: (ColorPalette) -> Unit = {},
         onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
+        onIncrementModeChange: (IncrementMode) -> Unit = {},
         onPresetSelect: (TimePreset) -> Unit = {},
     ) {
         composeRule.setContent {
@@ -159,6 +181,7 @@ class SettingsScreenTest {
                     onThemeChange = onThemeChange,
                     onPaletteChange = onPaletteChange,
                     onTimerChange = onTimerChange,
+                    onIncrementModeChange = onIncrementModeChange,
                     onPresetSelect = onPresetSelect,
                 )
             }
