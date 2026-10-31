@@ -76,6 +76,19 @@ class ClockScreenTest {
     }
 
     @Test
+    fun aSecondFingerCountsWhileAnotherRestsOnTheFace() {
+        val pressed = mutableListOf<Player>()
+        setScreen(ClockUiState.Ready(newGame, Orientation.HorizontalSame), onPlayerPressed = pressed::add)
+
+        composeRule.onAllNodesWithText("05:00")[1].performTouchInput {
+            down(0, center)
+            down(1, centerLeft)
+        }
+
+        assertEquals(listOf(Player.Second, Player.Second), pressed)
+    }
+
+    @Test
     fun talkBackCanEndATurn() {
         val pressed = mutableListOf<Player>()
         setScreen(ClockUiState.Ready(newGame, Orientation.HorizontalSame), onPlayerPressed = pressed::add)
@@ -197,7 +210,7 @@ class ClockScreenTest {
     ) {
         composeRule.setContent {
             ChessClockTheme {
-                ClockScreen(uiState(), onPlayerPressed, onControlPressed, onOpenSettings)
+                ClockScreen(uiState(), { player, _ -> onPlayerPressed(player) }, onControlPressed, onOpenSettings)
             }
         }
     }

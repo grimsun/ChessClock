@@ -126,6 +126,37 @@ class ClockViewModelTest {
     }
 
     @Test
+    fun aTurnEndsWhenTheFaceWasTouchedNotWhenThePressIsHandled() = runTest {
+        settings.update { it.copy(incrementSeconds = 0) }
+        val viewModel = createViewModel()
+        viewModel.onPlayerPressed(Player.First, touchedAgo = 30.milliseconds)
+        advanceTimeBy(1_050)
+
+        // Handled 40ms after the touch: those 40ms were the opponent's, not this player's.
+        viewModel.onPlayerPressed(Player.Second, touchedAgo = 40.milliseconds)
+        viewModel.pause()
+
+        val clock = viewModel.ready().clock
+        assertEquals(5.minutes - 1_080.milliseconds + 40.milliseconds, clock.second.remaining)
+        assertEquals(5.minutes - 40.milliseconds, clock.first.remaining)
+    }
+
+    @Test
+    fun aTouchFromBeforeTheLastTickChargesNothingMore() = runTest {
+        settings.update { it.copy(incrementSeconds = 0) }
+        val viewModel = createViewModel()
+        viewModel.onPlayerPressed(Player.First)
+        advanceTimeBy(1_050) // The last tick was at 1,000ms.
+
+        viewModel.onPlayerPressed(Player.Second, touchedAgo = 80.milliseconds)
+        viewModel.pause()
+
+        val clock = viewModel.ready().clock
+        assertEquals(5.minutes - 1.seconds, clock.second.remaining)
+        assertEquals(5.minutes - 50.milliseconds, clock.first.remaining)
+    }
+
+    @Test
     fun pressingTheWaitingPlayerChargesNoTime() = runTest {
         val viewModel = createViewModel()
         viewModel.onPlayerPressed(Player.First)
