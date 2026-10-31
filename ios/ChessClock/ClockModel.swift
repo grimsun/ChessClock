@@ -15,7 +15,11 @@ final class ClockModel {
         clock = ChessClock(timeControl)
     }
 
-    func press(_ player: Player) { update { $0.press(player) } }
+    /// `player` touched their face `touchedAgo` before this call: the turn ends at that moment, so
+    /// the time the app took to handle the touch is charged to neither player as thinking time.
+    func press(_ player: Player, touchedAgo: Duration = .zero) {
+        update(at: time.now - touchedAgo) { $0.press(player) }
+    }
 
     func toggle() { update { $0.toggle() } }
 
@@ -28,15 +32,18 @@ final class ClockModel {
         clock = ChessClock(timeControl)
     }
 
-    private func update(_ action: (ChessClock) -> ChessClock) {
-        chargeElapsedTime()
+    /// Applies `action` as of `moment`, when it happened, or now.
+    private func update(at moment: ContinuousClock.Instant? = nil, _ action: (ChessClock) -> ChessClock) {
+        let moment = moment ?? time.now
+        chargeElapsedTime(until: moment)
         clock = action(clock)
-        if clock.status == .running { startTicker() } else { stopTicker() }
+        if clock.status == .running { startTicker(from: moment) } else { stopTicker() }
     }
 
-    private func startTicker() {
+    /// Starts charging the running player from `start`.
+    private func startTicker(from start: ContinuousClock.Instant) {
         guard ticker == nil else { return }
-        lastTick = time.now
+        lastTick = start
         ticker = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: Self.tickInterval)
@@ -53,10 +60,12 @@ final class ClockModel {
         lastTick = nil
     }
 
-    /// Charges the running player for the time since the last tick, so no time is lost between ticks.
-    private func chargeElapsedTime() {
+    /// Charges the running player for the time from the last tick to `now`, so no time is lost
+    /// between ticks. A `now` before the last tick charges nothing rather than giving time back.
+    private func chargeElapsedTime(until now: ContinuousClock.Instant? = nil) {
         guard let last = lastTick else { return }
-        let now = time.now
+        let now = now ?? time.now
+        guard now > last else { return }
         lastTick = now
         clock = clock.tick(now - last)
     }
