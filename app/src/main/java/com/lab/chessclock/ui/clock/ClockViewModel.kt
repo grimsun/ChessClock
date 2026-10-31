@@ -51,6 +51,10 @@ class ClockViewModel(
     private var ticker: Job? = null
     private var lastTick: ComparableTimeMark? = null
 
+    /** The vibration settings; none play until the settings have loaded. */
+    private var vibrateOnTurnEnd = initialSettings?.vibrateOnTurnEnd ?: false
+    private var vibrateOnLowTime = initialSettings?.vibrateOnLowTime ?: false
+
     val uiState: StateFlow<ClockUiState> =
         combine(clock.filterNotNull(), settingsRepository.settings) { clock, settings ->
             readyState(clock, settings)
@@ -71,6 +75,13 @@ class ClockViewModel(
                 }
             }
             .launchIn(viewModelScope)
+
+        settingsRepository.settings
+            .onEach {
+                vibrateOnTurnEnd = it.vibrateOnTurnEnd
+                vibrateOnLowTime = it.vibrateOnLowTime
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun readyState(clock: ChessClock, settings: ClockSettings) =
@@ -80,7 +91,9 @@ class ClockViewModel(
         val before = clock.value
         val after = update { it.press(player) }
         // Confirms the press to a player who is looking at the board, not the clock.
-        if (after != null && after.status == ClockStatus.Running && after.turn != before?.turn) haptics.turnEnded()
+        if (vibrateOnTurnEnd && after != null && after.status == ClockStatus.Running && after.turn != before?.turn) {
+            haptics.turnEnded()
+        }
     }
 
     fun onControlPressed() {
@@ -131,6 +144,7 @@ class ClockViewModel(
      * clock runs, so a player who starts their turn already short isn't buzzed on every move.
      */
     private fun warnAboutTime(before: ChessClock, after: ChessClock) {
+        if (!vibrateOnLowTime) return
         val player = before.active ?: return
         when {
             after.status == ClockStatus.Finished && before.status != ClockStatus.Finished -> haptics.outOfTime()

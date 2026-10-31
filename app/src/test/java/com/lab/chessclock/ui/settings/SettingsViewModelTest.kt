@@ -67,6 +67,19 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun vibrationSettingsAreSavedSeparately() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setVibrateOnTurnEnd(false)
+        assertEquals(ClockSettings(minutes = 5, vibrateOnTurnEnd = false), repository.settings.value)
+        viewModel.setVibrateOnLowTime(false)
+        assertEquals(
+            ClockSettings(minutes = 5, vibrateOnTurnEnd = false, vibrateOnLowTime = false),
+            repository.settings.value,
+        )
+    }
+
+    @Test
     fun setOrientationSavesIt() = runTest {
         val viewModel = createViewModel()
 

@@ -37,6 +37,10 @@ class SettingsViewModel(
 
     fun setIncrementMode(mode: IncrementMode) = update { it.copy(incrementMode = mode) }
 
+    fun setVibrateOnTurnEnd(enabled: Boolean) = update { it.copy(vibrateOnTurnEnd = enabled) }
+
+    fun setVibrateOnLowTime(enabled: Boolean) = update { it.copy(vibrateOnLowTime = enabled) }
+
     fun applyPreset(preset: TimePreset) = update(preset::appliedTo)
 
     private fun update(transform: (ClockSettings) -> ClockSettings) {
