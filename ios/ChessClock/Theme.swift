@@ -10,13 +10,17 @@ extension Color {
     static let win = dynamic(light: 0x52643F, dark: 0xB8CE9D)
     static let loss = dynamic(light: 0xBA1A1A, dark: 0xFFB4AB)
 
-    private static func dynamic(light: UInt32, dark: UInt32) -> Color {
-        Color(UIColor { $0.userInterfaceStyle == .dark ? UIColor(rgb: dark) : UIColor(rgb: light) })
+    /// SwiftUI resolves colors on its render thread too, so the provider must not be tied to the main
+    /// actor that this target's code defaults to: resolving it off the main thread would crash.
+    nonisolated private static func dynamic(light: UInt32, dark: UInt32) -> Color {
+        Color(UIColor { @Sendable traits in
+            traits.userInterfaceStyle == .dark ? UIColor(rgb: dark) : UIColor(rgb: light)
+        })
     }
 }
 
 private extension UIColor {
-    convenience init(rgb: UInt32) {
+    nonisolated convenience init(rgb: UInt32) {
         self.init(
             red: CGFloat(rgb >> 16 & 0xFF) / 255,
             green: CGFloat(rgb >> 8 & 0xFF) / 255,
