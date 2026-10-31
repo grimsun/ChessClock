@@ -36,9 +36,18 @@ Kotlin 2.4 · Jetpack Compose (Material 3) · ViewModel + StateFlow · Navigatio
 ## Project layout
 
 ```
+android/       The Android app (Gradle project; open this folder in Android Studio)
+ios/           The iPhone app (Xcode project and the ClockCore Swift package), see ios/README.md
+docs/          Screenshots and the Android toolchain explainer
+```
+
+Inside `android/`:
+
+```
 app/src/main/java/com/lab/chessclock/
   clock/       Chess clock rules: immutable, plain Kotlin
   settings/    ClockSettings and the DataStore-backed SettingsRepository
+  haptics/     Vibrations for turn ends, low time and a fallen flag
   ui/clock/    Clock screen and ClockViewModel
   ui/settings/ Settings screen and SettingsViewModel
   ui/theme/    Palettes, clock colors and the Material theme
@@ -48,13 +57,14 @@ baselineprofile/
                Profile generator and startup benchmark (Macrobenchmark)
 ```
 
-Dependencies are wired by hand in `AppContainer`, which also loads the settings once at startup so every screen draws with them on its first frame. Versions live in `gradle/libs.versions.toml`.
+Dependencies are wired by hand in `AppContainer`, which also loads the settings once at startup so every screen draws with them on its first frame. Versions live in `android/gradle/libs.versions.toml`.
 
 ## Build and run
 
 Requires JDK 17+ (Android Studio's bundled JDK works) and the Android SDK with platform 37.
 
 ```sh
+cd android
 ./gradlew installDebug              # build and install on a running emulator/device
 ./gradlew testDebugUnitTest         # unit tests, no device needed
 ./gradlew connectedDebugAndroidTest # Compose UI tests on an emulator/device
@@ -66,6 +76,7 @@ Requires JDK 17+ (Android Studio's bundled JDK works) and the Android SDK with p
 Release builds ship a [baseline profile](https://developer.android.com/topic/performance/baselineprofiles/overview), so the code a game uses is compiled ahead of time instead of interpreted until the JIT warms up. The clock reports when it is fully drawn, so startup can be measured up to the moment the clock appears.
 
 ```sh
+cd android
 ./gradlew :app:generateBaselineProfile   # re-record the profile after UI changes (API 33+ device or emulator)
 ./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest \
   -Pandroid.testInstrumentationRunnerArguments.class=com.lab.chessclock.baselineprofile.StartupBenchmark
