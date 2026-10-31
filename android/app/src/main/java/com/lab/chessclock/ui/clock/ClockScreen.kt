@@ -457,7 +457,8 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
 
 private val RING_STROKE = 15.dp
 
-private const val COLOR_FADE_MILLIS = 200
+// Short, so the turn is seen to pass at once.
+private const val COLOR_FADE_MILLIS = 100
 
 /** Longer than the main thread is ever busy, short enough to reject a timestamp from another clock. */
 private val MAX_TOUCH_AGE = 1.seconds
