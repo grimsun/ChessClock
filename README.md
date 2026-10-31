@@ -71,6 +71,10 @@ Release builds ship a [baseline profile](https://developer.android.com/topic/per
 
 The benchmark compares cold start with and without the profile. Use a physical device for real numbers: an emulator that renders in software hides most of the profile's effect.
 
+## iPhone
+
+A SwiftUI version is under way in [`ios/`](ios/README.md), sharing the same clock rules.
+
 ## Docs
 
 [`docs/android-toolchain-map.html`](docs/android-toolchain-map.html) explains how the JDK, Gradle, AGP, Kotlin, the SDK and the emulator fit together.
