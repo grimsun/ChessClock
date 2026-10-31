@@ -68,6 +68,7 @@ private struct PlayerFace: View {
     let clock: ChessClock
     let player: Player
     let onPress: () -> Void
+    @State private var pressed = false
 
     var body: some View {
         let time = clock.time(of: player)
@@ -75,36 +76,56 @@ private struct PlayerFace: View {
         let onMove = !finished && clock.turn == player
 
         // The whole half of the screen is the player's button, like a physical clock.
-        Button(action: onPress) {
-            ZStack {
-                Circle()
-                    .trim(from: 0, to: finished ? 1 : time.progress)
-                    .stroke(color(time: time, finished: finished, onMove: onMove), style: StrokeStyle(lineWidth: 15, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: time.progress)
-                Text(formatClockTime(time.remaining))
-                    .font(.system(size: 60).monospacedDigit())
-                    .minimumScaleFactor(0.3)
-                    .lineLimit(1)
-                    .padding(.horizontal, 28)
-                // With a simple delay, the seconds the player on move can still think before their time runs.
-                if clock.turn == player, clock.delayRemaining > .zero {
-                    Text("Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s")
-                        .font(.headline)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 40)
-                }
-            }
+        face(time: time, finished: finished, onMove: onMove)
             .padding(16)
             .frame(maxWidth: 300, maxHeight: 300)
             .aspectRatio(1, contentMode: .fit)
+            .scaleEffect(pressed ? 0.96 : 1)
+            .animation(.spring(duration: 0.2), value: pressed)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
+            // Like a physical clock, it acts the moment it is touched rather than when the finger
+            // lifts, as a Button would: the opponent's clock starts a tap's length sooner.
+            .gesture(touchDown)
+            // VoiceOver double-taps instead of touching, so it gets the same action as a button.
+            .accessibilityElement(children: .ignore)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel(formatClockTime(time.remaining))
+            .accessibilityValue(time.isExpired ? "Out of time" : onMove ? "On move" : "")
+            .accessibilityHint("End turn")
+            .accessibilityAction(.default) { onPress() }
+    }
+
+    private var touchDown: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { _ in
+                guard !pressed else { return }
+                pressed = true
+                onPress()
+            }
+            .onEnded { _ in pressed = false }
+    }
+
+    private func face(time: PlayerTime, finished: Bool, onMove: Bool) -> some View {
+        ZStack {
+            Circle()
+                .trim(from: 0, to: finished ? 1 : time.progress)
+                .stroke(color(time: time, finished: finished, onMove: onMove), style: StrokeStyle(lineWidth: 15, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: time.progress)
+            Text(formatClockTime(time.remaining))
+                .font(.system(size: 60).monospacedDigit())
+                .minimumScaleFactor(0.3)
+                .lineLimit(1)
+                .padding(.horizontal, 28)
+            // With a simple delay, the seconds the player on move can still think before their time runs.
+            if clock.turn == player, clock.delayRemaining > .zero {
+                Text("Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s")
+                    .font(.headline)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, 40)
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(formatClockTime(time.remaining))
-        .accessibilityValue(time.isExpired ? "Out of time" : onMove ? "On move" : "")
-        .accessibilityHint("End turn")
     }
 
     private func color(time: PlayerTime, finished: Bool, onMove: Bool) -> Color {
