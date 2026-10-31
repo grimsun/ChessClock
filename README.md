@@ -13,10 +13,12 @@ A two-player chess clock for Android. Tap your half of the screen to end your tu
 - **Time controls** – one-tap presets from bullet to classical (`1 + 0` … `30 + 0`), or your own hours, minutes and seconds with an increment of up to a minute per move
 - **Increment or delay** – the seconds per move can be a Fischer increment, a Bronstein increment that gives back only the time a move took, or a simple delay that holds the clock at the start of each move, counted down on the face
 - **Seating** – times can face both players, whether they sit at the ends of the phone or at its sides
+- **Ready to play** – starts at `5 + 3` with each time turned to its player, for a phone lying between two players across a board
 - **Two clock faces** – rings that empty as time runs down, or full-color panels with large digits you can read from across the table
 - **Light and dark** – follows the system, or pick one in settings
 - **Four color palettes** – Walnut, Forest, Ocean (color-blind friendly) and Graphite (high contrast, true black when dark)
 - **Low-time warning** – the face of the player on move turns red under ten seconds
+- **Vibration** – a click confirms each press without looking at the clock, two pulses warn at ten seconds left and a long buzz marks a fallen flag; each can be turned off
 - **Made for play** – the screen stays on while the clock runs, the settings button hides during play so it can't be hit by accident, and the game pauses when the app goes to the background
 - **Accessible** – TalkBack announces whose move it is, slider names and values, and presets in words ("3 minutes, plus 2 seconds per move")
 
