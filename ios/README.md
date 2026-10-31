@@ -3,7 +3,16 @@
 A SwiftUI sketch of the Android app in the parent directory.
 
 ```
-ClockCore/   Swift package: the clock rules, ported from the Android app's `clock` package
+ClockCore/          Swift package: the clock rules, ported from the Android app's `clock` package
+ChessClock/         SwiftUI app: clock screen, ClockModel that runs the clock, Walnut colors
+ChessClock.xcodeproj
+```
+
+Open `ChessClock.xcodeproj` in Xcode 27 and run the ChessClock scheme, or build from the shell:
+
+```sh
+xcodebuild -project ios/ChessClock.xcodeproj -scheme ChessClock \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
 ```sh
