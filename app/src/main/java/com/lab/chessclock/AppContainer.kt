@@ -1,6 +1,8 @@
 package com.lab.chessclock
 
 import android.content.Context
+import com.lab.chessclock.haptics.Haptics
+import com.lab.chessclock.haptics.VibratorHaptics
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.DataStoreSettingsRepository
 import com.lab.chessclock.settings.SettingsRepository
@@ -15,6 +17,8 @@ import kotlinx.coroutines.flow.stateIn
 /** App-wide dependencies, created once in [ChessClockApplication]. */
 class AppContainer(context: Context) {
     val settingsRepository: SettingsRepository = DataStoreSettingsRepository(context.settingsDataStore)
+
+    val haptics: Haptics = VibratorHaptics(context)
 
     /**
      * The settings, read as soon as the app starts and kept current; null until the first read.
