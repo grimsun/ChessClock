@@ -38,8 +38,8 @@ class SettingsScreenTest {
     fun showsCurrentOrientationAndTimerValues() {
         setScreen(ClockSettings(hours = 2, minutes = 45, seconds = 30, incrementSeconds = 7))
 
-        composeRule.onNodeWithText("Upright").assertIsSelected()
-        composeRule.onNodeWithText("Facing each other at the sides").assertIsNotSelected()
+        composeRule.onNodeWithText("Facing each other at the ends").assertIsSelected()
+        composeRule.onNodeWithText("Upright").assertIsNotSelected()
         listOf("2", "45", "30", "7").forEach { composeRule.onNodeWithText(it).assertExists() }
     }
 

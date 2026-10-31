@@ -16,8 +16,8 @@ class OrientationTest {
     }
 
     @Test
-    fun missingOrUnknownKeyIsHorizontalSame() {
-        assertEquals(Orientation.HorizontalSame, Orientation.fromStorageKey(null))
-        assertEquals(Orientation.HorizontalSame, Orientation.fromStorageKey("diagonal"))
+    fun missingOrUnknownKeyIsTheDefault() {
+        assertEquals(ClockSettings().orientation, Orientation.fromStorageKey(null))
+        assertEquals(ClockSettings().orientation, Orientation.fromStorageKey("diagonal"))
     }
 }

@@ -1,6 +1,9 @@
 package com.lab.chessclock.settings
 
+import com.lab.chessclock.clock.IncrementMode
+import com.lab.chessclock.clock.TimeControl
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -19,5 +22,14 @@ class ClockSettingsTest {
     fun allZeroTimeStillGivesAPlayableGame() {
         val timeControl = ClockSettings(hours = 0, minutes = 0, seconds = 0).timeControl
         assertEquals(ClockSettings.MIN_INITIAL_TIME, timeControl.initial)
+    }
+
+    @Test
+    fun defaultsAreBlitzWithAnIncrementForPlayersFacingEachOther() {
+        val defaults = ClockSettings()
+        assertEquals(TimeControl(5.minutes, 3.seconds, IncrementMode.Fischer), defaults.timeControl)
+        assertEquals(Orientation.HorizontalOpposite, defaults.orientation)
+        assertTrue(TimePreset.All.any { it.matches(defaults) })
+        assertTrue(defaults.vibrateOnTurnEnd && defaults.vibrateOnLowTime)
     }
 }

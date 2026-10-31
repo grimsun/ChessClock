@@ -15,7 +15,7 @@ enum class Orientation(val storageKey: String) {
 
     companion object {
         fun fromStorageKey(key: String?): Orientation =
-            entries.firstOrNull { it.storageKey == key } ?: HorizontalSame
+            entries.firstOrNull { it.storageKey == key } ?: HorizontalOpposite
     }
 }
 
@@ -89,13 +89,17 @@ enum class TimerSetting(val storageKey: String, val max: Int) {
     }
 }
 
+/**
+ * The defaults are set for a phone lying between two players across a board: 5 + 3 blitz, whose
+ * increment keeps a won game from being lost on time, and each time turned to its player.
+ */
 data class ClockSettings(
     val hours: Int = 0,
     val minutes: Int = 5,
     val seconds: Int = 0,
-    val incrementSeconds: Int = 0,
+    val incrementSeconds: Int = 3,
     val incrementMode: IncrementMode = IncrementMode.Fischer,
-    val orientation: Orientation = Orientation.HorizontalSame,
+    val orientation: Orientation = Orientation.HorizontalOpposite,
     val faceStyle: FaceStyle = FaceStyle.Rings,
     val theme: ThemeMode = ThemeMode.System,
     val palette: ColorPalette = ColorPalette.Walnut,
