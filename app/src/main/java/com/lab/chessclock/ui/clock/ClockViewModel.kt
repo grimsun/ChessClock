@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.Player
+import com.lab.chessclock.haptics.Haptics
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
@@ -43,6 +44,7 @@ class ClockViewModel(
     settingsRepository: SettingsRepository,
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
     initialSettings: ClockSettings? = null,
+    private val haptics: Haptics = Haptics.None,
 ) : ViewModel() {
 
     private val clock = MutableStateFlow(initialSettings?.let { ChessClock(it.timeControl) })
@@ -74,16 +76,26 @@ class ClockViewModel(
     private fun readyState(clock: ChessClock, settings: ClockSettings) =
         ClockUiState.Ready(clock, settings.orientation, settings.faceStyle)
 
-    fun onPlayerPressed(player: Player) = update { it.press(player) }
+    fun onPlayerPressed(player: Player) {
+        val before = clock.value
+        val after = update { it.press(player) }
+        // Confirms the press to a player who is looking at the board, not the clock.
+        if (after != null && after.status == ClockStatus.Running && after.turn != before?.turn) haptics.turnEnded()
+    }
 
-    fun onControlPressed() = update { it.toggle() }
+    fun onControlPressed() {
+        update { it.toggle() }
+    }
 
-    fun pause() = update { it.pause() }
+    fun pause() {
+        update { it.pause() }
+    }
 
-    private fun update(action: (ChessClock) -> ChessClock) {
+    private fun update(action: (ChessClock) -> ChessClock): ChessClock? {
         chargeElapsedTime()
         val next = clock.updateAndGet { it?.let(action) }
         if (next?.status == ClockStatus.Running) startTicker() else stopTicker()
+        return next
     }
 
     private fun startTicker() {
@@ -116,7 +128,7 @@ class ClockViewModel(
         val TICK_INTERVAL = 100.milliseconds
 
         val Factory = appViewModelFactory {
-            ClockViewModel(settingsRepository, initialSettings = currentSettings.value)
+            ClockViewModel(settingsRepository, initialSettings = currentSettings.value, haptics = haptics)
         }
     }
 }

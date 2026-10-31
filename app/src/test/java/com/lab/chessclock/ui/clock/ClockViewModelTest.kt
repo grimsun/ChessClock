@@ -6,6 +6,7 @@ import com.lab.chessclock.clock.Player
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.testing.FakeHaptics
 import com.lab.chessclock.testing.FakeSettingsRepository
 import com.lab.chessclock.testing.MainDispatcherRule
 import com.lab.chessclock.testing.NeverLoadingSettingsRepository
@@ -30,6 +31,7 @@ class ClockViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val settings = FakeSettingsRepository(ClockSettings(minutes = 5))
+    private val haptics = FakeHaptics()
 
     @Test
     fun startsWithTimeControlFromSettings() = runTest {
@@ -215,8 +217,32 @@ class ClockViewModelTest {
         viewModel.pause()
     }
 
+    @Test
+    fun endingATurnClicks() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.onPlayerPressed(Player.First)
+        viewModel.onPlayerPressed(Player.Second)
+
+        assertEquals(listOf("turnEnded", "turnEnded"), haptics.played)
+        viewModel.pause()
+    }
+
+    @Test
+    fun pressesThatChangeNothingDoNotClick() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onPlayerPressed(Player.First)
+        haptics.played.clear()
+
+        // The opponent's side while they are on move, then the Pause button.
+        viewModel.onPlayerPressed(Player.First)
+        viewModel.onControlPressed()
+
+        assertEquals(emptyList<String>(), haptics.played)
+    }
+
     private fun TestScope.createViewModel(): ClockViewModel {
-        val viewModel = ClockViewModel(settings, timeSource = testScheduler.timeSource)
+        val viewModel = ClockViewModel(settings, timeSource = testScheduler.timeSource, haptics = haptics)
         // uiState is only produced while someone collects it, as the UI would.
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
         return viewModel
