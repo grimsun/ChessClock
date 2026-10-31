@@ -269,6 +269,29 @@ class ClockViewModelTest {
         viewModel.pause()
     }
 
+    @Test
+    fun vibrationsCanBeTurnedOff() = runTest {
+        settings.update { it.copy(seconds = 12, minutes = 0, vibrateOnTurnEnd = false, vibrateOnLowTime = false) }
+        val viewModel = createViewModel()
+
+        viewModel.onPlayerPressed(Player.First)
+        advanceTimeBy(20_000)
+
+        assertEquals(emptyList<String>(), haptics.played)
+    }
+
+    @Test
+    fun turnClickAndLowTimeBuzzAreSeparateSettings() = runTest {
+        settings.update { it.copy(seconds = 12, minutes = 0, vibrateOnTurnEnd = false) }
+        val viewModel = createViewModel()
+
+        viewModel.onPlayerPressed(Player.First)
+        advanceTimeBy(3_000)
+
+        assertEquals(listOf("lowTime"), haptics.played)
+        viewModel.pause()
+    }
+
     private fun TestScope.createViewModel(): ClockViewModel {
         val viewModel = ClockViewModel(settings, timeSource = testScheduler.timeSource, haptics = haptics)
         // uiState is only produced while someone collects it, as the UI would.

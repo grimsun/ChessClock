@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -35,6 +36,8 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
             preferences[FACE_STYLE] = updated.faceStyle.storageKey
             preferences[THEME] = updated.theme.storageKey
             preferences[PALETTE] = updated.palette.storageKey
+            preferences[VIBRATE_ON_TURN_END] = updated.vibrateOnTurnEnd
+            preferences[VIBRATE_ON_LOW_TIME] = updated.vibrateOnLowTime
         }
     }
 
@@ -46,6 +49,8 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
                 faceStyle = FaceStyle.fromStorageKey(this[FACE_STYLE]),
                 theme = ThemeMode.fromStorageKey(this[THEME]),
                 palette = ColorPalette.fromStorageKey(this[PALETTE]),
+                vibrateOnTurnEnd = this[VIBRATE_ON_TURN_END] ?: ClockSettings().vibrateOnTurnEnd,
+                vibrateOnLowTime = this[VIBRATE_ON_LOW_TIME] ?: ClockSettings().vibrateOnLowTime,
             ),
         ) { settings, setting -> this[setting.key]?.let { setting.update(settings, it) } ?: settings }
 
@@ -58,6 +63,8 @@ class DataStoreSettingsRepository(private val dataStore: DataStore<Preferences>)
         val FACE_STYLE = stringPreferencesKey("face_style")
         val THEME = stringPreferencesKey("theme")
         val PALETTE = stringPreferencesKey("palette")
+        val VIBRATE_ON_TURN_END = booleanPreferencesKey("vibrate_turn_end")
+        val VIBRATE_ON_LOW_TIME = booleanPreferencesKey("vibrate_low_time")
     }
 }
 

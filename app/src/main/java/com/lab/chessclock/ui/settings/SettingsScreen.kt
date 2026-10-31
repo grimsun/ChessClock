@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -29,6 +30,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -83,6 +85,8 @@ fun SettingsRoute(
         onPaletteChange = viewModel::setPalette,
         onTimerChange = viewModel::setTimer,
         onIncrementModeChange = viewModel::setIncrementMode,
+        onVibrateOnTurnEndChange = viewModel::setVibrateOnTurnEnd,
+        onVibrateOnLowTimeChange = viewModel::setVibrateOnLowTime,
         onPresetSelect = viewModel::applyPreset,
     )
 }
@@ -98,6 +102,8 @@ fun SettingsScreen(
     onPaletteChange: (ColorPalette) -> Unit,
     onTimerChange: (TimerSetting, Int) -> Unit,
     onIncrementModeChange: (IncrementMode) -> Unit,
+    onVibrateOnTurnEndChange: (Boolean) -> Unit,
+    onVibrateOnLowTimeChange: (Boolean) -> Unit,
     onPresetSelect: (TimePreset) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -179,6 +185,22 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            SectionHeader(R.string.vibration_title)
+            SwitchOption(
+                label = R.string.vibrate_on_turn_end,
+                description = R.string.vibrate_on_turn_end_description,
+                checked = settings.vibrateOnTurnEnd,
+                onCheckedChange = onVibrateOnTurnEndChange,
+            )
+            SwitchOption(
+                label = R.string.vibrate_on_low_time,
+                description = R.string.vibrate_on_low_time_description,
+                checked = settings.vibrateOnLowTime,
+                onCheckedChange = onVibrateOnLowTimeChange,
+            )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -312,6 +334,34 @@ private fun RadioOption(
             }
         }
         trailing()
+    }
+}
+
+/** A whole row that toggles, with the switch at its end. */
+@Composable
+private fun SwitchOption(
+    @StringRes label: Int,
+    @StringRes description: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, onValueChange = onCheckedChange, role = Role.Switch)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = stringResource(description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
@@ -454,6 +504,8 @@ private fun SettingsScreenPreview() {
             onPaletteChange = {},
             onTimerChange = { _, _ -> },
             onIncrementModeChange = {},
+            onVibrateOnTurnEndChange = {},
+            onVibrateOnLowTimeChange = {},
             onPresetSelect = {},
         )
     }

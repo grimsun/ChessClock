@@ -3,6 +3,8 @@ package com.lab.chessclock.ui.settings
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -113,6 +115,23 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun turningVibrationsOffReportsEachOne() {
+        val turnEnd = mutableListOf<Boolean>()
+        val lowTime = mutableListOf<Boolean>()
+        setScreen(
+            ClockSettings(vibrateOnLowTime = false),
+            onVibrateOnTurnEndChange = turnEnd::add,
+            onVibrateOnLowTimeChange = lowTime::add,
+        )
+
+        composeRule.onNodeWithText("When a turn ends").performScrollTo().assertIsOn().performClick()
+        composeRule.onNodeWithText("When time runs low").performScrollTo().assertIsOff().performClick()
+
+        assertEquals(listOf(false), turnEnd)
+        assertEquals(listOf(true), lowTime)
+    }
+
+    @Test
     fun marksThePresetMatchingTheSettings() {
         setScreen(ClockSettings(minutes = 3, incrementSeconds = 2))
 
@@ -169,6 +188,8 @@ class SettingsScreenTest {
         onPaletteChange: (ColorPalette) -> Unit = {},
         onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
         onIncrementModeChange: (IncrementMode) -> Unit = {},
+        onVibrateOnTurnEndChange: (Boolean) -> Unit = {},
+        onVibrateOnLowTimeChange: (Boolean) -> Unit = {},
         onPresetSelect: (TimePreset) -> Unit = {},
     ) {
         composeRule.setContent {
@@ -182,6 +203,8 @@ class SettingsScreenTest {
                     onPaletteChange = onPaletteChange,
                     onTimerChange = onTimerChange,
                     onIncrementModeChange = onIncrementModeChange,
+                    onVibrateOnTurnEndChange = onVibrateOnTurnEndChange,
+                    onVibrateOnLowTimeChange = onVibrateOnLowTimeChange,
                     onPresetSelect = onPresetSelect,
                 )
             }

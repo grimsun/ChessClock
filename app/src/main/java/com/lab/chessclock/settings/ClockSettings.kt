@@ -99,6 +99,10 @@ data class ClockSettings(
     val faceStyle: FaceStyle = FaceStyle.Rings,
     val theme: ThemeMode = ThemeMode.System,
     val palette: ColorPalette = ColorPalette.Walnut,
+    /** A click when a press ends the turn. */
+    val vibrateOnTurnEnd: Boolean = true,
+    /** Pulses when the player on move gets low on time, and a buzz when it runs out. */
+    val vibrateOnLowTime: Boolean = true,
 ) {
     val timeControl: TimeControl
         get() = TimeControl(

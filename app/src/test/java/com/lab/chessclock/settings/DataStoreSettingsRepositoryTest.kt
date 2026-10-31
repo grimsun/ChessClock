@@ -39,6 +39,7 @@ class DataStoreSettingsRepositoryTest {
                 faceStyle = FaceStyle.Panels,
                 theme = ThemeMode.Dark,
                 palette = ColorPalette.Ocean,
+                vibrateOnLowTime = false,
             )
         }
 
@@ -51,6 +52,8 @@ class DataStoreSettingsRepositoryTest {
         assertEquals(3.minutes, settings.timeControl.initial)
         assertEquals(2.seconds, settings.timeControl.increment)
         assertEquals(IncrementMode.Bronstein, settings.timeControl.mode)
+        assertEquals(true, settings.vibrateOnTurnEnd)
+        assertEquals(false, settings.vibrateOnLowTime)
     }
 
     @Test

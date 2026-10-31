@@ -47,6 +47,11 @@
     <string name="orientation_vertical_same_description">Both times read from the same long side</string>
     <string name="orientation_vertical_opposite">Facing each other at the sides</string>
     <string name="orientation_vertical_opposite_description">Players at the left and right, each time turned to its player</string>
+    <string name="vibration_title">Vibration</string>
+    <string name="vibrate_on_turn_end">When a turn ends</string>
+    <string name="vibrate_on_turn_end_description">A short click confirms your press without looking</string>
+    <string name="vibrate_on_low_time">When time runs low</string>
+    <string name="vibrate_on_low_time_description">Two pulses at 10 seconds left, a long buzz when time runs out</string>
     <string name="appearance_title">Appearance</string>
     <string name="face_style_title">Clock face</string>
     <string name="face_style_rings">Rings</string>
