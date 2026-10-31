@@ -21,10 +21,10 @@ struct ClockScreen: View {
                 ? AnyLayout(HStackLayout(spacing: 0))
                 : AnyLayout(VStackLayout(spacing: 0))
             layout {
-                PlayerFace(clock: clock, player: .first) { model.press(.first) }
+                PlayerFace(clock: clock, player: .first) { model.press(.first, touchedAgo: $0) }
                     .rotationEffect(.degrees(facing ? 180 : 0))
                 ControlButton(status: clock.status) { model.toggle() }
-                PlayerFace(clock: clock, player: .second) { model.press(.second) }
+                PlayerFace(clock: clock, player: .second) { model.press(.second, touchedAgo: $0) }
             }
         }
         // The button sits on the second player's half: hide it during play so a hard tap near the
@@ -67,7 +67,8 @@ let lowTime = Duration.seconds(10)
 private struct PlayerFace: View {
     let clock: ChessClock
     let player: Player
-    let onPress: () -> Void
+    /// The player touched the face, and how long ago the screen sensed the touch.
+    let onPress: (Duration) -> Void
     @State private var pressed = false
 
     var body: some View {
@@ -83,27 +84,18 @@ private struct PlayerFace: View {
             .scaleEffect(pressed ? 0.96 : 1)
             .animation(.spring(duration: 0.2), value: pressed)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
             // Like a physical clock, it acts the moment it is touched rather than when the finger
             // lifts, as a Button would: the opponent's clock starts a tap's length sooner.
-            .gesture(touchDown)
+            .overlay {
+                TouchDownArea(onTouchDown: onPress) { pressed = $0 }
+            }
             // VoiceOver double-taps instead of touching, so it gets the same action as a button.
             .accessibilityElement(children: .ignore)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel(formatClockTime(time.remaining))
             .accessibilityValue(time.isExpired ? "Out of time" : onMove ? "On move" : "")
             .accessibilityHint("End turn")
-            .accessibilityAction(.default) { onPress() }
-    }
-
-    private var touchDown: some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { _ in
-                guard !pressed else { return }
-                pressed = true
-                onPress()
-            }
-            .onEnded { _ in pressed = false }
+            .accessibilityAction(.default) { onPress(.zero) }
     }
 
     private func face(time: PlayerTime, finished: Bool, onMove: Bool) -> some View {
@@ -133,6 +125,53 @@ private struct PlayerFace: View {
         if onMove && time.remaining < lowTime { return .loss }
         // While paused too, so it's clear whose move it is when play resumes.
         return onMove ? .onMove : .waiting
+    }
+}
+
+/// Reports each finger as it lands, with how long ago the screen sensed it, and whether any finger
+/// is down. A UIKit view rather than a SwiftUI gesture, so it sees every finger, not just the first,
+/// and each touch's own timestamp.
+private struct TouchDownArea: UIViewRepresentable {
+    let onTouchDown: (Duration) -> Void
+    let onPressedChange: (Bool) -> Void
+
+    func makeUIView(context: Context) -> TouchView { TouchView() }
+
+    func updateUIView(_ view: TouchView, context: Context) {
+        view.onTouchDown = onTouchDown
+        view.onPressedChange = onPressedChange
+    }
+
+    final class TouchView: UIView {
+        var onTouchDown: (Duration) -> Void = { _ in }
+        var onPressedChange: (Bool) -> Void = { _ in }
+        private var fingers = 0
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            isMultipleTouchEnabled = true
+        }
+
+        required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            // A touch's timestamp counts seconds since boot, like systemUptime.
+            let now = ProcessInfo.processInfo.systemUptime
+            let age = now - (touches.map(\.timestamp).min() ?? now)
+            // Longer than the main thread is ever busy means the timestamp can't be trusted.
+            onTouchDown(.seconds(age >= 0 && age <= 1 ? age : 0))
+            fingers += touches.count
+            onPressedChange(true)
+        }
+
+        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { lift(touches) }
+
+        override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { lift(touches) }
+
+        private func lift(_ touches: Set<UITouch>) {
+            fingers = max(fingers - touches.count, 0)
+            if fingers == 0 { onPressedChange(false) }
+        }
     }
 }
 
