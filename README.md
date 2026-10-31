@@ -8,6 +8,16 @@ A two-player chess clock for Android. Tap your half of the screen to end your tu
   <img src="docs/screenshots/settings.png" width="216" alt="Settings with time-control presets, custom time sliders and seating options">
 </p>
 
+## Design
+
+The idea is a minimal, clean clock that stays out of the way of the game:
+
+- **Two faces and one button.** During play the screen shows only the two times and Pause; the settings button hides while the clock runs.
+- **Color carries the state.** Whose move it is, low time and the result show as color, not as extra labels or icons.
+- **One design language.** Rings and panels share the same square, digits and spacing, and differ only in shape.
+- **Quiet feedback.** A click confirms a press and a pulse warns of low time, so players can keep their eyes on the board.
+- **Every addition earns its place.** A feature or animation goes in only if it is clear, small and useful at the board.
+
 ## Features
 
 - **Time controls** – one-tap presets from bullet to classical (`1 + 0` … `30 + 0`), or your own hours, minutes and seconds with an increment of up to a minute per move
