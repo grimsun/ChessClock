@@ -17,9 +17,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -48,7 +48,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,9 +58,13 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
@@ -229,9 +235,8 @@ private fun PlayerClockFace(
     // The turn passes from one face to the other as a short cross-fade instead of a jump.
     val color by animateColorAsState(targetColor, tween(COLOR_FADE_MILLIS), label = "color")
     val onColor by animateColorAsState(targetOnColor, tween(COLOR_FADE_MILLIS), label = "onColor")
-    // The face gives a little under the finger, confirming the touch before the clock switches.
-    val interactions = remember { MutableInteractionSource() }
-    val pressed by interactions.collectIsPressedAsState()
+    // The face gives a little under the finger while it is down.
+    var pressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.96f else 1f,
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
@@ -243,17 +248,32 @@ private fun PlayerClockFace(
         else -> null
     }
 
-    // The whole half of the screen is the player's button, like a physical clock.
+    // The whole half of the screen is the player's button, like a physical clock, and like one it
+    // acts the moment it is touched rather than when the finger lifts: the opponent's clock starts,
+    // and the player stops being charged, a tap's length sooner.
+    val endTurnLabel = stringResource(R.string.end_turn)
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clickable(
-                interactionSource = interactions,
-                indication = null,
-                onClickLabel = stringResource(R.string.end_turn),
-                onClick = { onPress(player) },
-            )
-            .semantics { if (state != null) stateDescription = state },
+            .pointerInput(player, onPress) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    onPress(player)
+                    pressed = true
+                    waitForUpOrCancellation()
+                    pressed = false
+                }
+            }
+            // TalkBack double-taps instead of touching, so it gets the same action as a click, and
+            // reads the face as one button with its time and state.
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                onClick(label = endTurnLabel) {
+                    onPress(player)
+                    true
+                }
+                if (state != null) stateDescription = state
+            },
         contentAlignment = Alignment.Center,
     ) {
         val text = formatClockTime(time.remaining)
