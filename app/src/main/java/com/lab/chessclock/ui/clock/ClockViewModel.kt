@@ -121,7 +121,21 @@ class ClockViewModel(
         val last = lastTick ?: return
         val now = timeSource.markNow()
         lastTick = now
-        clock.update { it?.tick(now - last) }
+        val before = clock.value ?: return
+        val after = clock.updateAndGet { it?.tick(now - last) } ?: return
+        warnAboutTime(before, after)
+    }
+
+    /**
+     * Buzzes when the running player's time crosses into low time or runs out. Only while their
+     * clock runs, so a player who starts their turn already short isn't buzzed on every move.
+     */
+    private fun warnAboutTime(before: ChessClock, after: ChessClock) {
+        val player = before.active ?: return
+        when {
+            after.status == ClockStatus.Finished && before.status != ClockStatus.Finished -> haptics.outOfTime()
+            after.isLowOnTime(player) && !before.isLowOnTime(player) -> haptics.lowTime()
+        }
     }
 
     companion object {
