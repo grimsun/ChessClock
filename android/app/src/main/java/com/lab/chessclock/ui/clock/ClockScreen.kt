@@ -3,14 +3,23 @@ package com.lab.chessclock.ui.clock
 import android.content.res.Configuration
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.ReportDrawnWhen
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,6 +35,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -37,12 +48,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -157,13 +170,17 @@ fun ClockScreen(
         // The button sits on the second player's half: hide it during play so a hard tap near the
         // corner ends the turn instead of opening settings and pausing the game.
         val running = uiState is ClockUiState.Ready && uiState.clock.status == ClockStatus.Running
-        if (!running) {
+        AnimatedVisibility(
+            visible = !running,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .safeDrawingPadding()
+                .padding(16.dp),
+            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+            exit = fadeOut() + scaleOut(targetScale = 0.8f),
+        ) {
             SmallFloatingActionButton(
                 onClick = onOpenSettings,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .safeDrawingPadding()
-                    .padding(16.dp),
                 containerColor = MaterialTheme.clockColors.inactive,
                 contentColor = MaterialTheme.clockColors.onInactive,
                 elevation = FloatingActionButtonDefaults.elevation(1.dp),
@@ -190,16 +207,18 @@ private fun PlayerClockFace(
     val finished = clock.status == ClockStatus.Finished
     val progress by animateFloatAsState(
         targetValue = if (finished) 1f else time.progress,
+        // Smooth between ticks while running; otherwise a reset or a new time control sweeps the
+        // ring back to full instead of jumping.
         animationSpec = if (clock.status == ClockStatus.Running) {
             tween(ClockViewModel.TICK_INTERVAL.inWholeMilliseconds.toInt(), easing = LinearEasing)
         } else {
-            snap()
+            tween(500)
         },
         label = "progress",
     )
     val colors = MaterialTheme.clockColors
     // The face color, and the color of a panel's content drawn on it.
-    val (color, onColor) = when {
+    val (targetColor, targetOnColor) = when {
         finished && time.isExpired -> colors.loss to colors.onLoss
         finished -> colors.win to colors.onWin
         clock.isLowOnTime(player) -> colors.loss to colors.onLoss
@@ -207,6 +226,17 @@ private fun PlayerClockFace(
         clock.turn == player -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
         else -> colors.inactive to colors.onInactive
     }
+    // The turn passes from one face to the other as a short cross-fade instead of a jump.
+    val color by animateColorAsState(targetColor, tween(COLOR_FADE_MILLIS), label = "color")
+    val onColor by animateColorAsState(targetOnColor, tween(COLOR_FADE_MILLIS), label = "onColor")
+    // The face gives a little under the finger, confirming the touch before the clock switches.
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.96f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "pressScale",
+    )
     val state = when {
         time.isExpired -> stringResource(R.string.state_out_of_time)
         !finished && clock.turn == player -> stringResource(R.string.state_on_move)
@@ -218,7 +248,7 @@ private fun PlayerClockFace(
         modifier = modifier
             .fillMaxSize()
             .clickable(
-                interactionSource = null,
+                interactionSource = interactions,
                 indication = null,
                 onClickLabel = stringResource(R.string.end_turn),
                 onClick = { onPress(player) },
@@ -231,9 +261,17 @@ private fun PlayerClockFace(
         val delay = clock.delayRemaining.takeIf { clock.turn == player && it > Duration.ZERO }
             ?.let { stringResource(R.string.delay_remaining, it.inWholeSecondsRoundedUp) }
         val rotation = orientation.rotationOf(player)
-        when (faceStyle) {
-            FaceStyle.Rings -> RingFace(text, delay, { progress }, color, rotation)
-            FaceStyle.Panels -> PanelFace(text, delay, { progress }, color, onColor, rotation)
+        Box(
+            modifier = Modifier.graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
+            contentAlignment = Alignment.Center,
+        ) {
+            when (faceStyle) {
+                FaceStyle.Rings -> RingFace(text, delay, { progress }, color, rotation)
+                FaceStyle.Panels -> PanelFace(text, delay, { progress }, color, onColor, rotation)
+            }
         }
     }
 }
@@ -375,11 +413,19 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
         shape = CircleShape,
         contentPadding = PaddingValues(0.dp),
     ) {
-        Text(stringResource(label), fontSize = 18.sp)
+        AnimatedContent(
+            targetState = label,
+            transitionSpec = { fadeIn(tween(COLOR_FADE_MILLIS)) togetherWith fadeOut(tween(COLOR_FADE_MILLIS)) },
+            label = "controlLabel",
+        ) {
+            Text(stringResource(it), fontSize = 18.sp)
+        }
     }
 }
 
 private val RING_STROKE = 15.dp
+
+private const val COLOR_FADE_MILLIS = 200
 
 /** Large enough for big digits, small enough that a ring stays a ring on a tablet. */
 private val FACE_SIZE = 340.dp
