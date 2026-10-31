@@ -30,13 +30,14 @@ interface Haptics {
 /** [Haptics] played on the device's vibrator, if it has one. */
 class VibratorHaptics(context: Context) : Haptics {
 
+    // Looked up once, so a press doesn't ask the system whether there is a vibrator every time.
     private val vibrator: Vibrator? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             context.getSystemService(VibratorManager::class.java)?.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
             context.getSystemService(Vibrator::class.java)
-        }
+        }?.takeIf { it.hasVibrator() }
 
     // A crisp click, like a physical clock's button.
     private val turnEnded =
@@ -59,6 +60,6 @@ class VibratorHaptics(context: Context) : Haptics {
     override fun outOfTime() = vibrate(outOfTime)
 
     private fun vibrate(effect: VibrationEffect) {
-        vibrator?.takeIf { it.hasVibrator() }?.vibrate(effect)
+        vibrator?.vibrate(effect)
     }
 }
