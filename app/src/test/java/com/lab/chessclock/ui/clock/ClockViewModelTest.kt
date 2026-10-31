@@ -241,6 +241,34 @@ class ClockViewModelTest {
         assertEquals(emptyList<String>(), haptics.played)
     }
 
+    @Test
+    fun buzzesOnceWhenTimeGetsLowAndAgainWhenItRunsOut() = runTest {
+        settings.update { it.copy(minutes = 0, seconds = 12) }
+        val viewModel = createViewModel()
+        viewModel.onControlPressed()
+
+        advanceTimeBy(1_000)
+        assertEquals(emptyList<String>(), haptics.played)
+        advanceTimeBy(2_000)
+        assertEquals(listOf("lowTime"), haptics.played)
+        advanceTimeBy(5_000)
+        assertEquals(listOf("lowTime"), haptics.played)
+        advanceTimeBy(5_000)
+        assertEquals(listOf("lowTime", "outOfTime"), haptics.played)
+    }
+
+    @Test
+    fun aTurnThatStartsLowDoesNotBuzz() = runTest {
+        settings.update { it.copy(minutes = 0, seconds = 5) }
+        val viewModel = createViewModel()
+        viewModel.onControlPressed()
+
+        advanceTimeBy(1_000)
+
+        assertEquals(emptyList<String>(), haptics.played)
+        viewModel.pause()
+    }
+
     private fun TestScope.createViewModel(): ClockViewModel {
         val viewModel = ClockViewModel(settings, timeSource = testScheduler.timeSource, haptics = haptics)
         // uiState is only produced while someone collects it, as the UI would.

@@ -9,4 +9,12 @@ class FakeHaptics : Haptics {
     override fun turnEnded() {
         played += "turnEnded"
     }
+
+    override fun lowTime() {
+        played += "lowTime"
+    }
+
+    override fun outOfTime() {
+        played += "outOfTime"
+    }
 }
