@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
 
@@ -87,9 +88,13 @@ class ClockViewModel(
     private fun readyState(clock: ChessClock, settings: ClockSettings) =
         ClockUiState.Ready(clock, settings.orientation, settings.faceStyle)
 
-    fun onPlayerPressed(player: Player) {
+    /**
+     * [player] touched their face [touchedAgo] before this call: the turn ends at that moment, so
+     * the time the app took to handle the touch is charged to neither player as thinking time.
+     */
+    fun onPlayerPressed(player: Player, touchedAgo: Duration = Duration.ZERO) {
         val before = clock.value
-        val after = update { it.press(player) }
+        val after = update(at = timeSource.markNow() - touchedAgo) { it.press(player) }
         // Confirms the press to a player who is looking at the board, not the clock.
         if (vibrateOnTurnEnd && after != null && after.status == ClockStatus.Running && after.turn != before?.turn) {
             haptics.turnEnded()
@@ -104,16 +109,21 @@ class ClockViewModel(
         update { it.pause() }
     }
 
-    private fun update(action: (ChessClock) -> ChessClock): ChessClock? {
-        chargeElapsedTime()
+    /** Applies [action] as of [at], the moment it happened. */
+    private fun update(
+        at: ComparableTimeMark = timeSource.markNow(),
+        action: (ChessClock) -> ChessClock,
+    ): ChessClock? {
+        chargeElapsedTime(at)
         val next = clock.updateAndGet { it?.let(action) }
-        if (next?.status == ClockStatus.Running) startTicker() else stopTicker()
+        if (next?.status == ClockStatus.Running) startTicker(at) else stopTicker()
         return next
     }
 
-    private fun startTicker() {
+    /** Starts charging the running player from [from]. */
+    private fun startTicker(from: ComparableTimeMark) {
         if (ticker?.isActive == true) return
-        lastTick = timeSource.markNow()
+        lastTick = from
         ticker = viewModelScope.launch {
             while (clock.value?.status == ClockStatus.Running) {
                 delay(TICK_INTERVAL)
@@ -129,10 +139,13 @@ class ClockViewModel(
         lastTick = null
     }
 
-    /** Charges the running player for the time since the last tick, so no time is lost between ticks. */
-    private fun chargeElapsedTime() {
+    /**
+     * Charges the running player for the time from the last tick to [now], so no time is lost
+     * between ticks. A [now] before the last tick charges nothing rather than giving time back.
+     */
+    private fun chargeElapsedTime(now: ComparableTimeMark = timeSource.markNow()) {
         val last = lastTick ?: return
-        val now = timeSource.markNow()
+        if (now <= last) return
         lastTick = now
         val before = clock.value ?: return
         val after = clock.updateAndGet { it?.tick(now - last) } ?: return

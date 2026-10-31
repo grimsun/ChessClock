@@ -1,6 +1,7 @@
 package com.lab.chessclock.ui.clock
 
 import android.content.res.Configuration
+import android.os.SystemClock
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.AnimatedContent
@@ -17,9 +18,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -58,6 +56,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -124,7 +123,8 @@ fun ClockRoute(
 @Composable
 fun ClockScreen(
     uiState: ClockUiState,
-    onPlayerPressed: (Player) -> Unit,
+    /** A player touched their face, and how long ago the screen sensed the touch. */
+    onPlayerPressed: (Player, Duration) -> Unit,
     onControlPressed: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -206,7 +206,7 @@ private fun PlayerClockFace(
     player: Player,
     orientation: Orientation,
     faceStyle: FaceStyle,
-    onPress: (Player) -> Unit,
+    onPress: (Player, Duration) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val time = clock.timeOf(player)
@@ -250,18 +250,21 @@ private fun PlayerClockFace(
 
     // The whole half of the screen is the player's button, like a physical clock, and like one it
     // acts the moment it is touched rather than when the finger lifts: the opponent's clock starts,
-    // and the player stops being charged, a tap's length sooner.
+    // and the player stops being charged, a tap's length sooner. Every finger that lands counts,
+    // even while another still rests on the face.
     val endTurnLabel = stringResource(R.string.end_turn)
     Box(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(player, onPress) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    onPress(player)
-                    pressed = true
-                    waitForUpOrCancellation()
-                    pressed = false
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        event.changes.firstOrNull { it.changedToDownIgnoreConsumed() }?.let { down ->
+                            onPress(player, touchAge(down.uptimeMillis))
+                        }
+                        pressed = event.changes.any { it.pressed }
+                    }
                 }
             }
             // TalkBack double-taps instead of touching, so it gets the same action as a click, and
@@ -269,7 +272,7 @@ private fun PlayerClockFace(
             .semantics(mergeDescendants = true) {
                 role = Role.Button
                 onClick(label = endTurnLabel) {
-                    onPress(player)
+                    onPress(player, Duration.ZERO)
                     true
                 }
                 if (state != null) stateDescription = state
@@ -295,6 +298,15 @@ private fun PlayerClockFace(
         }
     }
 }
+
+/**
+ * How long ago a touch at [uptimeMillis] (the [SystemClock.uptimeMillis] the screen sensed it at)
+ * happened: the time the app took to receive and handle it. Zero for a time that can't be a real
+ * touch's, such as one injected by a test with its own clock.
+ */
+private fun touchAge(uptimeMillis: Long): Duration =
+    (SystemClock.uptimeMillis() - uptimeMillis).milliseconds.takeIf { it in Duration.ZERO..MAX_TOUCH_AGE }
+        ?: Duration.ZERO
 
 @Composable
 private fun RingFace(text: String, caption: String?, progress: () -> Float, color: Color, rotation: Float) {
@@ -447,6 +459,9 @@ private val RING_STROKE = 15.dp
 
 private const val COLOR_FADE_MILLIS = 200
 
+/** Longer than the main thread is ever busy, short enough to reject a timestamp from another clock. */
+private val MAX_TOUCH_AGE = 1.seconds
+
 /** Large enough for big digits, small enough that a ring stays a ring on a tablet. */
 private val FACE_SIZE = 340.dp
 
@@ -510,7 +525,7 @@ private fun DelayPreview() {
             FaceStyle.entries.forEach { faceStyle ->
                 ClockScreen(
                     uiState = ClockUiState.Ready(clock, Orientation.HorizontalOpposite, faceStyle),
-                    onPlayerPressed = {},
+                    onPlayerPressed = { _, _ -> },
                     onControlPressed = {},
                     onOpenSettings = {},
                     modifier = Modifier.weight(1f),
@@ -535,7 +550,7 @@ private fun PalettesPreview() {
             ChessClockTheme(palette = palette) {
                 ClockScreen(
                     uiState = ClockUiState.Ready(clock, Orientation.HorizontalOpposite, FaceStyle.Panels),
-                    onPlayerPressed = {},
+                    onPlayerPressed = { _, _ -> },
                     onControlPressed = {},
                     onOpenSettings = {},
                     modifier = Modifier.weight(1f),
@@ -551,7 +566,7 @@ private fun ClockScreenPreview(faceStyle: FaceStyle, orientation: Orientation) {
     ChessClockTheme {
         ClockScreen(
             uiState = ClockUiState.Ready(clock, orientation, faceStyle),
-            onPlayerPressed = {},
+            onPlayerPressed = { _, _ -> },
             onControlPressed = {},
             onOpenSettings = {},
         )
