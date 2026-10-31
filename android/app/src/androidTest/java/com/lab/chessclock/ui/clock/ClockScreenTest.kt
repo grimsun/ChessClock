@@ -3,7 +3,9 @@ package com.lab.chessclock.ui.clock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasText
@@ -12,6 +14,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.IncrementMode
@@ -59,6 +63,26 @@ class ClockScreenTest {
             state = ClockUiState.Ready(clock.tick(4.seconds), Orientation.HorizontalSame, faceStyle)
             composeRule.onAllNodesWithText("Delay", substring = true).assertCountEquals(0)
         }
+    }
+
+    @Test
+    fun aFaceActsWhenTouchedBeforeTheFingerLifts() {
+        val pressed = mutableListOf<Player>()
+        setScreen(ClockUiState.Ready(newGame, Orientation.HorizontalSame), onPlayerPressed = pressed::add)
+
+        composeRule.onAllNodesWithText("05:00")[1].performTouchInput { down(center) }
+
+        assertEquals(listOf(Player.Second), pressed)
+    }
+
+    @Test
+    fun talkBackCanEndATurn() {
+        val pressed = mutableListOf<Player>()
+        setScreen(ClockUiState.Ready(newGame, Orientation.HorizontalSame), onPlayerPressed = pressed::add)
+
+        composeRule.onAllNodes(hasClickLabel("End turn"))[0].performSemanticsAction(SemanticsActions.OnClick)
+
+        assertEquals(listOf(Player.First), pressed)
     }
 
     @Test
@@ -154,6 +178,10 @@ class ClockScreenTest {
 
     private fun hasStateDescription(value: String) =
         SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
+
+    private fun hasClickLabel(label: String) = SemanticsMatcher("click label is $label") {
+        it.config.getOrNull(SemanticsActions.OnClick)?.label == label
+    }
 
     private fun setScreen(
         uiState: ClockUiState,
