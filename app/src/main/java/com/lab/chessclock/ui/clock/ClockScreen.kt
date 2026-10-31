@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,7 +43,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,7 +52,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -241,14 +240,7 @@ private fun PlayerClockFace(
 
 @Composable
 private fun RingFace(text: String, caption: String?, progress: () -> Float, color: Color, rotation: Float) {
-    Box(
-        modifier = Modifier
-            .padding(16.dp)
-            .sizeIn(maxWidth = 300.dp, maxHeight = 300.dp)
-            .aspectRatio(1f)
-            .rotate(rotation),
-        contentAlignment = Alignment.Center,
-    ) {
+    FaceSquare(rotation) {
         CircularProgressIndicator(
             progress = progress,
             modifier = Modifier.fillMaxSize(),
@@ -258,26 +250,7 @@ private fun RingFace(text: String, caption: String?, progress: () -> Float, colo
             strokeCap = StrokeCap.Round,
             gapSize = 0.dp,
         )
-        ClockText(
-            text = text,
-            color = MaterialTheme.clockColors.text,
-            maxFontSize = 60.sp,
-            // Inside the ring's stroke, shrinking the text when the face is small or the
-            // system font is large instead of letting it overflow the ring.
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = RING_STROKE + 12.dp),
-        )
-        if (caption != null) {
-            Text(
-                text = caption,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = RING_STROKE + 16.dp),
-                color = MaterialTheme.clockColors.text,
-                style = MaterialTheme.typography.titleMedium,
-            )
-        }
+        FaceContent(text, caption, MaterialTheme.clockColors.text)
     }
 }
 
@@ -290,49 +263,69 @@ private fun PanelFace(
     onPanel: Color,
     rotation: Float,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(color),
-    ) {
-        // Turned with the player's seat, and laid out for the turned box so the digits fill the
-        // panel's long side when the players sit at its ends.
+    FaceSquare(rotation) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .rotateFitted(rotation)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            ClockText(
-                text = text,
-                color = onPanel,
-                maxFontSize = 112.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (caption != null) {
-                Text(
-                    text = caption,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    color = onPanel,
-                    style = MaterialTheme.typography.titleLarge,
-                )
-            }
-            // The remaining share of the player's time, as a thin bar below the digits.
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                color = onPanel,
-                trackColor = onPanel.copy(alpha = 0.25f),
-                gapSize = 0.dp,
-                drawStopIndicator = {},
-            )
-        }
+                .clip(RoundedCornerShape(PANEL_CORNER))
+                .background(color),
+        )
+        FaceContent(text, caption, onPanel)
+        // The remaining share of the player's time, as a thin bar along the panel's bottom edge.
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = PANEL_CORNER, vertical = 20.dp),
+            color = onPanel,
+            trackColor = onPanel.copy(alpha = 0.25f),
+            gapSize = 0.dp,
+            drawStopIndicator = {},
+        )
+    }
+}
+
+/**
+ * The square both face styles draw in, turned to the player. Rings and panels share its size and
+ * [FaceContent], so they differ only in shape: an outline that empties or a filled block.
+ */
+@Composable
+private fun FaceSquare(rotation: Float, content: @Composable BoxScope.() -> Unit) {
+    Box(
+        modifier = Modifier
+            .padding(16.dp)
+            .sizeIn(maxWidth = FACE_SIZE, maxHeight = FACE_SIZE)
+            .aspectRatio(1f)
+            .rotate(rotation),
+        contentAlignment = Alignment.Center,
+        content = content,
+    )
+}
+
+/** The time, and below it any delay countdown, laid out the same on every face. */
+@Composable
+private fun BoxScope.FaceContent(text: String, caption: String?, color: Color) {
+    ClockText(
+        text = text,
+        color = color,
+        maxFontSize = 96.sp,
+        fontWeight = FontWeight.Medium,
+        // Clear of the ring's stroke even at the corners of the text, shrinking the text when the
+        // face is small or the system font is large instead of letting it overflow.
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = RING_STROKE + 24.dp),
+    )
+    if (caption != null) {
+        Text(
+            text = caption,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = RING_STROKE + 40.dp),
+            color = color,
+            style = MaterialTheme.typography.titleMedium,
+        )
     }
 }
 
@@ -358,28 +351,6 @@ private fun ClockText(
         softWrap = false,
         autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = maxFontSize),
     )
-}
-
-/**
- * Rotates the content like [rotate], but for a quarter turn measures it with width and height
- * swapped, so it fills the box the way it is seen instead of being clipped to the unturned shape.
- */
-private fun Modifier.rotateFitted(degrees: Float): Modifier = layout { measurable, constraints ->
-    val sideways = degrees % 180f != 0f
-    val placeable = measurable.measure(
-        if (sideways) {
-            Constraints(constraints.minHeight, constraints.maxHeight, constraints.minWidth, constraints.maxWidth)
-        } else {
-            constraints
-        },
-    )
-    val width = if (sideways) placeable.height else placeable.width
-    val height = if (sideways) placeable.width else placeable.height
-    layout(width, height) {
-        placeable.placeWithLayer((width - placeable.width) / 2, (height - placeable.height) / 2) {
-            rotationZ = degrees
-        }
-    }
 }
 
 @Composable
@@ -409,6 +380,11 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
 }
 
 private val RING_STROKE = 15.dp
+
+/** Large enough for big digits, small enough that a ring stays a ring on a tablet. */
+private val FACE_SIZE = 340.dp
+
+private val PANEL_CORNER = 36.dp
 
 /** Below this the player on move sees their face turn red. */
 internal val LOW_TIME = 10.seconds
