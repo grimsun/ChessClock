@@ -1,6 +1,6 @@
 # ChessClock for iPhone
 
-A SwiftUI sketch of the Android app in the parent directory.
+A SwiftUI sketch of the Android app in [`../android`](../android).
 
 ```
 ClockCore/          Swift package: the clock rules, ported from the Android app's `clock` package
