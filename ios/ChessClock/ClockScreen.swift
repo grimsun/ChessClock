@@ -2,14 +2,19 @@ import ClockCore
 import SwiftUI
 
 struct ClockScreen: View {
-    @State private var model = ClockModel(timeControl: TimeControl(initial: .seconds(300), increment: .zero))
+    @Bindable var settings: SettingsStore
+    @State private var model: ClockModel
+    @State private var showingSettings = false
     @Environment(\.scenePhase) private var scenePhase
 
-    /// Players sit at the ends of the phone, so the first player's time is turned toward them.
-    private let facing = true
+    init(settings: SettingsStore) {
+        self.settings = settings
+        _model = State(initialValue: ClockModel(timeControl: settings.settings.timeControl))
+    }
 
     var body: some View {
         let clock = model.clock
+        let facing = settings.settings.seating == .facing
         GeometryReader { geometry in
             // Faces stacked on a tall screen, side by side on a wide one, so each gets half the room.
             let layout = geometry.size.width > geometry.size.height
@@ -21,6 +26,29 @@ struct ClockScreen: View {
                 ControlButton(status: clock.status) { model.toggle() }
                 PlayerFace(clock: clock, player: .second) { model.press(.second) }
             }
+        }
+        // The button sits on the second player's half: hide it during play so a hard tap near the
+        // corner ends the turn instead of opening settings and pausing the game.
+        .overlay(alignment: .bottomTrailing) {
+            if clock.status != .running {
+                Button("Settings", systemImage: "gearshape.fill") {
+                    model.pause()
+                    showingSettings = true
+                }
+                .labelStyle(.iconOnly)
+                .font(.title2)
+                .foregroundStyle(Color.onWaiting)
+                .padding(12)
+                .background(Color.waiting, in: .circle)
+                .padding(16)
+            }
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(settings: $settings.settings)
+        }
+        // A new time control starts a fresh game; other setting changes leave the game alone.
+        .onChange(of: settings.settings.timeControl) { _, timeControl in
+            model.setTimeControl(timeControl)
         }
         // Stop the clock when the app leaves the foreground.
         .onChange(of: scenePhase) { _, phase in
@@ -59,6 +87,13 @@ private struct PlayerFace: View {
                     .minimumScaleFactor(0.3)
                     .lineLimit(1)
                     .padding(.horizontal, 28)
+                // With a simple delay, the seconds the player on move can still think before their time runs.
+                if clock.turn == player, clock.delayRemaining > .zero {
+                    Text("Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s")
+                        .font(.headline)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 40)
+                }
             }
             .padding(16)
             .frame(maxWidth: 300, maxHeight: 300)
@@ -78,6 +113,11 @@ private struct PlayerFace: View {
         // While paused too, so it's clear whose move it is when play resumes.
         return onMove ? .onMove : .waiting
     }
+}
+
+private extension Duration {
+    /// Whole seconds, counting a started second as a whole one, as a countdown shows them.
+    var wholeSecondsRoundedUp: Int64 { (self + .milliseconds(999)).components.seconds }
 }
 
 private struct ControlButton: View {
@@ -106,5 +146,5 @@ private struct ControlButton: View {
 }
 
 #Preview {
-    ClockScreen()
+    ClockScreen(settings: SettingsStore(defaults: UserDefaults(suiteName: "preview")!))
 }

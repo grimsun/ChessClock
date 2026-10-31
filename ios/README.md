@@ -4,7 +4,7 @@ A SwiftUI sketch of the Android app in the parent directory.
 
 ```
 ClockCore/          Swift package: the clock rules, ported from the Android app's `clock` package
-ChessClock/         SwiftUI app: clock screen, ClockModel that runs the clock, Walnut colors
+ChessClock/         SwiftUI app: clock screen, settings sheet, ClockModel that runs the clock
 ChessClock.xcodeproj
 ```
 
@@ -18,3 +18,11 @@ xcodebuild -project ios/ChessClock.xcodeproj -scheme ChessClock \
 ```sh
 cd ios/ClockCore && swift test   # rules tests, no simulator needed
 ```
+
+## Compared with Android
+
+Done: ring faces, Start/Pause/Reset, presets and custom time, Fischer/Bronstein/delay with the delay
+counted down, upright or facing seats, low-time red, light and dark Walnut colors, settings saved
+in UserDefaults.
+
+Not yet: panel faces, other palettes, theme choice, sideways seating, a UI test target, an app icon.
