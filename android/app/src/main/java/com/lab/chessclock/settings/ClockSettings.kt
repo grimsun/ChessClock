@@ -71,7 +71,7 @@ fun incrementModeFromStorageKey(key: String?): IncrementMode =
 enum class TimerSetting(val storageKey: String, val max: Int) {
     Hours("timer_h", 12),
     Minutes("timer_m", 60),
-    Seconds("timer_s", 60),
+    Seconds("timer_s", 59),
     Increment("increment", 60);
 
     fun valueIn(settings: ClockSettings): Int = when (this) {
