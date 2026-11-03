@@ -11,18 +11,19 @@ struct ClockScreen: View {
     var body: some View {
         let clock = model.clock
         let seating = settings.settings.seating
+        let faceStyle = settings.settings.faceStyle
         GeometryReader { geometry in
             // Faces stacked on a tall screen, side by side on a wide one, so each gets half the room.
             let layout = geometry.size.width > geometry.size.height
                 ? AnyLayout(HStackLayout(spacing: 0))
                 : AnyLayout(VStackLayout(spacing: 0))
             layout {
-                PlayerFace(clock: clock, player: .first, rotation: seating.rotation(of: .first)) {
+                PlayerFace(clock: clock, player: .first, style: faceStyle, rotation: seating.rotation(of: .first)) {
                     model.press(.first, touchedAgo: $0)
                 }
                 ControlButton(status: clock.status) { model.toggle() }
                     .rotationEffect(seating.controlRotation)
-                PlayerFace(clock: clock, player: .second, rotation: seating.rotation(of: .second)) {
+                PlayerFace(clock: clock, player: .second, style: faceStyle, rotation: seating.rotation(of: .second)) {
                     model.press(.second, touchedAgo: $0)
                 }
             }
@@ -65,6 +66,7 @@ struct ClockScreen: View {
 private struct PlayerFace: View {
     let clock: ChessClock
     let player: Player
+    let style: FaceStyle
     /// Turns the face to where its player sits.
     let rotation: Angle
     /// The player touched the face, and how long ago the screen sensed the touch.
@@ -79,9 +81,9 @@ private struct PlayerFace: View {
 
         // The whole half of the screen is the player's button, like a physical clock.
         face(time: time, finished: finished, onMove: onMove)
-            .padding(16)
-            .frame(maxWidth: 300, maxHeight: 300)
+            .frame(maxWidth: faceSize, maxHeight: faceSize)
             .aspectRatio(1, contentMode: .fit)
+            .padding(16)
             .rotationEffect(rotation)
             .scaleEffect(pressed ? 0.96 : 1)
             .animation(.spring(duration: 0.2), value: pressed)
@@ -100,35 +102,87 @@ private struct PlayerFace: View {
             .accessibilityAction(.default) { onPress(.zero) }
     }
 
+    /// The square both face styles draw in. Rings and panels share its size and content, so they
+    /// differ only in shape: an outline that empties or a filled block.
     private func face(time: PlayerTime, finished: Bool, onMove: Bool) -> some View {
+        let (color, onColor) = colors(time: time, finished: finished, onMove: onMove)
+        let progress = finished ? 1 : time.progress
+        return ZStack {
+            switch style {
+            case .rings:
+                Circle()
+                    .inset(by: ringStroke / 2)
+                    .trim(from: 0, to: progress)
+                    .stroke(color, style: StrokeStyle(lineWidth: ringStroke, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: progress)
+                content(time: time, color: palette.ringText)
+            case .panels:
+                RoundedRectangle(cornerRadius: panelCorner).fill(color)
+                content(time: time, color: onColor)
+                // The remaining share of the player's time, as a thin bar along the panel's bottom edge.
+                ProgressBar(progress: progress, color: onColor)
+                    .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: progress)
+                    .padding(.horizontal, panelCorner)
+                    .padding(.bottom, 20)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+            }
+        }
+    }
+
+    /// The time, and below it any delay countdown, laid out the same on every face.
+    private func content(time: PlayerTime, color: Color) -> some View {
         ZStack {
-            Circle()
-                .trim(from: 0, to: finished ? 1 : time.progress)
-                .stroke(color(time: time, finished: finished, onMove: onMove), style: StrokeStyle(lineWidth: 15, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: time.progress)
             Text(formatClockTime(time.remaining))
-                .font(.system(size: 60).monospacedDigit())
-                .minimumScaleFactor(0.3)
+                .font(.system(size: 96, weight: .medium).monospacedDigit())
+                // Shrinks to fit a small face or a large text size instead of overflowing.
+                .minimumScaleFactor(0.125)
                 .lineLimit(1)
-                .padding(.horizontal, 28)
+                // Clear of the ring's stroke even at the corners of the text.
+                .padding(.horizontal, ringStroke + 24)
             // With a simple delay, the seconds the player on move can still think before their time runs.
             if clock.turn == player, clock.delayRemaining > .zero {
                 Text("Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s")
                     .font(.headline)
                     .frame(maxHeight: .infinity, alignment: .bottom)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, ringStroke + 40)
             }
         }
+        .foregroundStyle(color)
     }
 
-    private func color(time: PlayerTime, finished: Bool, onMove: Bool) -> Color {
-        if finished { return time.isExpired ? palette.loss : palette.win }
-        if clock.isLowOnTime(player) { return palette.loss }
+    /// The face color, and the color of a panel's content drawn on it.
+    private func colors(time: PlayerTime, finished: Bool, onMove: Bool) -> (Color, Color) {
+        if finished { return time.isExpired ? (palette.loss, palette.onLoss) : (palette.win, palette.onWin) }
+        if clock.isLowOnTime(player) { return (palette.loss, palette.onLoss) }
         // While paused too, so it's clear whose move it is when play resumes.
-        return onMove ? palette.primary : palette.inactive
+        return onMove ? (palette.primary, palette.onPrimary) : (palette.inactive, palette.onInactive)
     }
 }
+
+/// A thin track with the remaining share of time filled in.
+private struct ProgressBar: View {
+    let progress: Double
+    let color: Color
+
+    var body: some View {
+        Capsule()
+            .fill(color.opacity(0.25))
+            .overlay(alignment: .leading) {
+                GeometryReader { geometry in
+                    Capsule().fill(color).frame(width: geometry.size.width * progress)
+                }
+            }
+            .frame(height: 4)
+    }
+}
+
+private let ringStroke: CGFloat = 15
+
+/// Large enough for big digits, small enough that a ring stays a ring on an iPad.
+private let faceSize: CGFloat = 340
+
+private let panelCorner: CGFloat = 36
 
 /// Reports each finger as it lands, with how long ago the screen sensed it, and whether any finger
 /// is down. A UIKit view rather than a SwiftUI gesture, so it sees every finger, not just the first,
