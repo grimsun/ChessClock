@@ -47,8 +47,13 @@ struct SettingsView: View {
 
                 Section("Where players sit") {
                     Picker("Where players sit", selection: $settings.seating) {
-                        Text("Upright").tag(Seating.upright)
-                        Text("Facing each other at the ends").tag(Seating.facing)
+                        ForEach(Seating.allCases, id: \.self) { seating in
+                            VStack(alignment: .leading) {
+                                Text(seating.label)
+                                Text(seating.explanation).font(.footnote).foregroundStyle(.secondary)
+                            }
+                            .tag(seating)
+                        }
                     }
                     .pickerStyle(.inline)
                     .labelsHidden()
@@ -91,6 +96,26 @@ private struct PresetButton: View {
                 .lineLimit(1)
                 .fixedSize()
                 .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+private extension Seating {
+    var label: String {
+        switch self {
+        case .upright: "Upright"
+        case .facing: "Facing each other at the ends"
+        case .sideways: "Sideways"
+        case .facingSides: "Facing each other at the sides"
+        }
+    }
+
+    var explanation: String {
+        switch self {
+        case .upright: "Both times read from the bottom of the screen"
+        case .facing: "Players at the top and bottom, each time turned to its player"
+        case .sideways: "Both times read from the same long side"
+        case .facingSides: "Players at the left and right, each time turned to its player"
         }
     }
 }
