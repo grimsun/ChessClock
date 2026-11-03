@@ -42,8 +42,10 @@ struct ClockScreen: View {
                 .padding(12)
                 .background(palette.inactive, in: .circle)
                 .padding(16)
+                .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: clock.status == .running)
         .background(palette.background)
         .sheet(isPresented: $showingSettings) {
             SettingsView(settings: $settings.settings)
@@ -80,13 +82,13 @@ private struct PlayerFace: View {
         let onMove = !finished && clock.turn == player
 
         // The whole half of the screen is the player's button, like a physical clock.
-        face(time: time, finished: finished, onMove: onMove)
+        face(time: time, finished: finished)
             .frame(maxWidth: faceSize, maxHeight: faceSize)
             .aspectRatio(1, contentMode: .fit)
             .padding(16)
             .rotationEffect(rotation)
-            .scaleEffect(pressed ? 0.96 : 1)
-            .animation(.spring(duration: 0.2), value: pressed)
+            // The face gives a little under the finger while it is down.
+            .animation(.spring(duration: 0.2)) { $0.scaleEffect(pressed ? 0.96 : 1) }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Like a physical clock, it acts the moment it is touched rather than when the finger
             // lifts, as a Button would: the opponent's clock starts a tap's length sooner.
@@ -104,9 +106,13 @@ private struct PlayerFace: View {
 
     /// The square both face styles draw in. Rings and panels share its size and content, so they
     /// differ only in shape: an outline that empties or a filled block.
-    private func face(time: PlayerTime, finished: Bool, onMove: Bool) -> some View {
-        let (color, onColor) = colors(time: time, finished: finished, onMove: onMove)
+    private func face(time: PlayerTime, finished: Bool) -> some View {
+        let role = role(time: time, finished: finished)
+        let (color, onColor) = colors(role)
         let progress = finished ? 1 : time.progress
+        // Smooth between ticks while running; otherwise a reset or a new time control sweeps the
+        // ring back to full instead of jumping.
+        let sweep: Animation = clock.status == .running ? .linear(duration: 0.1) : .easeInOut(duration: 0.5)
         return ZStack {
             switch style {
             case .rings:
@@ -115,19 +121,21 @@ private struct PlayerFace: View {
                     .trim(from: 0, to: progress)
                     .stroke(color, style: StrokeStyle(lineWidth: ringStroke, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: progress)
+                    .animation(sweep, value: progress)
                 content(time: time, color: palette.ringText)
             case .panels:
                 RoundedRectangle(cornerRadius: panelCorner).fill(color)
                 content(time: time, color: onColor)
                 // The remaining share of the player's time, as a thin bar along the panel's bottom edge.
                 ProgressBar(progress: progress, color: onColor)
-                    .animation(clock.status == .running ? .linear(duration: 0.1) : nil, value: progress)
+                    .animation(sweep, value: progress)
                     .padding(.horizontal, panelCorner)
                     .padding(.bottom, 20)
                     .frame(maxHeight: .infinity, alignment: .bottom)
             }
         }
+        // The turn passes from one face to the other as a short cross-fade instead of a jump.
+        .animation(.easeInOut(duration: colorFade), value: role)
     }
 
     /// The time, and below it any delay countdown, laid out the same on every face.
@@ -151,12 +159,23 @@ private struct PlayerFace: View {
         .foregroundStyle(color)
     }
 
-    /// The face color, and the color of a panel's content drawn on it.
-    private func colors(time: PlayerTime, finished: Bool, onMove: Bool) -> (Color, Color) {
-        if finished { return time.isExpired ? (palette.loss, palette.onLoss) : (palette.win, palette.onWin) }
-        if clock.isLowOnTime(player) { return (palette.loss, palette.onLoss) }
+    private enum Role { case waiting, onMove, lowOnTime, won, lost }
+
+    private func role(time: PlayerTime, finished: Bool) -> Role {
+        if finished { return time.isExpired ? .lost : .won }
+        if clock.isLowOnTime(player) { return .lowOnTime }
         // While paused too, so it's clear whose move it is when play resumes.
-        return onMove ? (palette.primary, palette.onPrimary) : (palette.inactive, palette.onInactive)
+        return clock.turn == player ? .onMove : .waiting
+    }
+
+    /// The face color, and the color of a panel's content drawn on it.
+    private func colors(_ role: Role) -> (Color, Color) {
+        switch role {
+        case .waiting: (palette.inactive, palette.onInactive)
+        case .onMove: (palette.primary, palette.onPrimary)
+        case .lowOnTime, .lost: (palette.loss, palette.onLoss)
+        case .won: (palette.win, palette.onWin)
+        }
     }
 }
 
@@ -183,6 +202,9 @@ private let ringStroke: CGFloat = 15
 private let faceSize: CGFloat = 340
 
 private let panelCorner: CGFloat = 36
+
+/// Short, so the turn is seen to pass at once.
+private let colorFade = 0.1
 
 /// Reports each finger as it lands, with how long ago the screen sensed it, and whether any finger
 /// is down. A UIKit view rather than a SwiftUI gesture, so it sees every finger, not just the first,
@@ -264,6 +286,8 @@ private struct ControlButton: View {
             Text(label)
                 .font(.title3.weight(.medium))
                 .frame(width: 100, height: 100)
+                .contentTransition(.opacity)
+                .animation(.easeInOut(duration: colorFade), value: status)
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
