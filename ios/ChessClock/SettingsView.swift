@@ -61,6 +61,10 @@ struct SettingsView: View {
                 }
 
                 Section("Appearance") {
+                    Picker("Clock face", selection: $settings.faceStyle) {
+                        Text("Rings").tag(FaceStyle.rings)
+                        Text("Panels").tag(FaceStyle.panels)
+                    }
                     Picker("Theme", selection: $settings.theme) {
                         Text("System").tag(ThemeMode.system)
                         Text("Light").tag(ThemeMode.light)
