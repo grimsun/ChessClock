@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Binding var settings: ClockSettings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.palette) private var palette
 
     var body: some View {
         NavigationStack {
@@ -59,6 +60,25 @@ struct SettingsView: View {
                     .labelsHidden()
                 }
 
+                Section("Appearance") {
+                    Picker("Theme", selection: $settings.theme) {
+                        Text("System").tag(ThemeMode.system)
+                        Text("Light").tag(ThemeMode.light)
+                        Text("Dark").tag(ThemeMode.dark)
+                    }
+                    Picker("Colors", selection: $settings.palette) {
+                        ForEach(ColorPalette.allCases, id: \.self) { choice in
+                            HStack {
+                                Text(choice.label)
+                                Spacer()
+                                PaletteSwatch(palette: .of(choice))
+                            }
+                            .tag(choice)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                }
+
                 Section("Vibration") {
                     Toggle(isOn: $settings.vibrateOnTurnEnd) {
                         Text("When a turn ends")
@@ -70,6 +90,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .tint(palette.primary)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -85,12 +106,13 @@ private struct PresetButton: View {
     let preset: TimePreset
     let selected: Bool
     let action: () -> Void
+    @Environment(\.palette) private var palette
 
     var body: some View {
         // The current control filled in, the others outlined.
         Group {
             if selected {
-                button.buttonStyle(.borderedProminent).tint(.onMove).foregroundStyle(Color.onOnMove)
+                button.buttonStyle(.borderedProminent).tint(palette.primary).foregroundStyle(palette.onPrimary)
             } else {
                 button.buttonStyle(.bordered).tint(.primary)
             }
@@ -107,6 +129,35 @@ private struct PresetButton: View {
                 .lineLimit(1)
                 .fixedSize()
                 .frame(maxWidth: .infinity)
+        }
+    }
+}
+
+/// The palette's on-move color beside its waiting color, in the current light or dark.
+private struct PaletteSwatch: View {
+    let palette: Palette
+
+    var body: some View {
+        Circle()
+            .fill(palette.swatch.waiting)
+            .overlay {
+                Circle().fill(palette.swatch.active).mask(alignment: .leading) {
+                    Rectangle().frame(width: 16)
+                }
+            }
+            .overlay { Circle().stroke(.separator) }
+            .frame(width: 32, height: 32)
+            .accessibilityHidden(true)
+    }
+}
+
+private extension ColorPalette {
+    var label: String {
+        switch self {
+        case .walnut: "Walnut"
+        case .forest: "Forest"
+        case .ocean: "Ocean (color-blind friendly)"
+        case .graphite: "Graphite (high contrast)"
         }
     }
 }

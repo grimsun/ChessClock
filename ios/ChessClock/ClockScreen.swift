@@ -6,6 +6,7 @@ struct ClockScreen: View {
     let model: ClockModel
     @State private var showingSettings = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.palette) private var palette
 
     var body: some View {
         let clock = model.clock
@@ -36,12 +37,13 @@ struct ClockScreen: View {
                 }
                 .labelStyle(.iconOnly)
                 .font(.title2)
-                .foregroundStyle(Color.onWaiting)
+                .foregroundStyle(palette.onInactive)
                 .padding(12)
-                .background(Color.waiting, in: .circle)
+                .background(palette.inactive, in: .circle)
                 .padding(16)
             }
         }
+        .background(palette.background)
         .sheet(isPresented: $showingSettings) {
             SettingsView(settings: $settings.settings)
         }
@@ -68,6 +70,7 @@ private struct PlayerFace: View {
     /// The player touched the face, and how long ago the screen sensed the touch.
     let onPress: (Duration) -> Void
     @State private var pressed = false
+    @Environment(\.palette) private var palette
 
     var body: some View {
         let time = clock.time(of: player)
@@ -120,10 +123,10 @@ private struct PlayerFace: View {
     }
 
     private func color(time: PlayerTime, finished: Bool, onMove: Bool) -> Color {
-        if finished { return time.isExpired ? .loss : .win }
-        if clock.isLowOnTime(player) { return .loss }
+        if finished { return time.isExpired ? palette.loss : palette.win }
+        if clock.isLowOnTime(player) { return palette.loss }
         // While paused too, so it's clear whose move it is when play resumes.
-        return onMove ? .onMove : .waiting
+        return onMove ? palette.primary : palette.inactive
     }
 }
 
@@ -200,6 +203,7 @@ private extension Duration {
 private struct ControlButton: View {
     let status: ClockStatus
     let action: () -> Void
+    @Environment(\.palette) private var palette
 
     var body: some View {
         Button(action: action) {
@@ -209,8 +213,8 @@ private struct ControlButton: View {
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
-        .tint(.onMove)
-        .foregroundStyle(Color.onOnMove)
+        .tint(palette.primary)
+        .foregroundStyle(palette.onPrimary)
     }
 
     private var label: LocalizedStringKey {

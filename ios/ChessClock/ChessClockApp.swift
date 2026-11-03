@@ -1,3 +1,4 @@
+import ClockCore
 import SwiftUI
 
 @main
@@ -14,6 +15,8 @@ struct ChessClockApp: App {
     var body: some Scene {
         WindowGroup {
             ClockScreen(settings: settings, model: model)
+                .environment(\.palette, .of(settings.settings.palette))
+                .preferredColorScheme(settings.settings.theme.colorScheme)
         }
     }
 }
