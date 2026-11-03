@@ -14,17 +14,21 @@ struct ClockScreen: View {
 
     var body: some View {
         let clock = model.clock
-        let facing = settings.settings.seating == .facing
+        let seating = settings.settings.seating
         GeometryReader { geometry in
             // Faces stacked on a tall screen, side by side on a wide one, so each gets half the room.
             let layout = geometry.size.width > geometry.size.height
                 ? AnyLayout(HStackLayout(spacing: 0))
                 : AnyLayout(VStackLayout(spacing: 0))
             layout {
-                PlayerFace(clock: clock, player: .first) { model.press(.first, touchedAgo: $0) }
-                    .rotationEffect(.degrees(facing ? 180 : 0))
+                PlayerFace(clock: clock, player: .first, rotation: seating.rotation(of: .first)) {
+                    model.press(.first, touchedAgo: $0)
+                }
                 ControlButton(status: clock.status) { model.toggle() }
-                PlayerFace(clock: clock, player: .second) { model.press(.second, touchedAgo: $0) }
+                    .rotationEffect(seating.controlRotation)
+                PlayerFace(clock: clock, player: .second, rotation: seating.rotation(of: .second)) {
+                    model.press(.second, touchedAgo: $0)
+                }
             }
         }
         // The button sits on the second player's half: hide it during play so a hard tap near the
@@ -64,6 +68,8 @@ struct ClockScreen: View {
 private struct PlayerFace: View {
     let clock: ChessClock
     let player: Player
+    /// Turns the face to where its player sits.
+    let rotation: Angle
     /// The player touched the face, and how long ago the screen sensed the touch.
     let onPress: (Duration) -> Void
     @State private var pressed = false
@@ -78,6 +84,7 @@ private struct PlayerFace: View {
             .padding(16)
             .frame(maxWidth: 300, maxHeight: 300)
             .aspectRatio(1, contentMode: .fit)
+            .rotationEffect(rotation)
             .scaleEffect(pressed ? 0.96 : 1)
             .animation(.spring(duration: 0.2), value: pressed)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -168,6 +175,24 @@ private struct TouchDownArea: UIViewRepresentable {
         private func lift(_ touches: Set<UITouch>) {
             fingers = max(fingers - touches.count, 0)
             if fingers == 0 { onPressedChange(false) }
+        }
+    }
+}
+
+private extension Seating {
+    /// The second player (bottom) always reads the screen the right way up for their side.
+    var controlRotation: Angle {
+        switch self {
+        case .upright, .facing: .zero
+        case .sideways, .facingSides: .degrees(90)
+        }
+    }
+
+    /// Facing each other turns the first player's face half a turn from the second's.
+    func rotation(of player: Player) -> Angle {
+        switch self {
+        case .upright, .sideways: controlRotation
+        case .facing, .facingSides: player == .first ? controlRotation + .degrees(180) : controlRotation
         }
     }
 }
