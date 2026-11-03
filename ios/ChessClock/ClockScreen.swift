@@ -61,9 +61,6 @@ struct ClockScreen: View {
     }
 }
 
-/// Below this the player on move sees their face turn red.
-let lowTime = Duration.seconds(10)
-
 private struct PlayerFace: View {
     let clock: ChessClock
     let player: Player
@@ -122,7 +119,7 @@ private struct PlayerFace: View {
 
     private func color(time: PlayerTime, finished: Bool, onMove: Bool) -> Color {
         if finished { return time.isExpired ? .loss : .win }
-        if onMove && time.remaining < lowTime { return .loss }
+        if clock.isLowOnTime(player) { return .loss }
         // While paused too, so it's clear whose move it is when play resumes.
         return onMove ? .onMove : .waiting
     }

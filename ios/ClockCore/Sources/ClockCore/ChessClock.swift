@@ -157,3 +157,38 @@ public struct ChessClock: Equatable, Sendable {
         if player == .first { first = transform(first) } else { second = transform(second) }
     }
 }
+
+/// What the clock should tell the players without them looking at it.
+public enum ClockSignal: Sendable {
+    /// A press ended a turn and the opponent's clock started.
+    case turnEnded
+    /// The player on move just dropped below ``ChessClock/lowTime``.
+    case lowTime
+    /// A player's time ran out.
+    case outOfTime
+}
+
+extension ChessClock {
+    /// Below this the player on move sees their face turn red, and is warned once.
+    public static let lowTime = Duration.seconds(10)
+
+    /// Whether `player` is on move in an unfinished game with less than ``lowTime`` left.
+    public func isLowOnTime(_ player: Player) -> Bool {
+        status != .finished && turn == player && time(of: player).remaining < Self.lowTime
+    }
+
+    /// The signal for a press that took this clock to `next`: a click only when it started the
+    /// opponent's clock, not for a press that changed nothing.
+    public func signal(pressedTo next: ChessClock) -> ClockSignal? {
+        next.status == .running && next.turn != turn ? .turnEnded : nil
+    }
+
+    /// The signal for time passing from this clock to `next`. Only while the player's clock runs,
+    /// so a player who starts their turn already short isn't warned on every move.
+    public func signal(tickedTo next: ChessClock) -> ClockSignal? {
+        guard let player = active else { return nil }
+        if next.status == .finished, status != .finished { return .outOfTime }
+        if next.isLowOnTime(player), !isLowOnTime(player) { return .lowTime }
+        return nil
+    }
+}

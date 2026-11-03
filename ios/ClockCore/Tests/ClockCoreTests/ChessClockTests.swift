@@ -80,3 +80,32 @@ struct TimeFormatTests {
         #expect(formatClockTime(time) == expected)
     }
 }
+
+struct ClockSignalTests {
+    let clock = ChessClock(TimeControl(initial: .seconds(12), increment: .zero))
+
+    @Test func aPressThatStartsTheOpponentClicks() {
+        let started = clock.press(.first)
+        #expect(clock.signal(pressedTo: started) == .turnEnded)
+        #expect(started.signal(pressedTo: started.press(.second)) == .turnEnded)
+    }
+
+    @Test func aPressThatChangesNothingIsSilent() {
+        let running = clock.press(.first)
+        #expect(running.signal(pressedTo: running.press(.first)) == nil)
+        #expect(running.signal(pressedTo: running.pause()) == nil)
+    }
+
+    @Test func warnsOnceWhenTimeGetsLowAndAgainWhenItRunsOut() {
+        let running = clock.press(.first)
+        let low = running.tick(.seconds(3))
+        #expect(running.signal(tickedTo: low) == .lowTime)
+        #expect(low.signal(tickedTo: low.tick(.seconds(1))) == nil)
+        #expect(low.signal(tickedTo: low.tick(.seconds(20))) == .outOfTime)
+    }
+
+    @Test func aTurnThatStartsLowIsNotWarned() {
+        let short = ChessClock(TimeControl(initial: .seconds(5), increment: .zero)).press(.first)
+        #expect(short.signal(tickedTo: short.tick(.seconds(1))) == nil)
+    }
+}

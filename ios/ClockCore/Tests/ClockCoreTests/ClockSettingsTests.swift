@@ -43,13 +43,44 @@ struct ClockSettingsTests {
         }
     }
 
+    @Test func defaultsSuitPlayersAcrossABoard() {
+        let settings = ClockSettings()
+        #expect(settings.timeControl == TimeControl(initial: .seconds(300), increment: .seconds(3)))
+        #expect(settings.seating == .facing)
+        #expect(settings.vibrateOnTurnEnd && settings.vibrateOnLowTime)
+    }
+
     @Test func settingsRoundTripThroughJSON() throws {
         var settings = ClockSettings()
         settings.minutes = 3
         settings.incrementMode = .simpleDelay
-        settings.seating = .facing
+        settings.seating = .facingSides
+        settings.faceStyle = .panels
+        settings.theme = .dark
+        settings.palette = .ocean
+        settings.vibrateOnLowTime = false
 
         let decoded = try JSONDecoder().decode(ClockSettings.self, from: JSONEncoder().encode(settings))
         #expect(decoded == settings)
+    }
+
+    @Test func olderSavedSettingsKeepTheirValuesAndDefaultTheRest() throws {
+        let saved = #"{"hours":0,"minutes":3,"seconds":0,"incrementSeconds":2,"incrementMode":"bronstein","seating":"upright"}"#
+
+        let decoded = try JSONDecoder().decode(ClockSettings.self, from: Data(saved.utf8))
+
+        #expect(decoded.timeControl == TimeControl(initial: .seconds(180), increment: .seconds(2), mode: .bronstein))
+        #expect(decoded.seating == .upright)
+        #expect(decoded.faceStyle == .rings)
+        #expect(decoded.vibrateOnTurnEnd)
+    }
+
+    @Test func anUnknownValueFallsBackToItsDefaultAlone() throws {
+        let saved = #"{"minutes":10,"palette":"sunset"}"#
+
+        let decoded = try JSONDecoder().decode(ClockSettings.self, from: Data(saved.utf8))
+
+        #expect(decoded.minutes == 10)
+        #expect(decoded.palette == .walnut)
     }
 }
