@@ -13,7 +13,7 @@ struct SettingsView: View {
                     // One tap for the usual time controls, with the steppers right below for anything else.
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 8) {
                         ForEach(TimePreset.all, id: \.self) { preset in
-                            PresetButton(preset: preset, selected: preset.matches(settings)) {
+                            PresetButton(preset: preset, mode: settings.incrementMode, selected: preset.matches(settings)) {
                                 settings = preset.applied(to: settings)
                             }
                         }
@@ -108,6 +108,7 @@ struct SettingsView: View {
 
 private struct PresetButton: View {
     let preset: TimePreset
+    let mode: IncrementMode
     let selected: Bool
     let action: () -> Void
     @Environment(\.palette) private var palette
@@ -121,9 +122,19 @@ private struct PresetButton: View {
                 button.buttonStyle(.bordered).tint(.primary)
             }
         }
-        // "3 + 2" read aloud means little: spell it out for VoiceOver.
-        .accessibilityLabel("\(preset.minutes) minutes, plus \(preset.incrementSeconds) seconds per move")
+        .accessibilityLabel(spokenLabel)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    /// "3 + 2" read aloud means little: spelled out, in the words of the increment mode.
+    private var spokenLabel: String {
+        let minutes = preset.minutes == 1 ? "1 minute" : "\(preset.minutes) minutes"
+        let seconds = preset.incrementSeconds == 1 ? "1 second" : "\(preset.incrementSeconds) seconds"
+        return switch mode {
+        case .fischer: "\(minutes), plus \(seconds) per move"
+        case .bronstein: "\(minutes), plus up to \(seconds) back per move"
+        case .simpleDelay: "\(minutes), \(seconds) delay per move"
+        }
     }
 
     private var button: some View {
