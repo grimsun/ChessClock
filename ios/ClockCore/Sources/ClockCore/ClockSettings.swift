@@ -117,3 +117,13 @@ public struct TimePreset: Hashable, Sendable {
         TimePreset(5, 3), TimePreset(10, 0), TimePreset(10, 5), TimePreset(15, 10), TimePreset(30, 0),
     ]
 }
+
+extension ClockSettings {
+    /// Whether the player has left the vibration for `signal` on.
+    public func vibrates(for signal: ClockSignal) -> Bool {
+        switch signal {
+        case .turnEnded: vibrateOnTurnEnd
+        case .lowTime, .outOfTime: vibrateOnLowTime
+        }
+    }
+}

@@ -3,14 +3,9 @@ import SwiftUI
 
 struct ClockScreen: View {
     @Bindable var settings: SettingsStore
-    @State private var model: ClockModel
+    let model: ClockModel
     @State private var showingSettings = false
     @Environment(\.scenePhase) private var scenePhase
-
-    init(settings: SettingsStore) {
-        self.settings = settings
-        _model = State(initialValue: ClockModel(timeControl: settings.settings.timeControl))
-    }
 
     var body: some View {
         let clock = model.clock
@@ -228,5 +223,6 @@ private struct ControlButton: View {
 }
 
 #Preview {
-    ClockScreen(settings: SettingsStore(defaults: UserDefaults(suiteName: "preview")!))
+    let settings = SettingsStore(defaults: UserDefaults(suiteName: "preview")!)
+    ClockScreen(settings: settings, model: ClockModel(settings: settings, haptics: Haptics()))
 }

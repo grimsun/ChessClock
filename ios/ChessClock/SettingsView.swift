@@ -58,6 +58,17 @@ struct SettingsView: View {
                     .pickerStyle(.inline)
                     .labelsHidden()
                 }
+
+                Section("Vibration") {
+                    Toggle(isOn: $settings.vibrateOnTurnEnd) {
+                        Text("When a turn ends")
+                        Text("A short click confirms your press without looking")
+                    }
+                    Toggle(isOn: $settings.vibrateOnLowTime) {
+                        Text("When time runs low")
+                        Text("Two pulses at 10 seconds left, a long buzz when time runs out")
+                    }
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
