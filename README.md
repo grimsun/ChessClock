@@ -1,6 +1,6 @@
 # ChessClock
 
-A two-player chess clock for Android. Tap your half of the screen to end your turn and start your opponent's clock.
+A two-player chess clock for Android and iPhone. Touch your half of the screen to end your turn and start your opponent's clock.
 
 <p>
   <img src="docs/screenshots/rings.png" width="216" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite">
@@ -30,18 +30,20 @@ The idea is a minimal, clean clock that stays out of the way of the game:
 - **Low-time warning** – the face of the player on move turns red under ten seconds
 - **Vibration** – a click confirms each press without looking at the clock, two pulses warn at ten seconds left and a long buzz marks a fallen flag; each can be turned off
 - **Made for play** – the screen stays on while the clock runs, the settings button hides during play so it can't be hit by accident, and the game pauses when the app goes to the background
-- **Accessible** – TalkBack announces whose move it is, slider names and values, and presets in words ("3 minutes, plus 2 seconds per move")
+- **Quick to the touch** – a turn ends the moment your finger lands, timed by the touch itself, so the app's own handling time is never charged to the player who moved
+- **Accessible** – TalkBack and VoiceOver announce whose move it is, any delay, setting names and values, and presets in words ("3 minutes, plus 2 seconds per move")
 
 ### Palettes
 
 ![The four palettes in light mode: Walnut, Forest, Ocean and Graphite](docs/screenshots/palettes-light.png)
 ![The four palettes in dark mode](docs/screenshots/palettes-dark.png)
 
-Every palette's text colors meet WCAG AA contrast on their backgrounds, which `PaletteContrastTest` checks.
+Every palette's text colors meet WCAG AA contrast on their backgrounds, which `PaletteContrastTest` checks on Android and `PaletteContrastTests` on iOS.
 
 ## Tech stack
 
-Kotlin 2.4 · Jetpack Compose (Material 3) · ViewModel + StateFlow · Navigation 3 · DataStore · Baseline Profiles · AGP 9.4 · min SDK 28, target SDK 37
+- **Android:** Kotlin 2.4 · Jetpack Compose (Material 3) · ViewModel + StateFlow · Navigation 3 · DataStore · Baseline Profiles · AGP 9.4 · min SDK 28, target SDK 37
+- **iPhone:** Swift 6 · SwiftUI · Observation · Core Haptics · XCTest UI tests · iOS 26
 
 ## Project layout
 
@@ -96,7 +98,7 @@ The benchmark compares cold start with and without the profile. Use a physical d
 
 ## iPhone
 
-A SwiftUI version is under way in [`ios/`](ios/README.md), sharing the same clock rules.
+The SwiftUI app in [`ios/`](ios/README.md) has the same features, colors and defaults as the Android app. Its clock rules, settings and palettes live in the ClockCore Swift package, ported from the Android code and tested with `swift test`.
 
 ## Docs
 
