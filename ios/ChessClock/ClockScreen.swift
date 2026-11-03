@@ -99,8 +99,9 @@ private struct PlayerFace: View {
             .accessibilityElement(children: .ignore)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel(formatClockTime(time.remaining))
-            .accessibilityValue(time.isExpired ? "Out of time" : onMove ? "On move" : "")
+            .accessibilityValue(accessibilityState(time: time, onMove: onMove))
             .accessibilityHint("End turn")
+            .accessibilityIdentifier(player == .first ? "face.first" : "face.second")
             .accessibilityAction(.default) { onPress(.zero) }
     }
 
@@ -148,15 +149,28 @@ private struct PlayerFace: View {
                 .lineLimit(1)
                 // Clear of the ring's stroke even at the corners of the text.
                 .padding(.horizontal, ringStroke + 24)
-            // With a simple delay, the seconds the player on move can still think before their time runs.
-            if clock.turn == player, clock.delayRemaining > .zero {
-                Text("Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s")
+            if let delayCaption {
+                Text(delayCaption)
                     .font(.headline)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, ringStroke + 40)
             }
         }
         .foregroundStyle(color)
+    }
+
+    /// Whose move it is or that time ran out, and any delay countdown, as VoiceOver reads them.
+    private func accessibilityState(time: PlayerTime, onMove: Bool) -> String {
+        var parts: [String] = []
+        if time.isExpired { parts.append("Out of time") } else if onMove { parts.append("On move") }
+        if let delay = delayCaption { parts.append(delay) }
+        return parts.joined(separator: ", ")
+    }
+
+    /// With a simple delay, the seconds the player on move can still think before their time runs.
+    private var delayCaption: String? {
+        guard clock.turn == player, clock.delayRemaining > .zero else { return nil }
+        return "Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s"
     }
 
     private enum Role { case waiting, onMove, lowOnTime, won, lost }
