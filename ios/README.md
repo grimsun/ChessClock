@@ -1,10 +1,11 @@
 # ChessClock for iPhone
 
-A SwiftUI sketch of the Android app in [`../android`](../android).
+The iPhone version of the Android app in [`../android`](../android), with the same features.
 
 ```
-ClockCore/          Swift package: the clock rules, ported from the Android app's `clock` package
-ChessClock/         SwiftUI app: clock screen, settings sheet, ClockModel that runs the clock
+ClockCore/          Swift package: clock rules, settings and palettes, ported from the Android app
+ChessClock/         SwiftUI app: clock screen, settings sheet, ClockModel that runs the clock, haptics
+ChessClockUITests/  XCUITests that play the app on a simulator
 ChessClock.xcodeproj
 ```
 
@@ -16,13 +17,17 @@ xcodebuild -project ios/ChessClock.xcodeproj -scheme ChessClock \
 ```
 
 ```sh
-cd ios/ClockCore && swift test   # rules tests, no simulator needed
+cd ios/ClockCore && swift test   # rules, settings and palette contrast tests, no simulator needed
+xcodebuild test -project ios/ChessClock.xcodeproj -scheme ChessClock \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'   # UI tests
 ```
 
 ## Compared with Android
 
-Done: ring faces, Start/Pause/Reset, presets and custom time, Fischer/Bronstein/delay with the delay
-counted down, upright or facing seats, low-time red, light and dark Walnut colors, settings saved
-in UserDefaults.
+The two apps match feature for feature: presets and custom time, Fischer, Bronstein and delay,
+all four seats, rings and panels, the four palettes in light and dark, the theme choice, the
+vibrations and their switches, low-time red, the animations, and turns that end on touch-down,
+timed by the touch. Settings are saved as JSON in UserDefaults rather than in DataStore.
 
-Not yet: panel faces, other palettes, theme choice, sideways seating, a UI test target, an app icon.
+Platform conventions differ where they should: steppers instead of sliders, a settings sheet with
+Done instead of a screen with Back.
