@@ -1,7 +1,8 @@
 import ClockCore
 import Observation
 
-/// Runs a ``ChessClock``: applies presses and charges the running player as real time passes.
+/// Runs a ``ChessClock``: applies presses, charges the running player as real time passes, and
+/// vibrates as the settings allow.
 @Observable
 final class ClockModel {
     static let tickInterval = Duration.milliseconds(100)
@@ -10,15 +11,22 @@ final class ClockModel {
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var lastTick: ContinuousClock.Instant?
     @ObservationIgnored private let time = ContinuousClock()
+    @ObservationIgnored private let settings: SettingsStore
+    @ObservationIgnored private let haptics: Haptics
 
-    init(timeControl: TimeControl) {
-        clock = ChessClock(timeControl)
+    init(settings: SettingsStore, haptics: Haptics) {
+        self.settings = settings
+        self.haptics = haptics
+        clock = ChessClock(settings.settings.timeControl)
     }
 
     /// `player` touched their face `touchedAgo` before this call: the turn ends at that moment, so
     /// the time the app took to handle the touch is charged to neither player as thinking time.
     func press(_ player: Player, touchedAgo: Duration = .zero) {
+        let before = clock
         update(at: time.now - touchedAgo) { $0.press(player) }
+        // Confirms the press to a player who is looking at the board, not the clock.
+        before.signal(pressedTo: clock).map(vibrate)
     }
 
     func toggle() { update { $0.toggle() } }
@@ -43,6 +51,7 @@ final class ClockModel {
     /// Starts charging the running player from `start`.
     private func startTicker(from start: ContinuousClock.Instant) {
         guard ticker == nil else { return }
+        haptics.prepare()
         lastTick = start
         ticker = Task { [weak self] in
             while !Task.isCancelled {
@@ -67,6 +76,12 @@ final class ClockModel {
         let now = now ?? time.now
         guard now > last else { return }
         lastTick = now
+        let before = clock
         clock = clock.tick(now - last)
+        before.signal(tickedTo: clock).map(vibrate)
+    }
+
+    private func vibrate(_ signal: ClockSignal) {
+        if settings.settings.vibrates(for: signal) { haptics.play(signal) }
     }
 }

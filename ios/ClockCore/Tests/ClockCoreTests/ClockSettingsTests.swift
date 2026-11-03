@@ -83,4 +83,14 @@ struct ClockSettingsTests {
         #expect(decoded.minutes == 10)
         #expect(decoded.palette == .walnut)
     }
+
+    @Test func eachVibrationHasItsOwnSwitch() {
+        var settings = ClockSettings()
+        settings.vibrateOnTurnEnd = false
+        #expect(!settings.vibrates(for: .turnEnded))
+        #expect(settings.vibrates(for: .lowTime) && settings.vibrates(for: .outOfTime))
+
+        settings.vibrateOnLowTime = false
+        #expect(!settings.vibrates(for: .lowTime) && !settings.vibrates(for: .outOfTime))
+    }
 }
