@@ -350,7 +350,9 @@ private struct ControlButton: View {
         Button(action: action) {
             Text(label)
                 .font(.headline)
-                .frame(width: 96, height: 96)
+                // Clear to hit before a game, small enough during one that a hard tap near the
+                // middle ends the turn rather than pausing.
+                .frame(width: 80, height: 80)
                 .contentTransition(.opacity)
                 .animation(.easeInOut(duration: colorFade), value: status)
         }
