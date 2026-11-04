@@ -93,4 +93,11 @@ struct ClockSettingsTests {
         settings.vibrateOnLowTime = false
         #expect(!settings.vibrates(for: .lowTime) && !settings.vibrates(for: .outOfTime))
     }
+
+    @Test func timeControlsAreLabelledAsPlayersWriteThem() {
+        #expect(TimeControl(initial: .seconds(300), increment: .seconds(3)).shortLabel == "5 + 3")
+        #expect(TimeControl(initial: .seconds(5400), increment: .seconds(30)).shortLabel == "90 + 30")
+        #expect(TimeControl(initial: .seconds(90), increment: .zero).shortLabel == "1:30 + 0")
+        #expect(TimeControl(initial: .seconds(5), increment: .zero).shortLabel == "0:05 + 0")
+    }
 }

@@ -8,6 +8,14 @@ struct ClockScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.palette) private var palette
 
+    /// The preset the settings are, if any; picking one starts a fresh game with it.
+    private var preset: Binding<TimePreset?> {
+        Binding(
+            get: { TimePreset.all.first { $0.matches(settings.settings) } },
+            set: { if let preset = $0 { settings.settings = preset.applied(to: settings.settings) } },
+        )
+    }
+
     var body: some View {
         let clock = model.clock
         let seating = settings.settings.seating
@@ -41,6 +49,26 @@ struct ClockScreen: View {
                 .foregroundStyle(palette.onInactive)
                 .padding(12)
                 .background(palette.inactive, in: .circle)
+                .padding(16)
+                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            }
+        }
+        // The time control at a glance, opposite the settings button; a tap offers the presets.
+        .overlay(alignment: .bottomLeading) {
+            if clock.status != .running {
+                Menu {
+                    Picker("Time control", selection: preset) {
+                        ForEach(TimePreset.all, id: \.self) { Text($0.label).tag(Optional($0)) }
+                    }
+                } label: {
+                    Text(clock.timeControl.shortLabel)
+                        .font(.headline.monospacedDigit())
+                        .foregroundStyle(palette.onInactive)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 16)
+                        .background(palette.inactive, in: .capsule)
+                }
+                .accessibilityLabel("Time control, \(clock.timeControl.shortLabel)")
                 .padding(16)
                 .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }

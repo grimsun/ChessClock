@@ -52,6 +52,19 @@ final class ClockScreenUITests: XCTestCase {
         XCTAssertEqual(app.buttons["face.second"].label, "03:00")
     }
 
+    func testTheTimeControlButtonOffersPresets() {
+        let app = launch()
+
+        app.buttons["Time control, 5 + 3"].tap()
+        app.buttons["3 + 2"].tap()
+
+        XCTAssertEqual(app.buttons["face.first"].label, "03:00")
+        XCTAssertTrue(app.buttons["Time control, 3 + 2"].exists)
+
+        app.buttons["face.second"].tap()
+        XCTAssertTrue(app.buttons["Time control, 3 + 2"].waitForNonExistence(timeout: 2))
+    }
+
     func testPresetsAreSpokenInTheWordsOfTheIncrementMode() {
         let app = launch(#"{"incrementMode":"delay"}"#)
 
