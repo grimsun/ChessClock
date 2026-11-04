@@ -23,6 +23,7 @@ import com.lab.chessclock.clock.Player
 import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -179,6 +180,21 @@ class ClockScreenTest {
     }
 
     @Test
+    fun theTimeControlButtonOffersPresetsWhileStopped() {
+        var state by mutableStateOf<ClockUiState>(ClockUiState.Ready(newGame, Orientation.HorizontalSame))
+        val picked = mutableListOf<TimePreset>()
+        setScreen({ state }, onPresetSelect = picked::add)
+        val button = composeRule.onNodeWithContentDescription("Time control, 5 + 0")
+
+        button.performClick()
+        composeRule.onNodeWithContentDescription("3 minutes, plus 2 seconds per move").performClick()
+        assertEquals(listOf(TimePreset(3, 2)), picked)
+
+        state = ClockUiState.Ready(newGame.toggle(), Orientation.HorizontalSame)
+        button.assertDoesNotExist()
+    }
+
+    @Test
     fun loadingShowsOnlySettings() {
         var opened = false
         setScreen(ClockUiState.Loading, onOpenSettings = { opened = true })
@@ -207,10 +223,17 @@ class ClockScreenTest {
         onPlayerPressed: (Player) -> Unit = {},
         onControlPressed: () -> Unit = {},
         onOpenSettings: () -> Unit = {},
+        onPresetSelect: (TimePreset) -> Unit = {},
     ) {
         composeRule.setContent {
             ChessClockTheme {
-                ClockScreen(uiState(), { player, _ -> onPlayerPressed(player) }, onControlPressed, onOpenSettings)
+                ClockScreen(
+                    uiState(),
+                    { player, _ -> onPlayerPressed(player) },
+                    onControlPressed,
+                    onOpenSettings,
+                    onPresetSelect = onPresetSelect,
+                )
             }
         }
     }

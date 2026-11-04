@@ -10,6 +10,8 @@
     <!-- Shown on the face of the player on move while a simple delay holds their clock, e.g. "Delay 3 s". -->
     <string name="delay_remaining">Delay %1$d s</string>
     <string name="open_settings">Settings</string>
+    <!-- The time control button on the clock screen, e.g. "Time control, 5 + 3". -->
+    <string name="time_control_button">Time control, %1$s</string>
     <string name="navigate_up">Back</string>
     <string name="settings_title">Settings</string>
     <string name="presets_title">Time control</string>

@@ -10,6 +10,7 @@ import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.ui.appViewModelFactory
 import com.lab.chessclock.ui.stateInUi
 import kotlinx.coroutines.Job
@@ -42,7 +43,7 @@ sealed interface ClockUiState {
 
 /** [initialSettings], when already loaded, let the screen show the clock on its first frame. */
 class ClockViewModel(
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
     initialSettings: ClockSettings? = null,
     private val haptics: Haptics = Haptics.None,
@@ -99,6 +100,11 @@ class ClockViewModel(
         if (vibrateOnTurnEnd && after != null && after.status == ClockStatus.Running && after.turn != before?.turn) {
             haptics.turnEnded()
         }
+    }
+
+    /** A preset picked on the clock screen: a new time control, so a fresh game. */
+    fun applyPreset(preset: TimePreset) {
+        viewModelScope.launch { settingsRepository.update(preset::appliedTo) }
     }
 
     fun onControlPressed() {
