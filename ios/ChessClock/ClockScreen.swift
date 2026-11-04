@@ -45,11 +45,7 @@ struct ClockScreen: View {
                     showingSettings = true
                 }
                 .labelStyle(.iconOnly)
-                .font(.title2)
-                .foregroundStyle(palette.onInactive)
-                .padding(12)
-                .background(palette.inactive, in: .circle)
-                .padding(16)
+                .cornerButton(palette)
                 .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }
         }
@@ -62,14 +58,10 @@ struct ClockScreen: View {
                     }
                 } label: {
                     Text(clock.timeControl.shortLabel)
-                        .font(.headline.monospacedDigit())
-                        .foregroundStyle(palette.onInactive)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 16)
-                        .background(palette.inactive, in: .capsule)
+                        .monospacedDigit()
+                        .cornerButton(palette)
                 }
                 .accessibilityLabel("Time control, \(clock.timeControl.shortLabel)")
-                .padding(16)
                 .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }
         }
@@ -90,6 +82,19 @@ struct ClockScreen: View {
         .onChange(of: clock.status) { _, status in
             UIApplication.shared.isIdleTimerDisabled = status == .running
         }
+    }
+}
+
+private extension View {
+    /// The small buttons in the bottom corners, one shape and size so the two match.
+    func cornerButton(_ palette: Palette) -> some View {
+        font(.subheadline.weight(.semibold))
+            .foregroundStyle(palette.onInactive)
+            .frame(minWidth: 20)
+            .frame(height: 36)
+            .padding(.horizontal, 12)
+            .background(palette.inactive, in: .capsule)
+            .padding(16)
     }
 }
 
