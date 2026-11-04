@@ -148,9 +148,13 @@ fun ClockScreen(
             // off, which pauses the app and with it the clock.
             if (clock.status == ClockStatus.Running) KeepScreenOn()
 
-            val face = @Composable { player: Player, modifier: Modifier ->
-                PlayerClockFace(clock, player, orientation, faceStyle, onPlayerPressed, modifier)
+            // Faces are drawn clear of the corner buttons, the one opposite them by as much so both
+            // stay the same size; each whole half still takes touches.
+            val face = @Composable { player: Player, inset: PaddingValues, modifier: Modifier ->
+                PlayerClockFace(clock, player, orientation, faceStyle, onPlayerPressed, modifier, inset)
             }
+            val bottomInset = PaddingValues(bottom = CORNER_BUTTON_STRIP)
+            val topInset = PaddingValues(top = CORNER_BUTTON_STRIP)
             val control = @Composable {
                 ControlButton(
                     status = clock.status,
@@ -167,15 +171,15 @@ fun ClockScreen(
             ) {
                 if (maxWidth > maxHeight) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        face(Player.First, Modifier.weight(1f))
+                        face(Player.First, bottomInset, Modifier.weight(1f))
                         control()
-                        face(Player.Second, Modifier.weight(1f))
+                        face(Player.Second, bottomInset, Modifier.weight(1f))
                     }
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        face(Player.First, Modifier.weight(1f))
+                        face(Player.First, topInset, Modifier.weight(1f))
                         control()
-                        face(Player.Second, Modifier.weight(1f))
+                        face(Player.Second, bottomInset, Modifier.weight(1f))
                     }
                 }
             }
@@ -224,6 +228,7 @@ private fun PlayerClockFace(
     faceStyle: FaceStyle,
     onPress: (Player, Duration) -> Unit,
     modifier: Modifier = Modifier,
+    inset: PaddingValues = PaddingValues(),
 ) {
     val time = clock.timeOf(player)
     val finished = clock.status == ClockStatus.Finished
@@ -301,7 +306,9 @@ private fun PlayerClockFace(
             ?.let { stringResource(R.string.delay_remaining, it.inWholeSecondsRoundedUp) }
         val rotation = orientation.rotationOf(player)
         Box(
-            modifier = Modifier.graphicsLayer {
+            modifier = Modifier
+                .padding(inset)
+                .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             },
@@ -363,7 +370,7 @@ private fun PanelFace(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = PANEL_CORNER, vertical = 20.dp),
+                .padding(horizontal = PANEL_CORNER, vertical = 24.dp),
             color = onPanel,
             trackColor = onPanel.copy(alpha = 0.25f),
             gapSize = 0.dp,
@@ -534,7 +541,8 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
     }
     Button(
         onClick = onClick,
-        modifier = modifier.size(100.dp),
+        // Material's large FAB size: the screen's main action.
+        modifier = modifier.size(96.dp),
         shape = CircleShape,
         contentPadding = PaddingValues(0.dp),
     ) {
@@ -543,12 +551,12 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
             transitionSpec = { fadeIn(tween(COLOR_FADE_MILLIS)) togetherWith fadeOut(tween(COLOR_FADE_MILLIS)) },
             label = "controlLabel",
         ) {
-            Text(stringResource(it), fontSize = 18.sp)
+            Text(stringResource(it), style = MaterialTheme.typography.titleMedium)
         }
     }
 }
 
-private val RING_STROKE = 15.dp
+private val RING_STROKE = 16.dp
 
 // Short, so the turn is seen to pass at once.
 private const val COLOR_FADE_MILLIS = 100
@@ -559,7 +567,11 @@ private val MAX_TOUCH_AGE = 1.seconds
 /** Large enough for big digits, small enough that a ring stays a ring on a tablet. */
 private val FACE_SIZE = 340.dp
 
-private val PANEL_CORNER = 36.dp
+/** Material's extra-large shape. */
+private val PANEL_CORNER = 28.dp
+
+/** What a face leaves for the corner buttons, beyond its own padding. */
+private val CORNER_BUTTON_STRIP = 40.dp
 
 /** Below this the player on move sees their face turn red. */
 internal val LOW_TIME = 10.seconds

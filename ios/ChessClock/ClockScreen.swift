@@ -22,16 +22,23 @@ struct ClockScreen: View {
         let faceStyle = settings.settings.faceStyle
         GeometryReader { geometry in
             // Faces stacked on a tall screen, side by side on a wide one, so each gets half the room.
-            let layout = geometry.size.width > geometry.size.height
-                ? AnyLayout(HStackLayout(spacing: 0))
-                : AnyLayout(VStackLayout(spacing: 0))
+            let wide = geometry.size.width > geometry.size.height
+            let layout = wide ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
             layout {
-                PlayerFace(clock: clock, player: .first, style: faceStyle, rotation: seating.rotation(of: .first)) {
+                // Faces are drawn clear of the corner buttons, the one opposite them by as much so both
+                // stay the same size; each whole half still takes touches.
+                PlayerFace(
+                    clock: clock, player: .first, style: faceStyle, rotation: seating.rotation(of: .first),
+                    inset: wide ? .bottom : .top,
+                ) {
                     model.press(.first, touchedAgo: $0)
                 }
                 ControlButton(status: clock.status) { model.toggle() }
                     .rotationEffect(seating.controlRotation)
-                PlayerFace(clock: clock, player: .second, style: faceStyle, rotation: seating.rotation(of: .second)) {
+                PlayerFace(
+                    clock: clock, player: .second, style: faceStyle, rotation: seating.rotation(of: .second),
+                    inset: .bottom,
+                ) {
                     model.press(.second, touchedAgo: $0)
                 }
             }
@@ -96,7 +103,10 @@ private extension View {
             .padding(.horizontal, 6)
             .frame(width: 56, height: 36)
             .background(palette.inactive, in: .capsule)
-            .padding(16)
+            // Taps land in 44 points around it, the smallest target the HIG allows, while it looks smaller.
+            .padding(4)
+            .contentShape(.rect)
+            .padding(12)
     }
 }
 
@@ -106,6 +116,8 @@ private struct PlayerFace: View {
     let style: FaceStyle
     /// Turns the face to where its player sits.
     let rotation: Angle
+    /// The edge where room is left beside the drawn face, which the touch area still covers.
+    let inset: Edge.Set
     /// The player touched the face, and how long ago the screen sensed the touch.
     let onPress: (Duration) -> Void
     @State private var pressed = false
@@ -124,6 +136,7 @@ private struct PlayerFace: View {
             .rotationEffect(rotation)
             // The face gives a little under the finger while it is down.
             .animation(.spring(duration: 0.2)) { $0.scaleEffect(pressed ? 0.96 : 1) }
+            .padding(inset, cornerButtonStrip)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Like a physical clock, it acts the moment it is touched rather than when the finger
             // lifts, as a Button would: the opponent's clock starts a tap's length sooner.
@@ -160,13 +173,13 @@ private struct PlayerFace: View {
                     .animation(sweep, value: progress)
                 content(time: time, color: palette.ringText)
             case .panels:
-                RoundedRectangle(cornerRadius: panelCorner).fill(color)
+                RoundedRectangle(cornerRadius: panelCorner, style: .continuous).fill(color)
                 content(time: time, color: onColor)
                 // The remaining share of the player's time, as a thin bar along the panel's bottom edge.
                 ProgressBar(progress: progress, color: onColor)
                     .animation(sweep, value: progress)
                     .padding(.horizontal, panelCorner)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 24)
                     .frame(maxHeight: .infinity, alignment: .bottom)
             }
         }
@@ -245,12 +258,15 @@ private struct ProgressBar: View {
     }
 }
 
-private let ringStroke: CGFloat = 15
+private let ringStroke: CGFloat = 16
 
 /// Large enough for big digits, small enough that a ring stays a ring on an iPad.
 private let faceSize: CGFloat = 340
 
-private let panelCorner: CGFloat = 36
+private let panelCorner: CGFloat = 28
+
+/// What a face leaves for the corner buttons, beyond its own padding.
+private let cornerButtonStrip: CGFloat = 40
 
 /// Short, so the turn is seen to pass at once.
 private let colorFade = 0.1
@@ -333,8 +349,8 @@ private struct ControlButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.title3.weight(.medium))
-                .frame(width: 100, height: 100)
+                .font(.headline)
+                .frame(width: 96, height: 96)
                 .contentTransition(.opacity)
                 .animation(.easeInOut(duration: colorFade), value: status)
         }
