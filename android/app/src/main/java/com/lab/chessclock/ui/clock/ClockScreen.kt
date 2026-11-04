@@ -541,8 +541,9 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
     }
     Button(
         onClick = onClick,
-        // Material's large FAB size: the screen's main action.
-        modifier = modifier.size(96.dp),
+        // Material's medium FAB size: clear to hit before a game, small enough during one that a
+        // hard tap near the middle ends the turn rather than pausing.
+        modifier = modifier.size(80.dp),
         shape = CircleShape,
         contentPadding = PaddingValues(0.dp),
     ) {
