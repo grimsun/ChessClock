@@ -3,9 +3,11 @@ package com.lab.chessclock.ui.clock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.Player
+import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
+import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.testing.FakeHaptics
 import com.lab.chessclock.testing.FakeSettingsRepository
 import com.lab.chessclock.testing.MainDispatcherRule
@@ -79,6 +81,19 @@ class ClockViewModelTest {
         val clock = viewModel.ready().clock
         assertEquals(ClockStatus.NotStarted, clock.status)
         assertEquals(1.minutes, clock.second.remaining)
+    }
+
+    @Test
+    fun aPresetPickedOnTheClockStartsAFreshGameWithIt() = runTest {
+        val viewModel = createViewModel()
+        viewModel.onControlPressed()
+        advanceTimeBy(1_000)
+
+        viewModel.applyPreset(TimePreset(3, 2))
+
+        val clock = viewModel.ready().clock
+        assertEquals(ClockStatus.NotStarted, clock.status)
+        assertEquals(TimeControl(3.minutes, 2.seconds), clock.timeControl)
     }
 
     @Test

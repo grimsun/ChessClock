@@ -292,12 +292,7 @@ private fun SupportingText(@StringRes text: Int) {
 
 @Composable
 private fun PresetChip(preset: TimePreset, mode: IncrementMode, selected: Boolean, onClick: () -> Unit) {
-    // "3 + 2" is how players write it, but read aloud it means little: spell it out for TalkBack.
-    val description = stringResource(
-        mode.presetDescription,
-        pluralStringResource(R.plurals.minutes, preset.minutes, preset.minutes),
-        pluralStringResource(R.plurals.seconds, preset.incrementSeconds, preset.incrementSeconds),
-    )
+    val description = presetDescription(preset, mode)
     FilterChip(
         selected = selected,
         onClick = onClick,
@@ -435,6 +430,14 @@ private val IncrementMode.sliderLabel: Int
         IncrementMode.Fischer, IncrementMode.Bronstein -> R.string.setting_increment
         IncrementMode.SimpleDelay -> R.string.setting_delay
     }
+
+/** "3 + 2" is how players write it, but read aloud it means little: spelled out for TalkBack. */
+@Composable
+internal fun presetDescription(preset: TimePreset, mode: IncrementMode): String = stringResource(
+    mode.presetDescription,
+    pluralStringResource(R.plurals.minutes, preset.minutes, preset.minutes),
+    pluralStringResource(R.plurals.seconds, preset.incrementSeconds, preset.incrementSeconds),
+)
 
 private val IncrementMode.presetDescription: Int
     @StringRes get() = when (this) {
