@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -40,11 +39,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -208,12 +206,7 @@ fun ClockScreen(
             enter = fadeIn() + scaleIn(initialScale = 0.8f),
             exit = fadeOut() + scaleOut(targetScale = 0.8f),
         ) {
-            SmallFloatingActionButton(
-                onClick = onOpenSettings,
-                containerColor = MaterialTheme.clockColors.inactive,
-                contentColor = MaterialTheme.clockColors.onInactive,
-                elevation = FloatingActionButtonDefaults.elevation(1.dp),
-            ) {
+            CornerButton(onClick = onOpenSettings) {
                 Icon(
                     painter = painterResource(R.drawable.ic_baseline_settings_24),
                     contentDescription = stringResource(R.string.open_settings),
@@ -453,20 +446,21 @@ private fun TimeControlButton(timeControl: TimeControl, onPresetSelect: (TimePre
     val label = timeControl.shortLabel
     val description = stringResource(R.string.time_control_button, label)
     Box {
-        Surface(
+        CornerButton(
             onClick = { expanded = true },
-            modifier = Modifier
-                .heightIn(min = 40.dp)
-                .semantics { contentDescription = description },
-            // The settings button's shape and colors, so the two corners match.
-            shape = FloatingActionButtonDefaults.smallShape,
-            color = MaterialTheme.clockColors.inactive,
-            contentColor = MaterialTheme.clockColors.onInactive,
-            shadowElevation = 1.dp,
+            modifier = Modifier.semantics { contentDescription = description },
         ) {
-            Box(Modifier.padding(horizontal = 14.dp), contentAlignment = Alignment.Center) {
-                Text(label, style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
-            }
+            // A long time control shrinks to fit rather than widening its button.
+            BasicText(
+                text = label,
+                modifier = Modifier.padding(horizontal = 6.dp),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    color = LocalContentColor.current,
+                    fontFeatureSettings = "tnum",
+                ),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
+            )
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             TimePreset.All.forEach { preset ->
@@ -494,17 +488,32 @@ private fun TimeControlButton(timeControl: TimeControl, onPresetSelect: (TimePre
     }
 }
 
+/** The small buttons in the bottom corners, one shape and size so the two match. */
+@Composable
+private fun CornerButton(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.size(width = 56.dp, height = 40.dp),
+        shape = CircleShape,
+        color = MaterialTheme.clockColors.inactive,
+        contentColor = MaterialTheme.clockColors.onInactive,
+        shadowElevation = 1.dp,
+    ) {
+        Box(contentAlignment = Alignment.Center) { content() }
+    }
+}
+
 /** Whether [timeControl] already is this preset's, whatever its increment mode. */
 private fun TimePreset.matches(timeControl: TimeControl): Boolean =
     timeControl.initial == minutes.minutes && timeControl.increment == incrementSeconds.seconds
 
-/** As players write it: "5 + 3", or "0:30 + 0" for a time that isn't whole minutes. */
+/** As players write it, compactly: "5+3", or "0:30+0" for a time that isn't whole minutes. */
 private val TimeControl.shortLabel: String
     get() {
         val start = initial.toComponents { minutes, seconds, _ ->
             if (seconds == 0) "$minutes" else "$minutes:${seconds.toString().padStart(2, '0')}"
         }
-        return "$start + ${increment.inWholeSeconds}"
+        return "$start+${increment.inWholeSeconds}"
     }
 
 @Composable
