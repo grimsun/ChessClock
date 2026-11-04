@@ -184,7 +184,7 @@ class ClockScreenTest {
         var state by mutableStateOf<ClockUiState>(ClockUiState.Ready(newGame, Orientation.HorizontalSame))
         val picked = mutableListOf<TimePreset>()
         setScreen({ state }, onPresetSelect = picked::add)
-        val button = composeRule.onNodeWithContentDescription("Time control, 5 + 0")
+        val button = composeRule.onNodeWithContentDescription("Time control, 5+0")
 
         button.performClick()
         composeRule.onNodeWithContentDescription("3 minutes, plus 2 seconds per move").performClick()

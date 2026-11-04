@@ -129,11 +129,11 @@ extension ClockSettings {
 }
 
 extension TimeControl {
-    /// As players write it: "5 + 3", or "0:30 + 0" for a time that isn't whole minutes.
+    /// As players write it, compactly: "5+3", or "0:30+0" for a time that isn't whole minutes.
     public var shortLabel: String {
         let total = initial.components.seconds
         let (minutes, seconds) = (total / 60, total % 60)
         let start = seconds == 0 ? "\(minutes)" : "\(minutes):\(seconds < 10 ? "0" : "")\(seconds)"
-        return "\(start) + \(increment.components.seconds)"
+        return "\(start)+\(increment.components.seconds)"
     }
 }

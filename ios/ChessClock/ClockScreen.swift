@@ -90,9 +90,11 @@ private extension View {
     func cornerButton(_ palette: Palette) -> some View {
         font(.subheadline.weight(.semibold))
             .foregroundStyle(palette.onInactive)
-            .frame(minWidth: 20)
-            .frame(height: 36)
-            .padding(.horizontal, 12)
+            // A long time control shrinks to fit rather than widening its button.
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, 6)
+            .frame(width: 56, height: 36)
             .background(palette.inactive, in: .capsule)
             .padding(16)
     }
