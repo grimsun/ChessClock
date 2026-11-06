@@ -63,6 +63,12 @@ struct ClockScreen: View {
                     Picker("Time control", selection: preset) {
                         ForEach(TimePreset.all, id: \.self) { Text($0.label).tag(Optional($0)) }
                     }
+                    // Own times are set in settings.
+                    Divider()
+                    Button("Custom…") {
+                        model.pause()
+                        showingSettings = true
+                    }
                 } label: {
                     Text(clock.timeControl.shortLabel)
                         .monospacedDigit()
