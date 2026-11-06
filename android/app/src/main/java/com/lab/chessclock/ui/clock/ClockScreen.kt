@@ -38,6 +38,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -198,7 +199,7 @@ fun ClockScreen(
                 enter = fadeIn() + scaleIn(initialScale = 0.8f),
                 exit = fadeOut() + scaleOut(targetScale = 0.8f),
             ) {
-                TimeControlButton(uiState.clock.timeControl, onPresetSelect)
+                TimeControlButton(uiState.clock.timeControl, onPresetSelect, onCustom = onOpenSettings)
             }
         }
         AnimatedVisibility(
@@ -448,7 +449,11 @@ private fun ClockText(
 
 /** The time control at a glance, opposite the settings button; a tap offers the presets. */
 @Composable
-private fun TimeControlButton(timeControl: TimeControl, onPresetSelect: (TimePreset) -> Unit) {
+private fun TimeControlButton(
+    timeControl: TimeControl,
+    onPresetSelect: (TimePreset) -> Unit,
+    onCustom: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     val label = timeControl.shortLabel
     val description = stringResource(R.string.time_control_button, label)
@@ -491,6 +496,23 @@ private fun TimeControlButton(timeControl: TimeControl, onPresetSelect: (TimePre
                     },
                 )
             }
+            // Own times are set in settings; marked current when no preset matches.
+            val custom = TimePreset.All.none { it.matches(timeControl) }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(R.string.custom_time_control),
+                        fontWeight = if (custom) FontWeight.Bold else null,
+                        color = if (custom) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    onCustom()
+                },
+                modifier = Modifier.semantics { selected = custom },
+            )
         }
     }
 }

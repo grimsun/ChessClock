@@ -23,6 +23,8 @@
     <string name="preset_description_bronstein">%1$s, plus up to %2$s back per move</string>
     <!-- Spoken form of a preset with a simple delay, e.g. "3 minutes, 2 seconds delay per move". -->
     <string name="preset_description_delay">%1$s, %2$s delay per move</string>
+    <!-- The last entry of the clock screen's time-control menu; opens settings. -->
+    <string name="custom_time_control">Custom…</string>
     <string name="presets_explanation">Minutes each, plus seconds per move. Pick one or set your own.</string>
     <string name="increment_mode_title">Seconds per move</string>
     <string name="increment_mode_fischer">Increment</string>

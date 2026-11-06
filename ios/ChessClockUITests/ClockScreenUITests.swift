@@ -65,6 +65,15 @@ final class ClockScreenUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Time control, 3+2"].waitForNonExistence(timeout: 2))
     }
 
+    func testTheTimeControlMenuOpensSettingsForACustomTime() {
+        let app = launch()
+
+        app.buttons["Time control, 5+3"].tap()
+        app.buttons["Custom…"].tap()
+
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 2))
+    }
+
     func testPresetsAreSpokenInTheWordsOfTheIncrementMode() {
         let app = launch(#"{"incrementMode":"delay"}"#)
 

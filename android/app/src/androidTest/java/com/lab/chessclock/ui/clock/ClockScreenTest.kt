@@ -195,6 +195,17 @@ class ClockScreenTest {
     }
 
     @Test
+    fun theTimeControlMenuOpensSettingsForACustomTime() {
+        var opened = false
+        setScreen(ClockUiState.Ready(newGame, Orientation.HorizontalSame), onOpenSettings = { opened = true })
+
+        composeRule.onNodeWithContentDescription("Time control, 5+0").performClick()
+        composeRule.onNodeWithText("Custom…").performClick()
+
+        assertTrue(opened)
+    }
+
+    @Test
     fun loadingShowsOnlySettings() {
         var opened = false
         setScreen(ClockUiState.Loading, onOpenSettings = { opened = true })
