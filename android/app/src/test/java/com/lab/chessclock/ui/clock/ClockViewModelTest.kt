@@ -3,11 +3,9 @@ package com.lab.chessclock.ui.clock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.Player
-import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
-import com.lab.chessclock.settings.TimePreset
 import com.lab.chessclock.testing.FakeHaptics
 import com.lab.chessclock.testing.FakeSettingsRepository
 import com.lab.chessclock.testing.MainDispatcherRule
@@ -32,7 +30,7 @@ class ClockViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val settings = FakeSettingsRepository(ClockSettings(minutes = 5))
+    private val settings = FakeSettingsRepository(ClockSettings())
     private val haptics = FakeHaptics()
 
     @Test
@@ -76,7 +74,7 @@ class ClockViewModelTest {
         viewModel.onControlPressed()
         advanceTimeBy(1_000)
 
-        settings.update { it.copy(minutes = 1) }
+        settings.update { it.copy(time = 1.minutes) }
 
         val clock = viewModel.ready().clock
         assertEquals(ClockStatus.NotStarted, clock.status)
@@ -84,16 +82,17 @@ class ClockViewModelTest {
     }
 
     @Test
-    fun aPresetPickedOnTheClockStartsAFreshGameWithIt() = runTest {
+    fun addingAPeriodStartsAFreshGame() = runTest {
         val viewModel = createViewModel()
         viewModel.onControlPressed()
         advanceTimeBy(1_000)
 
-        viewModel.applyPreset(TimePreset(3, 2))
+        settings.update { it.withStageAdded() }
 
         val clock = viewModel.ready().clock
         assertEquals(ClockStatus.NotStarted, clock.status)
-        assertEquals(TimeControl(3.minutes, 2.seconds), clock.timeControl)
+        assertEquals(5.minutes, clock.second.remaining)
+        assertEquals(1, clock.timeControl.stages.size)
     }
 
     @Test
@@ -187,7 +186,7 @@ class ClockViewModelTest {
 
     @Test
     fun runningOutOfTimeFinishesAndStopsTicking() = runTest {
-        settings.update { it.copy(minutes = 0, seconds = 1) }
+        settings.update { it.copy(time = 1.seconds) }
         val viewModel = createViewModel()
         viewModel.onControlPressed()
 
@@ -239,7 +238,7 @@ class ClockViewModelTest {
 
     @Test
     fun startsReadyWhenTheSettingsAreAlreadyLoaded() = runTest {
-        val loaded = ClockSettings(minutes = 3, faceStyle = FaceStyle.Panels)
+        val loaded = ClockSettings(time = 3.minutes, faceStyle = FaceStyle.Panels)
         val viewModel = ClockViewModel(NeverLoadingSettingsRepository, initialSettings = loaded)
 
         // Before anyone collects: the screen's first frame already has the clock.
@@ -289,7 +288,7 @@ class ClockViewModelTest {
 
     @Test
     fun buzzesOnceWhenTimeGetsLowAndAgainWhenItRunsOut() = runTest {
-        settings.update { it.copy(minutes = 0, seconds = 12) }
+        settings.update { it.copy(time = 12.seconds) }
         val viewModel = createViewModel()
         viewModel.onControlPressed()
 
@@ -305,7 +304,7 @@ class ClockViewModelTest {
 
     @Test
     fun aTurnThatStartsLowDoesNotBuzz() = runTest {
-        settings.update { it.copy(minutes = 0, seconds = 5) }
+        settings.update { it.copy(time = 5.seconds) }
         val viewModel = createViewModel()
         viewModel.onControlPressed()
 
@@ -317,7 +316,7 @@ class ClockViewModelTest {
 
     @Test
     fun vibrationsCanBeTurnedOff() = runTest {
-        settings.update { it.copy(seconds = 12, minutes = 0, vibrateOnTurnEnd = false, vibrateOnLowTime = false) }
+        settings.update { it.copy(time = 12.seconds, vibrateOnTurnEnd = false, vibrateOnLowTime = false) }
         val viewModel = createViewModel()
 
         viewModel.onPlayerPressed(Player.First)
@@ -328,7 +327,7 @@ class ClockViewModelTest {
 
     @Test
     fun turnClickAndLowTimeBuzzAreSeparateSettings() = runTest {
-        settings.update { it.copy(seconds = 12, minutes = 0, vibrateOnTurnEnd = false) }
+        settings.update { it.copy(time = 12.seconds, vibrateOnTurnEnd = false) }
         val viewModel = createViewModel()
 
         viewModel.onPlayerPressed(Player.First)

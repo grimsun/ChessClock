@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.lab.chessclock.clock.IncrementMode
+import com.lab.chessclock.clock.TimeStage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -12,6 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,8 +34,10 @@ class DataStoreSettingsRepositoryTest {
         val repository = createRepository()
         repository.update {
             it.copy(
-                minutes = 3,
+                time = 3.minutes,
+                secondTime = 2.minutes,
                 incrementSeconds = 2,
+                stages = listOf(TimeStage(40, 30.minutes), TimeStage(20, 15.minutes)),
                 incrementMode = IncrementMode.Bronstein,
                 orientation = Orientation.VerticalOpposite,
                 faceStyle = FaceStyle.Panels,
@@ -44,7 +48,9 @@ class DataStoreSettingsRepositoryTest {
         }
 
         val settings = repository.settings.first()
-        assertEquals(3, settings.minutes)
+        assertEquals(3.minutes, settings.time)
+        assertEquals(2.minutes, settings.timeControl.secondInitial)
+        assertEquals(listOf(TimeStage(40, 30.minutes), TimeStage(20, 15.minutes)), settings.timeControl.stages)
         assertEquals(Orientation.VerticalOpposite, settings.orientation)
         assertEquals(FaceStyle.Panels, settings.faceStyle)
         assertEquals(ThemeMode.Dark, settings.theme)
@@ -72,9 +78,7 @@ class DataStoreSettingsRepositoryTest {
 
         assertEquals(
             ClockSettings(
-                hours = 1,
-                minutes = 30,
-                seconds = 15,
+                time = 1.hours + 30.minutes + 15.seconds,
                 incrementSeconds = 10,
                 orientation = Orientation.VerticalSame,
             ),
@@ -95,17 +99,37 @@ class DataStoreSettingsRepositoryTest {
 
         val settings = DataStoreSettingsRepository(dataStore).settings.first()
 
-        assertEquals(ClockSettings(seconds = 20), settings)
+        assertEquals(ClockSettings(time = 5.minutes + 20.seconds), settings)
+    }
+
+    @Test
+    fun turningSeparateTimesOffAndStagesOffClearsThem() = runTest {
+        val repository = createRepository()
+        repository.update { it.copy(secondTime = 3.minutes, stages = listOf(TimeStage(40, 30.minutes))) }
+
+        repository.update { it.copy(secondTime = null, stages = emptyList()) }
+
+        assertEquals(ClockSettings(), repository.settings.first())
+    }
+
+    @Test
+    fun unreadableStagesAreSkipped() = runTest {
+        val dataStore = createDataStore()
+        dataStore.edit { it[stringPreferencesKey("stages")] = "40:1800;x:1;0:60;20" }
+
+        val settings = DataStoreSettingsRepository(dataStore).settings.first()
+
+        assertEquals(listOf(TimeStage(40, 30.minutes)), settings.stages)
     }
 
     @Test
     fun updateTransformsTheStoredValue() = runTest {
         val repository = createRepository()
-        repository.update { it.copy(seconds = 10) }
+        repository.update { it.copy(time = 10.seconds) }
 
-        repository.update { it.copy(seconds = it.seconds + 5) }
+        repository.update { it.copy(time = it.time + 5.seconds) }
 
-        assertEquals(ClockSettings(seconds = 15), repository.settings.first())
+        assertEquals(ClockSettings(time = 15.seconds), repository.settings.first())
     }
 
     private fun TestScope.createRepository() = DataStoreSettingsRepository(createDataStore())

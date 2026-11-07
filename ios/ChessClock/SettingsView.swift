@@ -3,6 +3,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @Binding var settings: ClockSettings
+    /// Whether the clock lays its faces side by side, which names each player's time by its half.
+    var wide = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.palette) private var palette
 
@@ -19,13 +21,46 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.vertical, 4)
-                    Stepper("Hours: \(settings.hours)", value: $settings.hours, in: 0...ClockSettings.maxHours)
-                    Stepper("Minutes: \(settings.minutes)", value: $settings.minutes, in: 0...ClockSettings.maxMinutes)
-                    Stepper("Seconds: \(settings.seconds)", value: $settings.seconds, in: 0...ClockSettings.maxSeconds)
+                    // Named by where each half of the screen is: the first player's is on top, or on the
+                    // left when the faces are side by side.
+                    TimeStepper(settings.secondTime == nil ? "Time" : wide ? "Left player" : "Top player", time: $settings.time)
+                    if let secondTime = settings.secondTime {
+                        TimeStepper(wide ? "Right player" : "Bottom player", time: Binding(
+                            get: { secondTime },
+                            set: { settings.secondTime = $0 },
+                        ))
+                    }
+                    Toggle(isOn: separateTimes) {
+                        Text("Different times")
+                        Text("For time odds: the stronger player can start with less")
+                    }
                 } header: {
                     Text("Time control")
                 } footer: {
                     Text("Minutes each, plus seconds per move. Pick one or set your own.")
+                }
+
+                ForEach(settings.stages.indices, id: \.self) { index in
+                    let stage = stage(at: index)
+                    Section("Period \(index + 2)") {
+                        StepStepper(
+                            "Starts after",
+                            steps: ClockSettings.moveSteps,
+                            value: stage.moves,
+                            text: { $0 == 1 ? "1 move" : "\($0) moves" },
+                        )
+                        TimeStepper("Time added", time: stage.time)
+                        Button("Remove Period \(index + 2)", role: .destructive) {
+                            settings.stages.remove(at: index)
+                        }
+                    }
+                }
+                if settings.stages.count < ClockSettings.maxStages {
+                    Section {
+                        Button("Add Time After a Number of Moves", systemImage: "plus") { settings.addStage() }
+                    } footer: {
+                        Text("Each player gets the time once they have made the moves, as in classical chess.")
+                    }
                 }
 
                 Section {
@@ -204,6 +239,99 @@ private extension IncrementMode {
         case .bronstein: "The time a move took is given back, up to these seconds, so time never grows."
         case .simpleDelay: "Simple delay: each move, the clock waits these seconds before counting down."
         }
+    }
+}
+
+extension SettingsView {
+    /// The period at `index`, read safely while a removed one's rows are still going away.
+    private func stage(at index: Int) -> Binding<TimeStage> {
+        Binding(
+            get: { settings.stages.indices.contains(index) ? settings.stages[index] : TimeStage(moves: 1, time: .zero) },
+            set: { if settings.stages.indices.contains(index) { settings.stages[index] = $0 } },
+        )
+    }
+
+    /// Each player's own time starts out as the shared one, so turning it on changes nothing yet.
+    private var separateTimes: Binding<Bool> {
+        Binding(
+            get: { settings.secondTime != nil },
+            set: { settings.secondTime = $0 ? settings.secondTime ?? settings.time : nil },
+        )
+    }
+}
+
+/// A stepper through a time's steps, showing the time as "1 h 30 min".
+private struct TimeStepper: View {
+    let title: LocalizedStringKey
+    @Binding var time: Duration
+
+    init(_ title: LocalizedStringKey, time: Binding<Duration>) {
+        self.title = title
+        _time = time
+    }
+
+    var body: some View {
+        StepStepper(title, steps: ClockSettings.timeSteps, value: $time, text: \.settingsText) {
+            $0.formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide))
+        }
+    }
+}
+
+/// A stepper through a list of steps. A value between steps, such as one saved by an older version,
+/// stays as it is until a step moves it to the next one either way.
+private struct StepStepper<Value: Comparable>: View {
+    let title: LocalizedStringKey
+    let steps: [Value]
+    @Binding var value: Value
+    let text: (Value) -> String
+    /// The value as VoiceOver reads it, when the shown text is abbreviated.
+    var spoken: ((Value) -> String)?
+
+    init(
+        _ title: LocalizedStringKey,
+        steps: [Value],
+        value: Binding<Value>,
+        text: @escaping (Value) -> String,
+        spoken: ((Value) -> String)? = nil,
+    ) {
+        self.title = title
+        self.steps = steps
+        _value = value
+        self.text = text
+        self.spoken = spoken
+    }
+
+    var body: some View {
+        // The shown value stays out of the stepper's label: VoiceOver reads the spoken one as its value.
+        HStack {
+            Text(title).accessibilityHidden(true)
+            Spacer()
+            Text(text(value))
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            // A missing step leaves its button disabled at either end.
+            let next = steps.first { $0 > value }
+            let previous = steps.last { $0 < value }
+            Stepper(
+                title,
+                onIncrement: next.map { next in { value = next } },
+                onDecrement: previous.map { previous in { value = previous } },
+            )
+            .labelsHidden()
+            .accessibilityValue((spoken ?? text)(value))
+        }
+    }
+}
+
+private extension Duration {
+    /// "1 h 30 min", as a time is shown in settings.
+    var settingsText: String {
+        let total = components.seconds
+        let parts = [(total / 3600, "h"), (total / 60 % 60, "min"), (total % 60, "s")]
+            .filter { $0.0 > 0 }
+            .map { "\($0.0) \($0.1)" }
+        return parts.isEmpty ? "0 s" : parts.joined(separator: " ")
     }
 }
 

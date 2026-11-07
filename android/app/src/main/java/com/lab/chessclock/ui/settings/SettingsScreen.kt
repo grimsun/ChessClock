@@ -33,10 +33,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -51,23 +54,24 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lab.chessclock.R
 import com.lab.chessclock.clock.IncrementMode
+import com.lab.chessclock.clock.TimeStage
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
-import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import com.lab.chessclock.ui.theme.paletteSwatch
 import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 @Composable
 fun SettingsRoute(
@@ -83,7 +87,13 @@ fun SettingsRoute(
         onFaceStyleChange = viewModel::setFaceStyle,
         onThemeChange = viewModel::setTheme,
         onPaletteChange = viewModel::setPalette,
-        onTimerChange = viewModel::setTimer,
+        onTimeChange = viewModel::setTime,
+        onSecondTimeChange = viewModel::setSecondTime,
+        onSeparateTimesChange = viewModel::setSeparateTimes,
+        onIncrementChange = viewModel::setIncrement,
+        onStageAdd = viewModel::addStage,
+        onStageChange = viewModel::setStage,
+        onStageRemove = viewModel::removeStage,
         onIncrementModeChange = viewModel::setIncrementMode,
         onVibrateOnTurnEndChange = viewModel::setVibrateOnTurnEnd,
         onVibrateOnLowTimeChange = viewModel::setVibrateOnLowTime,
@@ -100,7 +110,13 @@ fun SettingsScreen(
     onFaceStyleChange: (FaceStyle) -> Unit,
     onThemeChange: (ThemeMode) -> Unit,
     onPaletteChange: (ColorPalette) -> Unit,
-    onTimerChange: (TimerSetting, Int) -> Unit,
+    onTimeChange: (Duration) -> Unit,
+    onSecondTimeChange: (Duration) -> Unit,
+    onSeparateTimesChange: (Boolean) -> Unit,
+    onIncrementChange: (Int) -> Unit,
+    onStageAdd: () -> Unit,
+    onStageChange: (Int, TimeStage) -> Unit,
+    onStageRemove: (Int) -> Unit,
     onIncrementModeChange: (IncrementMode) -> Unit,
     onVibrateOnTurnEndChange: (Boolean) -> Unit,
     onVibrateOnLowTimeChange: (Boolean) -> Unit,
@@ -151,25 +167,65 @@ fun SettingsScreen(
                     )
                 }
             }
-            TimerSetting.entries.forEach { setting ->
-                // The mode sits right above the slider whose seconds it gives a meaning to.
-                if (setting == TimerSetting.Increment) {
-                    SegmentedSetting(
-                        title = R.string.increment_mode_title,
-                        options = IncrementMode.entries,
-                        selected = settings.incrementMode,
-                        label = { it.label },
-                        onSelect = onIncrementModeChange,
-                    )
-                    SupportingText(settings.incrementMode.description)
-                }
-                SettingSlider(
-                    label = if (setting == TimerSetting.Increment) settings.incrementMode.sliderLabel else setting.label,
-                    value = setting.valueIn(settings),
-                    max = setting.max,
-                    onValueChange = { onTimerChange(setting, it) },
+            val secondTime = settings.secondTime
+            // Named by where each half of the screen is: the first player's is on top, or on the left
+            // when the screen is wide.
+            val wide = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+            TimeSlider(
+                label = when {
+                    secondTime == null -> R.string.setting_time
+                    wide -> R.string.setting_time_left
+                    else -> R.string.setting_time_top
+                },
+                value = settings.time,
+                onValueChange = onTimeChange,
+            )
+            if (secondTime != null) {
+                TimeSlider(
+                    label = if (wide) R.string.setting_time_right else R.string.setting_time_bottom,
+                    value = secondTime,
+                    onValueChange = onSecondTimeChange,
                 )
             }
+            SwitchOption(
+                label = R.string.separate_times,
+                description = R.string.separate_times_description,
+                checked = secondTime != null,
+                onCheckedChange = onSeparateTimesChange,
+            )
+
+            settings.stages.forEachIndexed { index, stage ->
+                StageSetting(
+                    number = index + 2,
+                    stage = stage,
+                    onChange = { onStageChange(index, it) },
+                    onRemove = { onStageRemove(index) },
+                )
+            }
+            if (settings.stages.size < ClockSettings.MAX_STAGES) {
+                TextButton(onClick = onStageAdd, modifier = Modifier.padding(horizontal = 4.dp)) {
+                    Icon(painterResource(R.drawable.ic_add_24), contentDescription = null, Modifier.size(18.dp))
+                    Text(stringResource(R.string.stage_add), Modifier.padding(start = 8.dp))
+                }
+            }
+            if (settings.stages.isNotEmpty()) SupportingText(R.string.stages_explanation)
+
+            // The mode sits right above the slider whose seconds it gives a meaning to.
+            SegmentedSetting(
+                title = R.string.increment_mode_title,
+                options = IncrementMode.entries,
+                selected = settings.incrementMode,
+                label = { it.label },
+                onSelect = onIncrementModeChange,
+            )
+            SupportingText(settings.incrementMode.description)
+            StepSlider(
+                label = settings.incrementMode.sliderLabel,
+                steps = INCREMENT_STEPS,
+                value = settings.incrementSeconds,
+                valueText = { it.toString() },
+                onValueChange = onIncrementChange,
+            )
             SupportingText(R.string.time_change_restarts)
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -373,43 +429,126 @@ private fun PaletteSwatch(palette: ColorPalette) {
     }
 }
 
+/** A later period: after how many moves it starts, and the time it adds. */
 @Composable
-private fun SettingSlider(@StringRes label: Int, value: Int, max: Int, onValueChange: (Int) -> Unit) {
-    // Follow the finger locally and save once the drag ends, instead of on every step.
-    var position by remember(value) { mutableFloatStateOf(value.toFloat()) }
-    val labelText = stringResource(label)
-
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text(labelText, style = MaterialTheme.typography.bodyLarge)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Slider(
-                value = position,
-                onValueChange = { position = it },
-                onValueChangeFinished = { onValueChange(position.roundToInt()) },
-                valueRange = 0f..max.toFloat(),
-                steps = max - 1,
-                // Without these TalkBack reads an unnamed percentage instead of "Minutes, 30".
-                modifier = Modifier
-                    .weight(1f)
-                    .semantics {
-                        contentDescription = labelText
-                        stateDescription = position.roundToInt().toString()
-                    },
-                // Up to 60 steps: tick marks would just be a row of dots.
-                colors = SliderDefaults.colors(
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                ),
-            )
-            Text(
-                text = position.roundToInt().toString(),
-                modifier = Modifier.widthIn(min = 48.dp),
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.bodyLarge,
+private fun StageSetting(number: Int, stage: TimeStage, onChange: (TimeStage) -> Unit, onRemove: () -> Unit) {
+    Row(
+        modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.stage_title, number),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        IconButton(onClick = onRemove) {
+            Icon(
+                painter = painterResource(R.drawable.ic_close_24),
+                contentDescription = stringResource(R.string.stage_remove, number),
             )
         }
     }
+    StepSlider(
+        label = R.string.stage_moves,
+        steps = ClockSettings.MOVE_STEPS,
+        value = stage.moves,
+        valueText = { pluralStringResource(R.plurals.move_count, it, it) },
+        onValueChange = { onChange(stage.copy(moves = it)) },
+    )
+    TimeSlider(R.string.stage_time, stage.time) { onChange(stage.copy(time = it)) }
 }
+
+@Composable
+private fun TimeSlider(@StringRes label: Int, value: Duration, onValueChange: (Duration) -> Unit) {
+    StepSlider(
+        label = label,
+        steps = ClockSettings.TIME_STEPS,
+        value = value,
+        valueText = { compactDuration(it) },
+        spokenValue = { spokenDuration(it) },
+        onValueChange = onValueChange,
+    )
+}
+
+/**
+ * A slider over a list of [steps], showing the value at its end. A [value] between steps, such as
+ * one saved by an older version, shows as it is until the slider moves.
+ */
+@Composable
+private fun <T : Comparable<T>> StepSlider(
+    @StringRes label: Int,
+    steps: List<T>,
+    value: T,
+    valueText: @Composable (T) -> String,
+    onValueChange: (T) -> Unit,
+    spokenValue: @Composable (T) -> String = valueText,
+) {
+    // Follow the finger locally and save once the drag ends, instead of on every step.
+    var position by remember(value, steps) { mutableFloatStateOf(steps.stepIndexOf(value).toFloat()) }
+    var moved by remember(value) { mutableStateOf(false) }
+    val shown = if (moved) steps[position.roundToInt()] else value
+    val labelText = stringResource(label)
+    val spoken = spokenValue(shown)
+
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        // The value on the label's line, so the slider gets the whole width whatever its length.
+        Row {
+            Text(labelText, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = valueText(shown),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Slider(
+            value = position,
+            onValueChange = {
+                position = it
+                moved = true
+            },
+            onValueChangeFinished = { if (moved) onValueChange(steps[position.roundToInt()]) },
+            valueRange = 0f..steps.lastIndex.toFloat(),
+            steps = steps.size - 2,
+            // Without these TalkBack reads an unnamed percentage instead of "Time, 5 minutes".
+            modifier = Modifier.semantics {
+                contentDescription = labelText
+                stateDescription = spoken
+            },
+            // Dozens of steps: tick marks would just be a row of dots.
+            colors = SliderDefaults.colors(
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            ),
+        )
+    }
+}
+
+/** The step at [value], or the next one up from a value between steps. */
+private fun <T : Comparable<T>> List<T>.stepIndexOf(value: T): Int =
+    indexOfFirst { it >= value }.takeIf { it >= 0 } ?: lastIndex
+
+/** "1 h 30 min", as a time is shown beside its slider. */
+@Composable
+private fun compactDuration(duration: Duration): String = duration.toComponents { hours, minutes, seconds, _ ->
+    listOfNotNull(
+        stringResource(R.string.duration_hours, hours).takeIf { hours > 0 },
+        stringResource(R.string.duration_minutes, minutes).takeIf { minutes > 0 },
+        stringResource(R.string.duration_seconds, seconds).takeIf { seconds > 0 || duration == Duration.ZERO },
+    ).joinToString(" ")
+}
+
+/** "1 hour 30 minutes", as TalkBack reads it. */
+@Composable
+private fun spokenDuration(duration: Duration): String = duration.toComponents { hours, minutes, seconds, _ ->
+    listOfNotNull(
+        pluralStringResource(R.plurals.hours, hours.toInt(), hours.toInt()).takeIf { hours > 0 },
+        pluralStringResource(R.plurals.minutes, minutes, minutes).takeIf { minutes > 0 },
+        pluralStringResource(R.plurals.seconds, seconds, seconds).takeIf { seconds > 0 || duration == Duration.ZERO },
+    ).joinToString(" ")
+}
+
+/** Increments and delays of up to a minute, in whole seconds. */
+private val INCREMENT_STEPS = (0..ClockSettings.MAX_INCREMENT_SECONDS).toList()
 
 private val IncrementMode.label: Int
     @StringRes get() = when (this) {
@@ -433,7 +572,7 @@ private val IncrementMode.sliderLabel: Int
 
 /** "3 + 2" is how players write it, but read aloud it means little: spelled out for TalkBack. */
 @Composable
-internal fun presetDescription(preset: TimePreset, mode: IncrementMode): String = stringResource(
+private fun presetDescription(preset: TimePreset, mode: IncrementMode): String = stringResource(
     mode.presetDescription,
     pluralStringResource(R.plurals.minutes, preset.minutes, preset.minutes),
     pluralStringResource(R.plurals.seconds, preset.incrementSeconds, preset.incrementSeconds),
@@ -483,14 +622,6 @@ private val ColorPalette.label: Int
         ColorPalette.Graphite -> R.string.palette_graphite
     }
 
-private val TimerSetting.label: Int
-    @StringRes get() = when (this) {
-        TimerSetting.Hours -> R.string.setting_hours
-        TimerSetting.Minutes -> R.string.setting_minutes
-        TimerSetting.Seconds -> R.string.setting_seconds
-        TimerSetting.Increment -> R.string.setting_increment
-    }
-
 @Preview(showBackground = true)
 @Preview(name = "Whole page", showBackground = true, heightDp = 1500)
 @Preview(name = "Landscape", showBackground = true, widthDp = 891, heightDp = 411)
@@ -499,13 +630,23 @@ private val TimerSetting.label: Int
 private fun SettingsScreenPreview() {
     ChessClockTheme {
         SettingsScreen(
-            settings = ClockSettings(minutes = 3, incrementSeconds = 2),
+            settings = ClockSettings(
+                time = 90.minutes,
+                incrementSeconds = 30,
+                stages = listOf(TimeStage(40, 30.minutes)),
+            ),
             onBack = {},
             onOrientationChange = {},
             onFaceStyleChange = {},
             onThemeChange = {},
             onPaletteChange = {},
-            onTimerChange = { _, _ -> },
+            onTimeChange = {},
+            onSecondTimeChange = {},
+            onSeparateTimesChange = {},
+            onIncrementChange = {},
+            onStageAdd = {},
+            onStageChange = { _, _ -> },
+            onStageRemove = {},
             onIncrementModeChange = {},
             onVibrateOnTurnEndChange = {},
             onVibrateOnLowTimeChange = {},

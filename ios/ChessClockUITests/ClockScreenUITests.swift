@@ -52,26 +52,49 @@ final class ClockScreenUITests: XCTestCase {
         XCTAssertEqual(app.buttons["face.second"].label, "03:00")
     }
 
-    func testTheTimeControlButtonOffersPresets() {
+    func testTheMoveCounterCountsMovesAndStaysDuringPlay() {
         let app = launch()
-
-        app.buttons["Time control, 5+3"].tap()
-        app.buttons["3 + 2"].tap()
-
-        XCTAssertEqual(app.buttons["face.first"].label, "03:00")
-        XCTAssertTrue(app.buttons["Time control, 3+2"].exists)
+        XCTAssertTrue(app.staticTexts["0 moves played"].exists)
 
         app.buttons["face.second"].tap()
-        XCTAssertTrue(app.buttons["Time control, 3+2"].waitForNonExistence(timeout: 2))
+        app.buttons["face.first"].tap()
+
+        XCTAssertTrue(app.staticTexts["1 move played"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["Pause"].exists)
     }
 
-    func testTheTimeControlMenuOpensSettingsForACustomTime() {
+    func testAPeriodsTimeIsAddedAfterItsMoves() {
+        let app = launch(#"{"timeSeconds":120,"incrementSeconds":0,"stages":[{"moves":1,"seconds":600}]}"#)
+
+        app.buttons["face.second"].tap()
+        app.buttons["face.first"].tap()
+
+        XCTAssertTrue(app.buttons["face.first"].label.hasPrefix("11:"), app.buttons["face.first"].label)
+        XCTAssertTrue(app.buttons["face.second"].label.hasPrefix("01:5"), app.buttons["face.second"].label)
+    }
+
+    func testEachPlayerCanStartWithTheirOwnTime() {
         let app = launch()
 
-        app.buttons["Time control, 5+3"].tap()
-        app.buttons["Custom…"].tap()
+        app.buttons["Settings"].tap()
+        app.switches.matching(NSPredicate(format: "label BEGINSWITH 'Different times'")).switches.firstMatch.tap()
+        app.steppers["Bottom player"].buttons["Decrement"].tap()
+        app.buttons["Done"].tap()
 
-        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 2))
+        XCTAssertEqual(app.buttons["face.first"].label, "05:00")
+        XCTAssertEqual(app.buttons["face.second"].label, "04:00")
+    }
+
+    func testAPeriodCanBeAddedAndRemoved() {
+        let app = launch()
+
+        app.buttons["Settings"].tap()
+        app.buttons["Add Time After a Number of Moves"].tap()
+        XCTAssertEqual(app.steppers["Starts after"].value as? String, "40 moves")
+        XCTAssertEqual(app.steppers["Time added"].value as? String, "30 minutes")
+
+        app.buttons["Remove Period 2"].tap()
+        XCTAssertTrue(app.steppers["Starts after"].waitForNonExistence(timeout: 2))
     }
 
     func testPresetsAreSpokenInTheWordsOfTheIncrementMode() {

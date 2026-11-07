@@ -1,6 +1,7 @@
 package com.lab.chessclock.ui.settings
 
 import com.lab.chessclock.clock.IncrementMode
+import com.lab.chessclock.clock.TimeStage
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
@@ -8,7 +9,6 @@ import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
 import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
-import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.testing.FakeSettingsRepository
 import com.lab.chessclock.testing.MainDispatcherRule
 import com.lab.chessclock.testing.NeverLoadingSettingsRepository
@@ -20,18 +20,21 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class SettingsViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val repository = FakeSettingsRepository(ClockSettings(minutes = 5))
+    private val repository = FakeSettingsRepository(ClockSettings())
 
     @Test
     fun exposesStoredSettings() = runTest {
         val viewModel = createViewModel()
-        assertEquals(ClockSettings(minutes = 5), viewModel.settings.value)
+        assertEquals(ClockSettings(), viewModel.settings.value)
     }
 
     @Test
@@ -42,19 +45,48 @@ class SettingsViewModelTest {
 
     @Test
     fun startsWithAlreadyLoadedSettings() = runTest {
-        val loaded = ClockSettings(minutes = 3)
+        val loaded = ClockSettings(time = 3.minutes)
         val viewModel = createViewModel(NeverLoadingSettingsRepository, initialSettings = loaded)
         assertEquals(loaded, viewModel.settings.value)
     }
 
     @Test
-    fun setTimerSavesOnlyThatSetting() = runTest {
+    fun setIncrementSavesOnlyThatSetting() = runTest {
         val viewModel = createViewModel()
 
-        viewModel.setTimer(TimerSetting.Increment, 7)
+        viewModel.setIncrement(7)
 
-        assertEquals(ClockSettings(minutes = 5, incrementSeconds = 7), repository.settings.value)
+        assertEquals(ClockSettings(incrementSeconds = 7), repository.settings.value)
         assertEquals(repository.settings.value, viewModel.settings.value)
+    }
+
+    @Test
+    fun separateTimesStartFromTheSharedTimeAndGoBackToIt() = runTest {
+        val viewModel = createViewModel()
+        viewModel.setTime(10.minutes)
+
+        viewModel.setSeparateTimes(true)
+        assertEquals(10.minutes, repository.settings.value.secondTime)
+
+        viewModel.setSecondTime(7.minutes)
+        assertEquals(7.minutes, repository.settings.value.timeControl.secondInitial)
+        assertEquals(10.minutes, repository.settings.value.timeControl.initial)
+
+        viewModel.setSeparateTimes(false)
+        assertEquals(ClockSettings(time = 10.minutes), repository.settings.value)
+    }
+
+    @Test
+    fun stagesAreAddedChangedAndRemoved() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.addStage()
+        viewModel.addStage()
+        viewModel.setStage(0, TimeStage(30, 1.hours))
+        assertEquals(listOf(TimeStage(30, 1.hours), TimeStage(20, 15.minutes)), repository.settings.value.stages)
+
+        viewModel.removeStage(1)
+        assertEquals(listOf(TimeStage(30, 1.hours)), repository.settings.value.stages)
     }
 
     @Test
@@ -63,7 +95,7 @@ class SettingsViewModelTest {
 
         viewModel.setIncrementMode(IncrementMode.SimpleDelay)
 
-        assertEquals(ClockSettings(minutes = 5, incrementMode = IncrementMode.SimpleDelay), repository.settings.value)
+        assertEquals(ClockSettings(incrementMode = IncrementMode.SimpleDelay), repository.settings.value)
     }
 
     @Test
@@ -71,10 +103,10 @@ class SettingsViewModelTest {
         val viewModel = createViewModel()
 
         viewModel.setVibrateOnTurnEnd(false)
-        assertEquals(ClockSettings(minutes = 5, vibrateOnTurnEnd = false), repository.settings.value)
+        assertEquals(ClockSettings(vibrateOnTurnEnd = false), repository.settings.value)
         viewModel.setVibrateOnLowTime(false)
         assertEquals(
-            ClockSettings(minutes = 5, vibrateOnTurnEnd = false, vibrateOnLowTime = false),
+            ClockSettings(vibrateOnTurnEnd = false, vibrateOnLowTime = false),
             repository.settings.value,
         )
     }
@@ -94,7 +126,7 @@ class SettingsViewModelTest {
 
         viewModel.setFaceStyle(FaceStyle.Panels)
 
-        assertEquals(ClockSettings(minutes = 5, faceStyle = FaceStyle.Panels), repository.settings.value)
+        assertEquals(ClockSettings(faceStyle = FaceStyle.Panels), repository.settings.value)
     }
 
     @Test
@@ -103,7 +135,7 @@ class SettingsViewModelTest {
 
         viewModel.setTheme(ThemeMode.Dark)
 
-        assertEquals(ClockSettings(minutes = 5, theme = ThemeMode.Dark), repository.settings.value)
+        assertEquals(ClockSettings(theme = ThemeMode.Dark), repository.settings.value)
     }
 
     @Test
@@ -112,18 +144,22 @@ class SettingsViewModelTest {
 
         viewModel.setPalette(ColorPalette.Graphite)
 
-        assertEquals(ClockSettings(minutes = 5, palette = ColorPalette.Graphite), repository.settings.value)
+        assertEquals(ClockSettings(palette = ColorPalette.Graphite), repository.settings.value)
     }
 
     @Test
     fun applyPresetSavesItsTimeControl() = runTest {
-        repository.settings.value = ClockSettings(hours = 1, seconds = 30, orientation = Orientation.VerticalSame)
+        repository.settings.value = ClockSettings(
+            time = 1.hours + 30.seconds,
+            stages = listOf(TimeStage(40, 30.minutes)),
+            orientation = Orientation.VerticalSame,
+        )
         val viewModel = createViewModel()
 
         viewModel.applyPreset(TimePreset(10, 5))
 
         assertEquals(
-            ClockSettings(minutes = 10, incrementSeconds = 5, orientation = Orientation.VerticalSame),
+            ClockSettings(time = 10.minutes, incrementSeconds = 5, orientation = Orientation.VerticalSame),
             repository.settings.value,
         )
     }
