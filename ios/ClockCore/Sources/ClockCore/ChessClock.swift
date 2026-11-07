@@ -16,27 +16,67 @@ public enum IncrementMode: String, Sendable, CaseIterable, Codable {
     case simpleDelay = "delay"
 }
 
+/// A later period of a multi-stage control, such as the 30 minutes after move 40 in classical chess:
+/// `time` is added once a player has made `moves` more moves since the period before began.
+public struct TimeStage: Hashable, Sendable {
+    public var moves: Int
+    public var time: Duration
+
+    public init(moves: Int, time: Duration) {
+        self.moves = moves
+        self.time = time
+    }
+}
+
 public struct TimeControl: Equatable, Sendable {
     public var initial: Duration
     public var increment: Duration
     public var mode: IncrementMode
+    /// The periods after the first, in order; empty when `initial` is for the whole game.
+    public var stages: [TimeStage]
+    /// The second player's starting time, set apart from the first's to give one player odds.
+    public var secondInitial: Duration
 
-    public init(initial: Duration, increment: Duration, mode: IncrementMode = .fischer) {
+    public init(
+        initial: Duration,
+        increment: Duration,
+        mode: IncrementMode = .fischer,
+        stages: [TimeStage] = [],
+        secondInitial: Duration? = nil,
+    ) {
         self.initial = initial
         self.increment = increment
         self.mode = mode
+        self.stages = stages
+        self.secondInitial = secondInitial ?? initial
+    }
+
+    public func initial(of player: Player) -> Duration { player == .first ? initial : secondInitial }
+
+    /// The time a player gets on making their `moves`th move: a new period's, if one starts there.
+    public func stageTime(after moves: Int) -> Duration {
+        var startsAt = 0
+        for stage in stages {
+            startsAt += stage.moves
+            if startsAt == moves { return stage.time }
+            if startsAt > moves { break }
+        }
+        return .zero
     }
 }
 
 /// One player's remaining time. `max` is the most time the player has had so far, which grows
-/// with increments, so `remaining / max` is the fraction shown by the progress ring.
+/// with increments, so `remaining / max` is the fraction shown by the progress ring. `moves` counts
+/// the moves the player has ended with a press.
 public struct PlayerTime: Equatable, Sendable {
     public var remaining: Duration
     public var max: Duration
+    public var moves: Int
 
-    public init(remaining: Duration, max: Duration) {
+    public init(remaining: Duration, max: Duration, moves: Int = 0) {
         self.remaining = remaining
         self.max = max
+        self.moves = moves
     }
 
     public static func full(_ time: Duration) -> PlayerTime { PlayerTime(remaining: time, max: time) }
@@ -48,11 +88,11 @@ public struct PlayerTime: Equatable, Sendable {
 
     func adding(_ time: Duration) -> PlayerTime {
         let newRemaining = remaining + time
-        return PlayerTime(remaining: newRemaining, max: Swift.max(max, newRemaining))
+        return PlayerTime(remaining: newRemaining, max: Swift.max(max, newRemaining), moves: moves)
     }
 
     func subtracting(_ time: Duration) -> PlayerTime {
-        PlayerTime(remaining: Swift.max(remaining - time, .zero), max: max)
+        PlayerTime(remaining: Swift.max(remaining - time, .zero), max: max, moves: moves)
     }
 }
 
@@ -73,8 +113,8 @@ public struct ChessClock: Equatable, Sendable {
 
     public init(_ timeControl: TimeControl) {
         self.timeControl = timeControl
-        first = .full(timeControl.initial)
-        second = .full(timeControl.initial)
+        first = .full(timeControl.initial(of: .first))
+        second = .full(timeControl.initial(of: .second))
     }
 
     public var status: ClockStatus {
@@ -88,6 +128,10 @@ public struct ChessClock: Equatable, Sendable {
 
     public func time(of player: Player) -> PlayerTime { player == .first ? first : second }
 
+    /// The moves played, counted as on a scoresheet: a move each, so the count rises when the
+    /// player who started presses, and stays as their opponent replies.
+    public var moves: Int { Swift.max(first.moves, second.moves) }
+
     /// With a simple delay, how long the player on move can still think before their time runs.
     public var delayRemaining: Duration {
         guard timeControl.mode == .simpleDelay, turn != nil, status != .finished else { return .zero }
@@ -95,7 +139,8 @@ public struct ChessClock: Equatable, Sendable {
     }
 
     /// `player` presses their clock: the opponent's time starts running. Ending a running turn
-    /// awards the increment as its ``IncrementMode`` says. Pressing either side of a paused clock
+    /// counts the move and awards the increment as its ``IncrementMode`` says, plus the next
+    /// period's time when the move completes a period. Pressing either side of a paused clock
     /// resumes the player on move, so a pause can't change whose turn it is.
     public func press(_ player: Player) -> ChessClock {
         var next = self
@@ -104,7 +149,12 @@ public struct ChessClock: Equatable, Sendable {
             return self
         case .running:
             guard turn == player else { return self }
-            next.update(player) { $0.adding(moveBonus) }
+            let bonus = moveBonus
+            next.update(player) { time in
+                var ended = time.adding(bonus + timeControl.stageTime(after: time.moves + 1))
+                ended.moves += 1
+                return ended
+            }
             next.turn = player.opponent
             next.moveTime = .zero
         case .paused:

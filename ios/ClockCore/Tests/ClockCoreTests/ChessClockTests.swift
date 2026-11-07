@@ -108,4 +108,53 @@ struct ClockSignalTests {
         let short = ChessClock(TimeControl(initial: .seconds(5), increment: .zero)).press(.first)
         #expect(short.signal(tickedTo: short.tick(.seconds(1))) == nil)
     }
+
+    @Test func eachPressThatEndsATurnCountsAMove() {
+        let started = clock.press(.first)
+        #expect(started.moves == 0)
+        let afterWhite = started.press(.second)
+        #expect(afterWhite.second.moves == 1 && afterWhite.moves == 1)
+        let afterBlack = afterWhite.press(.first)
+        #expect(afterBlack.first.moves == 1 && afterBlack.moves == 1)
+        #expect(afterBlack.press(.second).moves == 2)
+    }
+
+    @Test func pressesThatDontEndATurnDontCount() {
+        let paused = clock.press(.first).press(.second).pause()
+        #expect(paused.press(.first).moves == 1)
+        #expect(paused.press(.second).press(.second).moves == 1)
+        #expect(paused.reset().moves == 0)
+    }
+
+    @Test func aPeriodsTimeIsAddedOnTheMoveThatCompletesThePeriodBefore() {
+        let stages = [TimeStage(moves: 2, time: .seconds(1800)), TimeStage(moves: 1, time: .seconds(900))]
+        var game = ChessClock(TimeControl(initial: .seconds(600), increment: .zero, stages: stages)).press(.first)
+
+        game = game.press(.second)
+        #expect(game.second.remaining == .seconds(600))
+        game = game.press(.first).press(.second)
+        #expect(game.second.remaining == .seconds(2400))
+        #expect(game.second.max == .seconds(2400))
+        #expect(game.first.remaining == .seconds(600))
+
+        game = game.press(.first).press(.second).press(.first)
+        #expect(game.second.remaining == .seconds(3300))
+        #expect(game.first.remaining == .seconds(3300))
+
+        // The last period lasts the rest of the game.
+        game = game.press(.second).press(.first)
+        #expect(game.second.remaining == .seconds(3300))
+    }
+
+    @Test func aPeriodsTimeComesOnTopOfTheIncrement() {
+        let timeControl = TimeControl(initial: .seconds(600), increment: .seconds(5), stages: [TimeStage(moves: 1, time: .seconds(60))])
+        #expect(ChessClock(timeControl).press(.first).press(.second).second.remaining == .seconds(665))
+    }
+
+    @Test func eachPlayerStartsWithTheirOwnTime() {
+        let odds = ChessClock(TimeControl(initial: .seconds(300), increment: .zero, secondInitial: .seconds(180)))
+        #expect(odds.first == .full(.seconds(300)))
+        #expect(odds.second == .full(.seconds(180)))
+        #expect(odds.press(.first).reset() == odds)
+    }
 }

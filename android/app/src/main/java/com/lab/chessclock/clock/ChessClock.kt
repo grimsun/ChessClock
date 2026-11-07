@@ -22,17 +22,41 @@ enum class IncrementMode {
     SimpleDelay,
 }
 
+/**
+ * A later period of a multi-stage control, such as the 30 minutes after move 40 in classical chess:
+ * [time] is added once a player has made [moves] more moves since the period before began.
+ */
+data class TimeStage(val moves: Int, val time: Duration)
+
 data class TimeControl(
     val initial: Duration,
     val increment: Duration,
     val mode: IncrementMode = IncrementMode.Fischer,
-)
+    /** The periods after the first, in order; empty when [initial] is for the whole game. */
+    val stages: List<TimeStage> = emptyList(),
+    /** The second player's starting time, set apart from the first's to give one player odds. */
+    val secondInitial: Duration = initial,
+) {
+    fun initialOf(player: Player): Duration = if (player == Player.First) initial else secondInitial
+
+    /** The time a player gets on making their [moves]th move: a new period's, if one starts there. */
+    fun stageTimeAfter(moves: Int): Duration {
+        var startsAt = 0
+        for (stage in stages) {
+            startsAt += stage.moves
+            if (startsAt == moves) return stage.time
+            if (startsAt > moves) break
+        }
+        return Duration.ZERO
+    }
+}
 
 /**
  * One player's remaining time. [max] is the most time the player has had so far, which grows
- * with increments, so `remaining / max` is the fraction shown by the progress ring.
+ * with increments, so `remaining / max` is the fraction shown by the progress ring. [moves] counts
+ * the moves the player has ended with a press.
  */
-data class PlayerTime(val remaining: Duration, val max: Duration) {
+data class PlayerTime(val remaining: Duration, val max: Duration, val moves: Int = 0) {
     val progress: Float
         get() = if (max == Duration.ZERO) 0f else (remaining / max).toFloat()
 
@@ -42,7 +66,7 @@ data class PlayerTime(val remaining: Duration, val max: Duration) {
 
     internal fun add(time: Duration): PlayerTime {
         val newRemaining = remaining + time
-        return PlayerTime(newRemaining, maxOf(max, newRemaining))
+        return copy(remaining = newRemaining, max = maxOf(max, newRemaining))
     }
 
     internal fun subtract(time: Duration): PlayerTime =
@@ -58,8 +82,8 @@ enum class ClockStatus { NotStarted, Running, Paused, Finished }
 /** Immutable chess clock: every action returns the next state. */
 data class ChessClock(
     val timeControl: TimeControl,
-    val first: PlayerTime = PlayerTime.full(timeControl.initial),
-    val second: PlayerTime = PlayerTime.full(timeControl.initial),
+    val first: PlayerTime = PlayerTime.full(timeControl.initialOf(Player.First)),
+    val second: PlayerTime = PlayerTime.full(timeControl.initialOf(Player.Second)),
     /** The player on move, kept while paused; null before the game starts. */
     val turn: Player? = null,
     val running: Boolean = false,
@@ -80,6 +104,13 @@ data class ChessClock(
 
     fun timeOf(player: Player): PlayerTime = if (player == Player.First) first else second
 
+    /**
+     * The moves played, counted as on a scoresheet: a move each, so the count rises when the
+     * player who started presses, and stays as their opponent replies.
+     */
+    val moves: Int
+        get() = maxOf(first.moves, second.moves)
+
     /** With a simple delay, how long the player on move can still think before their time runs. */
     val delayRemaining: Duration
         get() = if (timeControl.mode == IncrementMode.SimpleDelay && turn != null && status != ClockStatus.Finished) {
@@ -90,14 +121,14 @@ data class ChessClock(
 
     /**
      * [player] presses their clock: the opponent's time starts running. Ending a running turn
-     * awards the increment as its [IncrementMode] says. Pressing either side of a paused clock
+     * counts the move and awards the increment as its [IncrementMode] says, plus the next period's
+     * time when the move completes a period. Pressing either side of a paused clock
      * resumes the player on move, so a pause can't change whose turn it is.
      */
     fun press(player: Player): ChessClock = when (status) {
         ClockStatus.Finished -> this
         ClockStatus.Running ->
-            if (turn == player) update(player) { it.add(moveBonus()) }.copy(turn = player.opponent, moveTime = Duration.ZERO)
-            else this
+            if (turn == player) endMove(player) else this
         ClockStatus.Paused -> copy(running = true)
         ClockStatus.NotStarted -> copy(turn = player.opponent, running = true)
     }
@@ -120,6 +151,11 @@ data class ChessClock(
         val charged = (elapsed - delayRemaining).coerceAtLeast(Duration.ZERO)
         return update(player) { it.subtract(charged) }.copy(moveTime = moveTime + elapsed)
     }
+
+    private fun endMove(player: Player): ChessClock = update(player) {
+        val moves = it.moves + 1
+        it.add(moveBonus() + timeControl.stageTimeAfter(moves)).copy(moves = moves)
+    }.copy(turn = player.opponent, moveTime = Duration.ZERO)
 
     /** The time given back to the player on move when they end this move. */
     private fun moveBonus(): Duration = when (timeControl.mode) {
