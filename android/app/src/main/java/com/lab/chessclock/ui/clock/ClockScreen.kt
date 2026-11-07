@@ -36,12 +36,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -55,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -63,12 +60,13 @@ import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
@@ -87,12 +85,11 @@ import com.lab.chessclock.clock.ChessClock
 import com.lab.chessclock.clock.ClockStatus
 import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.Player
+import com.lab.chessclock.clock.PlayerTime
 import com.lab.chessclock.clock.TimeControl
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
-import com.lab.chessclock.settings.TimePreset
-import com.lab.chessclock.ui.settings.presetDescription
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import com.lab.chessclock.ui.theme.clockColors
 import kotlin.time.Duration
@@ -120,7 +117,6 @@ fun ClockRoute(
         uiState = uiState,
         onPlayerPressed = viewModel::onPlayerPressed,
         onControlPressed = viewModel::onControlPressed,
-        onPresetSelect = viewModel::applyPreset,
         onOpenSettings = {
             viewModel.pause()
             onOpenSettings()
@@ -136,7 +132,6 @@ fun ClockScreen(
     onControlPressed: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    onPresetSelect: (TimePreset) -> Unit = {},
 ) {
     Box(
         modifier
@@ -152,7 +147,7 @@ fun ClockScreen(
             // Faces are drawn clear of the corner buttons, the one opposite them by as much so both
             // stay the same size; each whole half still takes touches.
             val face = @Composable { player: Player, inset: PaddingValues, modifier: Modifier ->
-                PlayerClockFace(clock, player, orientation, faceStyle, onPlayerPressed, modifier, inset)
+                PlayerClockFace(clock.faceOf(player), player, orientation, faceStyle, onPlayerPressed, modifier, inset)
             }
             val bottomInset = PaddingValues(bottom = CORNER_BUTTON_STRIP)
             val topInset = PaddingValues(top = CORNER_BUTTON_STRIP)
@@ -186,44 +181,27 @@ fun ClockScreen(
             }
         }
 
-        // The buttons sit on the second player's half: hide them during play so a hard tap near a
-        // corner ends the turn instead of changing the game.
-        val running = uiState is ClockUiState.Ready && uiState.clock.status == ClockStatus.Running
+        // Both sit on the second player's half. The settings button hides during play, so a hard
+        // tap near its corner ends the turn instead of opening settings; the counter is only a
+        // label that touches pass through, so it stays.
+        val cornerModifier = Modifier.safeDrawingPadding().padding(16.dp)
         if (uiState is ClockUiState.Ready) {
-            AnimatedVisibility(
-                visible = !running,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .safeDrawingPadding()
-                    .padding(16.dp),
-                enter = fadeIn() + scaleIn(initialScale = 0.8f),
-                exit = fadeOut() + scaleOut(targetScale = 0.8f),
-            ) {
-                TimeControlButton(uiState.clock.timeControl, onPresetSelect, onCustom = onOpenSettings)
-            }
+            MoveCounter(uiState.clock.moves, cornerModifier.align(Alignment.BottomStart))
         }
         AnimatedVisibility(
-            visible = !running,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .safeDrawingPadding()
-                .padding(16.dp),
+            visible = !(uiState is ClockUiState.Ready && uiState.clock.status == ClockStatus.Running),
+            modifier = cornerModifier.align(Alignment.BottomEnd),
             enter = fadeIn() + scaleIn(initialScale = 0.8f),
             exit = fadeOut() + scaleOut(targetScale = 0.8f),
         ) {
-            CornerButton(onClick = onOpenSettings) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_baseline_settings_24),
-                    contentDescription = stringResource(R.string.open_settings),
-                )
-            }
+            SettingsButton(onClick = onOpenSettings)
         }
     }
 }
 
 @Composable
 private fun PlayerClockFace(
-    clock: ChessClock,
+    face: FaceState,
     player: Player,
     orientation: Orientation,
     faceStyle: FaceStyle,
@@ -231,13 +209,13 @@ private fun PlayerClockFace(
     modifier: Modifier = Modifier,
     inset: PaddingValues = PaddingValues(),
 ) {
-    val time = clock.timeOf(player)
-    val finished = clock.status == ClockStatus.Finished
+    val time = face.time
+    val finished = face.role == FaceRole.Won || face.role == FaceRole.Lost
     val progress by animateFloatAsState(
         targetValue = if (finished) 1f else time.progress,
         // Smooth between ticks while running; otherwise a reset or a new time control sweeps the
         // ring back to full instead of jumping.
-        animationSpec = if (clock.status == ClockStatus.Running) {
+        animationSpec = if (face.running) {
             tween(ClockViewModel.TICK_INTERVAL.inWholeMilliseconds.toInt(), easing = LinearEasing)
         } else {
             tween(500)
@@ -246,13 +224,11 @@ private fun PlayerClockFace(
     )
     val colors = MaterialTheme.clockColors
     // The face color, and the color of a panel's content drawn on it.
-    val (targetColor, targetOnColor) = when {
-        finished && time.isExpired -> colors.loss to colors.onLoss
-        finished -> colors.win to colors.onWin
-        clock.isLowOnTime(player) -> colors.loss to colors.onLoss
-        // While paused too, so it's clear whose move it is when play resumes.
-        clock.turn == player -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
-        else -> colors.inactive to colors.onInactive
+    val (targetColor, targetOnColor) = when (face.role) {
+        FaceRole.Lost, FaceRole.LowOnTime -> colors.loss to colors.onLoss
+        FaceRole.Won -> colors.win to colors.onWin
+        FaceRole.OnMove -> MaterialTheme.colorScheme.primary to MaterialTheme.colorScheme.onPrimary
+        FaceRole.Waiting -> colors.inactive to colors.onInactive
     }
     // The turn passes from one face to the other as a short cross-fade instead of a jump.
     val color by animateColorAsState(targetColor, tween(COLOR_FADE_MILLIS), label = "color")
@@ -264,10 +240,10 @@ private fun PlayerClockFace(
         animationSpec = spring(stiffness = Spring.StiffnessMedium),
         label = "pressScale",
     )
-    val state = when {
-        time.isExpired -> stringResource(R.string.state_out_of_time)
-        !finished && clock.turn == player -> stringResource(R.string.state_on_move)
-        else -> null
+    val state = when (face.role) {
+        FaceRole.Lost -> stringResource(R.string.state_out_of_time)
+        FaceRole.OnMove, FaceRole.LowOnTime -> stringResource(R.string.state_on_move)
+        FaceRole.Waiting, FaceRole.Won -> null
     }
 
     // The whole half of the screen is the player's button, like a physical clock, and like one it
@@ -303,8 +279,7 @@ private fun PlayerClockFace(
     ) {
         val text = formatClockTime(time.remaining)
         // With a simple delay, the seconds the player on move can still think before their time runs.
-        val delay = clock.delayRemaining.takeIf { clock.turn == player && it > Duration.ZERO }
-            ?.let { stringResource(R.string.delay_remaining, it.inWholeSecondsRoundedUp) }
+        val delay = face.delaySeconds?.let { stringResource(R.string.delay_remaining, it) }
         val rotation = orientation.rotationOf(player)
         Box(
             modifier = Modifier
@@ -321,6 +296,34 @@ private fun PlayerClockFace(
             }
         }
     }
+}
+
+/**
+ * What one face shows. From tick to tick it stays equal for the face that waits, so only the face
+ * whose time runs is drawn again.
+ */
+private data class FaceState(
+    val time: PlayerTime,
+    val role: FaceRole,
+    /** Whether the clock runs, so the ring follows each tick smoothly. */
+    val running: Boolean,
+    /** With a simple delay, the whole seconds the player on move can still think; null otherwise. */
+    val delaySeconds: Long?,
+)
+
+private enum class FaceRole { Waiting, OnMove, LowOnTime, Won, Lost }
+
+private fun ChessClock.faceOf(player: Player): FaceState {
+    val time = timeOf(player)
+    val role = when {
+        status == ClockStatus.Finished -> if (time.isExpired) FaceRole.Lost else FaceRole.Won
+        isLowOnTime(player) -> FaceRole.LowOnTime
+        // While paused too, so it's clear whose move it is when play resumes.
+        turn == player -> FaceRole.OnMove
+        else -> FaceRole.Waiting
+    }
+    val delay = delayRemaining.takeIf { turn == player && it > Duration.ZERO }
+    return FaceState(time, role, status == ClockStatus.Running, delay?.inWholeSecondsRoundedUp)
 }
 
 /**
@@ -447,103 +450,55 @@ private fun ClockText(
     )
 }
 
-/** The time control at a glance, opposite the settings button; a tap offers the presets. */
+/**
+ * The moves played, opposite the settings button. Only a label, so it stays during play: a touch
+ * on it lands on the face below and ends the turn like anywhere else on it.
+ */
 @Composable
-private fun TimeControlButton(
-    timeControl: TimeControl,
-    onPresetSelect: (TimePreset) -> Unit,
-    onCustom: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val label = timeControl.shortLabel
-    val description = stringResource(R.string.time_control_button, label)
-    Box {
-        CornerButton(
-            onClick = { expanded = true },
-            modifier = Modifier.semantics { contentDescription = description },
-        ) {
-            // A long time control shrinks to fit rather than widening its button.
-            BasicText(
-                text = label,
-                modifier = Modifier.padding(horizontal = 6.dp),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    color = LocalContentColor.current,
-                    fontFeatureSettings = "tnum",
-                ),
-                maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            TimePreset.All.forEach { preset ->
-                val current = preset.matches(timeControl)
-                val spoken = presetDescription(preset, timeControl.mode)
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            stringResource(R.string.preset_label, preset.minutes, preset.incrementSeconds),
-                            fontWeight = if (current) FontWeight.Bold else null,
-                            color = if (current) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                        )
-                    },
-                    onClick = {
-                        expanded = false
-                        onPresetSelect(preset)
-                    },
-                    modifier = Modifier.semantics {
-                        contentDescription = spoken
-                        selected = current
-                    },
-                )
-            }
-            // Own times are set in settings; marked current when no preset matches.
-            val custom = TimePreset.All.none { it.matches(timeControl) }
-            HorizontalDivider()
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        stringResource(R.string.custom_time_control),
-                        fontWeight = if (custom) FontWeight.Bold else null,
-                        color = if (custom) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                    )
-                },
-                onClick = {
-                    expanded = false
-                    onCustom()
-                },
-                modifier = Modifier.semantics { selected = custom },
-            )
-        }
+private fun MoveCounter(moves: Int, modifier: Modifier = Modifier) {
+    val description = pluralStringResource(R.plurals.moves_played, moves, moves)
+    Box(
+        modifier = modifier
+            .size(CORNER_BUTTON_SIZE)
+            .shadow(1.dp, CircleShape)
+            .background(MaterialTheme.clockColors.inactive, CircleShape)
+            .clearAndSetSemantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        // A long game's three digits shrink to fit rather than crowding the circle's edge.
+        BasicText(
+            text = moves.toString(),
+            modifier = Modifier.padding(horizontal = 4.dp),
+            style = MaterialTheme.typography.labelLarge.copy(
+                color = MaterialTheme.clockColors.onInactive,
+                textAlign = TextAlign.Center,
+                fontFeatureSettings = "tnum",
+            ),
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.sp),
+        )
     }
 }
 
-/** The small buttons in the bottom corners, one shape and size so the two match. */
+/** The settings button, the size of a small FAB, matching the move counter opposite. */
 @Composable
-private fun CornerButton(onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+private fun SettingsButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
-        modifier = modifier.size(width = 56.dp, height = 40.dp),
+        modifier = modifier.size(CORNER_BUTTON_SIZE),
         shape = CircleShape,
         color = MaterialTheme.clockColors.inactive,
         contentColor = MaterialTheme.clockColors.onInactive,
         shadowElevation = 1.dp,
     ) {
-        Box(contentAlignment = Alignment.Center) { content() }
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                painter = painterResource(R.drawable.ic_baseline_settings_24),
+                contentDescription = stringResource(R.string.open_settings),
+            )
+        }
     }
 }
-
-/** Whether [timeControl] already is this preset's, whatever its increment mode. */
-private fun TimePreset.matches(timeControl: TimeControl): Boolean =
-    timeControl.initial == minutes.minutes && timeControl.increment == incrementSeconds.seconds
-
-/** As players write it, compactly: "5+3", or "0:30+0" for a time that isn't whole minutes. */
-private val TimeControl.shortLabel: String
-    get() {
-        val start = initial.toComponents { minutes, seconds, _ ->
-            if (seconds == 0) "$minutes" else "$minutes:${seconds.toString().padStart(2, '0')}"
-        }
-        return "$start+${increment.inWholeSeconds}"
-    }
 
 @Composable
 private fun KeepScreenOn() {
@@ -595,6 +550,9 @@ private val PANEL_CORNER = 28.dp
 
 /** What a face leaves for the corner buttons, beyond its own padding. */
 private val CORNER_BUTTON_STRIP = 40.dp
+
+/** Material's small FAB. */
+private val CORNER_BUTTON_SIZE = 40.dp
 
 /** Below this the player on move sees their face turn red. */
 internal val LOW_TIME = 10.seconds

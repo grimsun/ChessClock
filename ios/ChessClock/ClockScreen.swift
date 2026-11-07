@@ -5,16 +5,10 @@ struct ClockScreen: View {
     @Bindable var settings: SettingsStore
     let model: ClockModel
     @State private var showingSettings = false
+    /// Whether the faces sit side by side, which settings name each player's time by.
+    @State private var wide = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.palette) private var palette
-
-    /// The preset the settings are, if any; picking one starts a fresh game with it.
-    private var preset: Binding<TimePreset?> {
-        Binding(
-            get: { TimePreset.all.first { $0.matches(settings.settings) } },
-            set: { if let preset = $0 { settings.settings = preset.applied(to: settings.settings) } },
-        )
-    }
 
     var body: some View {
         let clock = model.clock
@@ -28,23 +22,26 @@ struct ClockScreen: View {
                 // Faces are drawn clear of the corner buttons, the one opposite them by as much so both
                 // stay the same size; each whole half still takes touches.
                 PlayerFace(
-                    clock: clock, player: .first, style: faceStyle, rotation: seating.rotation(of: .first),
-                    inset: wide ? .bottom : .top,
+                    face: clock.face(of: .first), player: .first, style: faceStyle,
+                    rotation: seating.rotation(of: .first), inset: wide ? .bottom : .top,
                 ) {
                     model.press(.first, touchedAgo: $0)
                 }
+                .equatable()
                 ControlButton(status: clock.status) { model.toggle() }
                     .rotationEffect(seating.controlRotation)
                 PlayerFace(
-                    clock: clock, player: .second, style: faceStyle, rotation: seating.rotation(of: .second),
-                    inset: .bottom,
+                    face: clock.face(of: .second), player: .second, style: faceStyle,
+                    rotation: seating.rotation(of: .second), inset: .bottom,
                 ) {
                     model.press(.second, touchedAgo: $0)
                 }
+                .equatable()
             }
         }
-        // The button sits on the second player's half: hide it during play so a hard tap near the
-        // corner ends the turn instead of opening settings and pausing the game.
+        .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { wide = $0 }
+        // Both sit on the second player's half. The settings button hides during play, so a hard tap
+        // near its corner ends the turn instead of opening settings and pausing the game.
         .overlay(alignment: .bottomTrailing) {
             if clock.status != .running {
                 Button("Settings", systemImage: "gearshape.fill") {
@@ -56,32 +53,21 @@ struct ClockScreen: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }
         }
-        // The time control at a glance, opposite the settings button; a tap offers the presets.
+        // The moves played. Only a label, so it stays during play: a touch on it lands on the face
+        // below and ends the turn like anywhere else on it.
         .overlay(alignment: .bottomLeading) {
-            if clock.status != .running {
-                Menu {
-                    Picker("Time control", selection: preset) {
-                        ForEach(TimePreset.all, id: \.self) { Text($0.label).tag(Optional($0)) }
-                    }
-                    // Own times are set in settings.
-                    Divider()
-                    Button("Custom…") {
-                        model.pause()
-                        showingSettings = true
-                    }
-                } label: {
-                    Text(clock.timeControl.shortLabel)
-                        .monospacedDigit()
-                        .cornerButton(palette)
-                }
-                .accessibilityLabel("Time control, \(clock.timeControl.shortLabel)")
-                .transition(.opacity.combined(with: .scale(scale: 0.8)))
-            }
+            Text("\(clock.moves)")
+                .monospacedDigit()
+                .contentTransition(.numericText(value: Double(clock.moves)))
+                .animation(.snappy, value: clock.moves)
+                .cornerButton(palette)
+                .allowsHitTesting(false)
+                .accessibilityLabel(clock.moves == 1 ? "1 move played" : "\(clock.moves) moves played")
         }
         .animation(.easeInOut(duration: 0.2), value: clock.status == .running)
         .background(palette.background)
         .sheet(isPresented: $showingSettings) {
-            SettingsView(settings: $settings.settings)
+            SettingsView(settings: $settings.settings, wide: wide)
         }
         // A new time control starts a fresh game; other setting changes leave the game alone.
         .onChange(of: settings.settings.timeControl) { _, timeControl in
@@ -99,25 +85,52 @@ struct ClockScreen: View {
 }
 
 private extension View {
-    /// The small buttons in the bottom corners, one shape and size so the two match.
+    /// The circles in the bottom corners, one size so the two match.
     func cornerButton(_ palette: Palette) -> some View {
         font(.subheadline.weight(.semibold))
             .foregroundStyle(palette.onInactive)
-            // A long time control shrinks to fit rather than widening its button.
+            // A long game's three digits shrink to fit rather than crowding the circle's edge.
             .lineLimit(1)
             .minimumScaleFactor(0.7)
-            .padding(.horizontal, 6)
-            .frame(width: 56, height: 36)
-            .background(palette.inactive, in: .capsule)
+            .padding(.horizontal, 4)
+            .frame(width: 40, height: 40)
+            .background(palette.inactive, in: .circle)
             // Taps land in 44 points around it, the smallest target the HIG allows, while it looks smaller.
-            .padding(4)
+            .padding(2)
             .contentShape(.rect)
-            .padding(12)
+            .padding(14)
     }
 }
 
-private struct PlayerFace: View {
-    let clock: ChessClock
+/// What one face shows. From tick to tick it stays equal for the face that waits, so only the face
+/// whose time runs is drawn again.
+nonisolated private struct FaceState: Equatable {
+    var time: PlayerTime
+    var role: FaceRole
+    /// Whether the clock runs, so the ring follows each tick smoothly.
+    var running: Bool
+    /// With a simple delay, the whole seconds the player on move can still think; nil otherwise.
+    var delaySeconds: Int64?
+}
+
+nonisolated private enum FaceRole { case waiting, onMove, lowOnTime, won, lost }
+
+private extension ChessClock {
+    func face(of player: Player) -> FaceState {
+        let time = time(of: player)
+        let role: FaceRole =
+            if status == .finished { time.isExpired ? .lost : .won }
+            else if isLowOnTime(player) { .lowOnTime }
+            // While paused too, so it's clear whose move it is when play resumes.
+            else if turn == player { .onMove }
+            else { .waiting }
+        let delay = turn == player && delayRemaining > .zero ? delayRemaining.wholeSecondsRoundedUp : nil
+        return FaceState(time: time, role: role, running: status == .running, delaySeconds: delay)
+    }
+}
+
+private struct PlayerFace: View, Equatable {
+    let face: FaceState
     let player: Player
     let style: FaceStyle
     /// Turns the face to where its player sits.
@@ -129,13 +142,17 @@ private struct PlayerFace: View {
     @State private var pressed = false
     @Environment(\.palette) private var palette
 
+    /// The press action is left out: it is the same for a face's whole life.
+    nonisolated static func == (lhs: PlayerFace, rhs: PlayerFace) -> Bool {
+        lhs.face == rhs.face && lhs.player == rhs.player && lhs.style == rhs.style
+            && lhs.rotation == rhs.rotation && lhs.inset == rhs.inset
+    }
+
     var body: some View {
-        let time = clock.time(of: player)
-        let finished = clock.status == .finished
-        let onMove = !finished && clock.turn == player
+        let time = face.time
 
         // The whole half of the screen is the player's button, like a physical clock.
-        face(time: time, finished: finished)
+        drawnFace(time: time)
             .frame(maxWidth: faceSize, maxHeight: faceSize)
             .aspectRatio(1, contentMode: .fit)
             .padding(16)
@@ -153,7 +170,7 @@ private struct PlayerFace: View {
             .accessibilityElement(children: .ignore)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel(formatClockTime(time.remaining))
-            .accessibilityValue(accessibilityState(time: time, onMove: onMove))
+            .accessibilityValue(accessibilityState(time: time))
             .accessibilityHint("End turn")
             .accessibilityIdentifier(player == .first ? "face.first" : "face.second")
             .accessibilityAction(.default) { onPress(.zero) }
@@ -161,13 +178,13 @@ private struct PlayerFace: View {
 
     /// The square both face styles draw in. Rings and panels share its size and content, so they
     /// differ only in shape: an outline that empties or a filled block.
-    private func face(time: PlayerTime, finished: Bool) -> some View {
-        let role = role(time: time, finished: finished)
+    private func drawnFace(time: PlayerTime) -> some View {
+        let role = face.role
         let (color, onColor) = colors(role)
-        let progress = finished ? 1 : time.progress
+        let progress = role == .won || role == .lost ? 1 : time.progress
         // Smooth between ticks while running; otherwise a reset or a new time control sweeps the
         // ring back to full instead of jumping.
-        let sweep: Animation = clock.status == .running ? .linear(duration: 0.1) : .easeInOut(duration: 0.5)
+        let sweep: Animation = face.running ? .linear(duration: 0.1) : .easeInOut(duration: 0.5)
         return ZStack {
             switch style {
             case .rings:
@@ -214,30 +231,22 @@ private struct PlayerFace: View {
     }
 
     /// Whose move it is or that time ran out, and any delay countdown, as VoiceOver reads them.
-    private func accessibilityState(time: PlayerTime, onMove: Bool) -> String {
+    private func accessibilityState(time: PlayerTime) -> String {
         var parts: [String] = []
-        if time.isExpired { parts.append("Out of time") } else if onMove { parts.append("On move") }
+        switch face.role {
+        case .lost: parts.append("Out of time")
+        case .onMove, .lowOnTime: parts.append("On move")
+        case .waiting, .won: break
+        }
         if let delay = delayCaption { parts.append(delay) }
         return parts.joined(separator: ", ")
     }
 
     /// With a simple delay, the seconds the player on move can still think before their time runs.
-    private var delayCaption: String? {
-        guard clock.turn == player, clock.delayRemaining > .zero else { return nil }
-        return "Delay \(clock.delayRemaining.wholeSecondsRoundedUp) s"
-    }
-
-    private enum Role { case waiting, onMove, lowOnTime, won, lost }
-
-    private func role(time: PlayerTime, finished: Bool) -> Role {
-        if finished { return time.isExpired ? .lost : .won }
-        if clock.isLowOnTime(player) { return .lowOnTime }
-        // While paused too, so it's clear whose move it is when play resumes.
-        return clock.turn == player ? .onMove : .waiting
-    }
+    private var delayCaption: String? { face.delaySeconds.map { "Delay \($0) s" } }
 
     /// The face color, and the color of a panel's content drawn on it.
-    private func colors(_ role: Role) -> (Color, Color) {
+    private func colors(_ role: FaceRole) -> (Color, Color) {
         switch role {
         case .waiting: (palette.inactive, palette.onInactive)
         case .onMove: (palette.primary, palette.onPrimary)

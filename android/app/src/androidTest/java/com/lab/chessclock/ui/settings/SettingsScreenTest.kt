@@ -14,19 +14,22 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lab.chessclock.clock.IncrementMode
+import com.lab.chessclock.clock.TimeStage
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
 import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
-import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.theme.ChessClockTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class SettingsScreenTest {
@@ -36,18 +39,18 @@ class SettingsScreenTest {
 
     @Test
     fun showsCurrentOrientationAndTimerValues() {
-        setScreen(ClockSettings(hours = 2, minutes = 45, seconds = 30, incrementSeconds = 7))
+        setScreen(ClockSettings(time = 2.hours + 45.minutes + 30.seconds, incrementSeconds = 7))
 
         composeRule.onNodeWithText("Facing each other at the ends").assertIsSelected()
         composeRule.onNodeWithText("Upright").assertIsNotSelected()
-        listOf("2", "45", "30", "7").forEach { composeRule.onNodeWithText(it).assertExists() }
+        listOf("2 h 45 min 30 s", "7").forEach { composeRule.onNodeWithText(it).assertExists() }
     }
 
     @Test
     fun slidersAreLabelledWithTheirValue() {
-        setScreen(ClockSettings(minutes = 45, incrementSeconds = 7))
+        setScreen(ClockSettings(time = 1.hours + 30.minutes, incrementSeconds = 7))
 
-        composeRule.onNode(hasContentDescription("Minutes") and hasStateDescription("45")).assertExists()
+        composeRule.onNode(hasContentDescription("Time") and hasStateDescription("1 hour 30 minutes")).assertExists()
         composeRule.onNode(hasContentDescription("Increment per move (seconds)") and hasStateDescription("7")).assertExists()
     }
 
@@ -133,7 +136,7 @@ class SettingsScreenTest {
 
     @Test
     fun marksThePresetMatchingTheSettings() {
-        setScreen(ClockSettings(minutes = 3, incrementSeconds = 2))
+        setScreen(ClockSettings(time = 3.minutes, incrementSeconds = 2))
 
         composeRule.onNodeWithText("3 + 2").assertIsSelected()
         composeRule.onNodeWithText("3 + 0").assertIsNotSelected()
@@ -156,6 +159,59 @@ class SettingsScreenTest {
         composeRule.onNodeWithText("10 + 5").performClick()
 
         assertEquals(listOf(TimePreset(10, 5)), chosen)
+    }
+
+    @Test
+    fun differentTimesShowASliderForEachHalf() {
+        val separate = mutableListOf<Boolean>()
+        setScreen(ClockSettings(), onSeparateTimesChange = separate::add)
+        composeRule.onNodeWithText("Top player").assertDoesNotExist()
+
+        composeRule.onNodeWithText("Different times").performScrollTo().assertIsOff().performClick()
+        assertEquals(listOf(true), separate)
+    }
+
+    @Test
+    fun eachPlayersTimeIsNamedByTheirHalf() {
+        setScreen(ClockSettings(time = 5.minutes, secondTime = 3.minutes))
+
+        composeRule.onNode(hasContentDescription("Top player") and hasStateDescription("5 minutes")).assertExists()
+        composeRule.onNode(hasContentDescription("Bottom player") and hasStateDescription("3 minutes")).assertExists()
+        composeRule.onNodeWithText("Different times").performScrollTo().assertIsOn()
+        composeRule.onNodeWithText("3 + 2").assertIsNotSelected()
+    }
+
+    @Test
+    fun periodsShowTheirMovesAndTimeAndCanBeRemoved() {
+        val removed = mutableListOf<Int>()
+        setScreen(
+            ClockSettings(time = 90.minutes, stages = listOf(TimeStage(40, 30.minutes))),
+            onStageRemove = removed::add,
+        )
+
+        composeRule.onNodeWithText("Period 2").performScrollTo().assertExists()
+        composeRule.onNode(hasContentDescription("Starts after") and hasStateDescription("40 moves")).assertExists()
+        composeRule.onNode(hasContentDescription("Time added") and hasStateDescription("30 minutes")).assertExists()
+        composeRule.onNodeWithContentDescription("Remove period 2").performClick()
+
+        assertEquals(listOf(0), removed)
+    }
+
+    @Test
+    fun aPeriodCanBeAddedUpToTheMost() {
+        var added = 0
+        setScreen(ClockSettings(), onStageAdd = { added++ })
+
+        composeRule.onNodeWithText("Add time after a number of moves").performScrollTo().performClick()
+        assertEquals(1, added)
+    }
+
+    @Test
+    fun noMorePeriodsThanTheMostCanBeAdded() {
+        setScreen(ClockSettings().withStageAdded().withStageAdded())
+
+        composeRule.onNodeWithText("Period 3").performScrollTo().assertExists()
+        composeRule.onNodeWithText("Add time after a number of moves").assertDoesNotExist()
     }
 
     @Test
@@ -186,7 +242,9 @@ class SettingsScreenTest {
         onFaceStyleChange: (FaceStyle) -> Unit = {},
         onThemeChange: (ThemeMode) -> Unit = {},
         onPaletteChange: (ColorPalette) -> Unit = {},
-        onTimerChange: (TimerSetting, Int) -> Unit = { _, _ -> },
+        onSeparateTimesChange: (Boolean) -> Unit = {},
+        onStageAdd: () -> Unit = {},
+        onStageRemove: (Int) -> Unit = {},
         onIncrementModeChange: (IncrementMode) -> Unit = {},
         onVibrateOnTurnEndChange: (Boolean) -> Unit = {},
         onVibrateOnLowTimeChange: (Boolean) -> Unit = {},
@@ -201,7 +259,13 @@ class SettingsScreenTest {
                     onFaceStyleChange = onFaceStyleChange,
                     onThemeChange = onThemeChange,
                     onPaletteChange = onPaletteChange,
-                    onTimerChange = onTimerChange,
+                    onTimeChange = {},
+                    onSecondTimeChange = {},
+                    onSeparateTimesChange = onSeparateTimesChange,
+                    onIncrementChange = {},
+                    onStageAdd = onStageAdd,
+                    onStageChange = { _, _ -> },
+                    onStageRemove = onStageRemove,
                     onIncrementModeChange = onIncrementModeChange,
                     onVibrateOnTurnEndChange = onVibrateOnTurnEndChange,
                     onVibrateOnLowTimeChange = onVibrateOnLowTimeChange,

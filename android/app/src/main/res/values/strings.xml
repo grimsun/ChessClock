@@ -10,8 +10,11 @@
     <!-- Shown on the face of the player on move while a simple delay holds their clock, e.g. "Delay 3 s". -->
     <string name="delay_remaining">Delay %1$d s</string>
     <string name="open_settings">Settings</string>
-    <!-- The time control button on the clock screen, e.g. "Time control, 5+3". -->
-    <string name="time_control_button">Time control, %1$s</string>
+    <!-- The move counter on the clock screen, as TalkBack reads it. -->
+    <plurals name="moves_played">
+        <item quantity="one">%d move played</item>
+        <item quantity="other">%d moves played</item>
+    </plurals>
     <string name="navigate_up">Back</string>
     <string name="settings_title">Settings</string>
     <string name="presets_title">Time control</string>
@@ -23,9 +26,7 @@
     <string name="preset_description_bronstein">%1$s, plus up to %2$s back per move</string>
     <!-- Spoken form of a preset with a simple delay, e.g. "3 minutes, 2 seconds delay per move". -->
     <string name="preset_description_delay">%1$s, %2$s delay per move</string>
-    <!-- The last entry of the clock screen's time-control menu; opens settings. -->
-    <string name="custom_time_control">Custom…</string>
-    <string name="presets_explanation">Minutes each, plus seconds per move. Pick one or set your own.</string>
+    <string name="presets_explanation">Minutes each, plus seconds per move. Pick one or set your own below.</string>
     <string name="increment_mode_title">Seconds per move</string>
     <string name="increment_mode_fischer">Increment</string>
     <string name="increment_mode_fischer_description">Fischer: added after every move, so time can grow.</string>
@@ -69,9 +70,34 @@
     <string name="palette_forest">Forest</string>
     <string name="palette_ocean">Ocean (color-blind friendly)</string>
     <string name="palette_graphite">Graphite (high contrast)</string>
-    <string name="setting_hours">Hours</string>
-    <string name="setting_minutes">Minutes</string>
-    <string name="setting_seconds">Seconds</string>
+    <string name="setting_time">Time</string>
+    <!-- Each player's own time, named by where their half of the screen is. -->
+    <string name="setting_time_top">Top player</string>
+    <string name="setting_time_bottom">Bottom player</string>
+    <string name="setting_time_left">Left player</string>
+    <string name="setting_time_right">Right player</string>
+    <string name="separate_times">Different times</string>
+    <string name="separate_times_description">For time odds: the stronger player can start with less</string>
+    <!-- A later period of a time control, e.g. "Period 2". -->
+    <string name="stage_title">Period %1$d</string>
+    <string name="stage_moves">Starts after</string>
+    <string name="stage_time">Time added</string>
+    <string name="stage_remove">Remove period %1$d</string>
+    <string name="stage_add">Add time after a number of moves</string>
+    <string name="stages_explanation">Each player gets the time once they have made the moves, as in classical chess.</string>
+    <!-- Compact parts of a time on the settings screen, e.g. "1 h 30 min". -->
+    <string name="duration_hours">%1$d h</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="duration_seconds">%1$d s</string>
+    <!-- A count of moves on the settings screen, e.g. "40 moves". -->
+    <plurals name="move_count">
+        <item quantity="one">%d move</item>
+        <item quantity="other">%d moves</item>
+    </plurals>
+    <plurals name="hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
     <string name="setting_increment">Increment per move (seconds)</string>
     <string name="setting_delay">Delay per move (seconds)</string>
 </resources>

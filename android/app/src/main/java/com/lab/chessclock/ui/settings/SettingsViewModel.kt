@@ -3,6 +3,7 @@ package com.lab.chessclock.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lab.chessclock.clock.IncrementMode
+import com.lab.chessclock.clock.TimeStage
 import com.lab.chessclock.settings.ClockSettings
 import com.lab.chessclock.settings.ColorPalette
 import com.lab.chessclock.settings.FaceStyle
@@ -10,11 +11,11 @@ import com.lab.chessclock.settings.Orientation
 import com.lab.chessclock.settings.SettingsRepository
 import com.lab.chessclock.settings.ThemeMode
 import com.lab.chessclock.settings.TimePreset
-import com.lab.chessclock.settings.TimerSetting
 import com.lab.chessclock.ui.appViewModelFactory
 import com.lab.chessclock.ui.stateInUi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration
 
 /** [initialSettings], when already loaded, let the screen show them on its first frame. */
 class SettingsViewModel(
@@ -33,7 +34,20 @@ class SettingsViewModel(
 
     fun setPalette(palette: ColorPalette) = update { it.copy(palette = palette) }
 
-    fun setTimer(setting: TimerSetting, value: Int) = update { setting.update(it, value) }
+    fun setTime(time: Duration) = update { it.copy(time = time) }
+
+    fun setSecondTime(time: Duration) = update { it.copy(secondTime = time) }
+
+    /** Each player's own time starts out as the shared one, so turning it on changes nothing yet. */
+    fun setSeparateTimes(enabled: Boolean) = update { it.copy(secondTime = if (enabled) it.secondTime ?: it.time else null) }
+
+    fun setIncrement(seconds: Int) = update { it.copy(incrementSeconds = seconds) }
+
+    fun addStage() = update(ClockSettings::withStageAdded)
+
+    fun setStage(index: Int, stage: TimeStage) = update { it.withStage(index, stage) }
+
+    fun removeStage(index: Int) = update { it.withoutStage(index) }
 
     fun setIncrementMode(mode: IncrementMode) = update { it.copy(incrementMode = mode) }
 

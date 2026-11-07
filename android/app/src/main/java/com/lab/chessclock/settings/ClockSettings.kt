@@ -2,7 +2,8 @@ package com.lab.chessclock.settings
 
 import com.lab.chessclock.clock.IncrementMode
 import com.lab.chessclock.clock.TimeControl
-import kotlin.time.Duration.Companion.hours
+import com.lab.chessclock.clock.TimeStage
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -67,38 +68,19 @@ val IncrementMode.storageKey: String
 fun incrementModeFromStorageKey(key: String?): IncrementMode =
     IncrementMode.entries.firstOrNull { it.storageKey == key } ?: IncrementMode.Fischer
 
-/** The numeric settings that make up the time control, so screens and storage can treat them alike. */
-enum class TimerSetting(val storageKey: String, val max: Int) {
-    Hours("timer_h", 12),
-    Minutes("timer_m", 60),
-    Seconds("timer_s", 59),
-    Increment("increment", 60);
-
-    fun valueIn(settings: ClockSettings): Int = when (this) {
-        Hours -> settings.hours
-        Minutes -> settings.minutes
-        Seconds -> settings.seconds
-        Increment -> settings.incrementSeconds
-    }
-
-    fun update(settings: ClockSettings, value: Int): ClockSettings = when (this) {
-        Hours -> settings.copy(hours = value)
-        Minutes -> settings.copy(minutes = value)
-        Seconds -> settings.copy(seconds = value)
-        Increment -> settings.copy(incrementSeconds = value)
-    }
-}
-
 /**
  * The defaults are set for a phone lying between two players across a board: 5 + 3 blitz, whose
  * increment keeps a won game from being lost on time, and each time turned to its player.
  */
 data class ClockSettings(
-    val hours: Int = 0,
-    val minutes: Int = 5,
-    val seconds: Int = 0,
+    /** Each player's starting time, or the first player's when [secondTime] sets the second's apart. */
+    val time: Duration = 5.minutes,
+    /** The second player's own starting time, to give one player odds; null when both get [time]. */
+    val secondTime: Duration? = null,
     val incrementSeconds: Int = 3,
     val incrementMode: IncrementMode = IncrementMode.Fischer,
+    /** Time added after a number of moves, for a control in several periods such as classical chess. */
+    val stages: List<TimeStage> = emptyList(),
     val orientation: Orientation = Orientation.HorizontalOpposite,
     val faceStyle: FaceStyle = FaceStyle.Rings,
     val theme: ThemeMode = ThemeMode.System,
@@ -110,25 +92,58 @@ data class ClockSettings(
 ) {
     val timeControl: TimeControl
         get() = TimeControl(
-            // All-zero settings would give a game that is over before it starts and can't be reset.
-            initial = (hours.hours + minutes.minutes + seconds.seconds).coerceAtLeast(MIN_INITIAL_TIME),
+            // A zero time would give a game that is over before it starts and can't be reset.
+            initial = time.coerceAtLeast(MIN_INITIAL_TIME),
             increment = incrementSeconds.seconds,
             mode = incrementMode,
+            stages = stages,
+            secondInitial = (secondTime ?: time).coerceAtLeast(MIN_INITIAL_TIME),
         )
+
+    /** Another period after the last, as classical chess has them: 30 minutes after 40 moves, then 15 after 20 more. */
+    fun withStageAdded(): ClockSettings =
+        if (stages.size >= MAX_STAGES) this
+        else copy(stages = stages + if (stages.isEmpty()) TimeStage(40, 30.minutes) else TimeStage(20, 15.minutes))
+
+    fun withStage(index: Int, stage: TimeStage): ClockSettings =
+        copy(stages = stages.mapIndexed { i, it -> if (i == index) stage else it })
+
+    fun withoutStage(index: Int): ClockSettings = copy(stages = stages.filterIndexed { i, _ -> i != index })
 
     companion object {
         val MIN_INITIAL_TIME = 1.seconds
+        const val MAX_INCREMENT_SECONDS = 60
+
+        /** Periods after the first: two cover the controls played over the board. */
+        const val MAX_STAGES = 2
+
+        /**
+         * The times a slider offers: fine steps for bullet and blitz, coarser ones for longer games,
+         * so one slider reaches from 15 seconds to 6 hours.
+         */
+        val TIME_STEPS: List<Duration> =
+            listOf(15, 30, 45).map { it.seconds } +
+                (1..10).map { it.minutes } +
+                listOf(12, 15, 20, 25, 30, 40, 45, 50, 60, 75, 90, 105, 120, 150, 180, 240, 300, 360).map { it.minutes }
+
+        /** The moves a period can last. */
+        val MOVE_STEPS: List<Int> = (5..80 step 5).toList()
     }
 }
 
 /** A common time control: whole minutes plus a per-move increment, written "3 + 2". */
 data class TimePreset(val minutes: Int, val incrementSeconds: Int) {
     /**
-     * The settings with this time control, keeping everything else such as the orientation. The
-     * increment mode is kept too, so a preset reads "3 + 2" whether the 2 is an increment or a delay.
+     * The settings with this time control, the same for both players in a single period, keeping
+     * everything else such as the orientation. The increment mode is kept too, so a preset reads
+     * "3 + 2" whether the 2 is an increment or a delay.
      */
-    fun appliedTo(settings: ClockSettings): ClockSettings =
-        settings.copy(hours = 0, minutes = minutes, seconds = 0, incrementSeconds = incrementSeconds)
+    fun appliedTo(settings: ClockSettings): ClockSettings = settings.copy(
+        time = minutes.minutes,
+        secondTime = null,
+        incrementSeconds = incrementSeconds,
+        stages = emptyList(),
+    )
 
     /** Whether the settings already are this time control, so the screen can mark it. */
     fun matches(settings: ClockSettings): Boolean = appliedTo(settings) == settings

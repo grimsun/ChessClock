@@ -24,8 +24,9 @@ xcodebuild test -project ios/ChessClock.xcodeproj -scheme ChessClock \
 
 ## Compared with Android
 
-The two apps match feature for feature: presets and custom time, Fischer, Bronstein and delay,
-all four seats, rings and panels, the four palettes in light and dark, the theme choice, the
+The two apps match feature for feature: presets and custom time, periods added after a number
+of moves, a different time for each player, the move counter, Fischer, Bronstein and delay, all
+four seats, rings and panels, the four palettes in light and dark, the theme choice, the
 vibrations and their switches, low-time red, the animations, and turns that end on touch-down,
 timed by the touch. Settings are saved as JSON in UserDefaults rather than in DataStore.
 
