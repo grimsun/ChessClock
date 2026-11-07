@@ -188,8 +188,8 @@ class ChessClockTest {
     @Test
     fun bronsteinNeverRaisesTheTime() {
         val game = bronstein.press(Player.First).press(Player.Second).press(Player.First)
-        assertEquals(PlayerTime.full(5.minutes), game.first)
-        assertEquals(PlayerTime.full(5.minutes), game.second)
+        assertEquals(PlayerTime(5.minutes, 5.minutes, moves = 1), game.first)
+        assertEquals(PlayerTime(5.minutes, 5.minutes, moves = 1), game.second)
     }
 
     @Test
@@ -233,5 +233,66 @@ class ChessClockTest {
     fun fischerAndBronsteinHaveNoDelay() {
         assertEquals(Duration.ZERO, clock.press(Player.First).delayRemaining)
         assertEquals(Duration.ZERO, bronstein.press(Player.First).delayRemaining)
+    }
+
+    @Test
+    fun eachPressThatEndsATurnCountsAMove() {
+        val started = clock.press(Player.First)
+        assertEquals(0, started.moves)
+
+        val afterWhite = started.press(Player.Second)
+        assertEquals(1, afterWhite.second.moves)
+        assertEquals(1, afterWhite.moves)
+
+        val afterBlack = afterWhite.press(Player.First)
+        assertEquals(1, afterBlack.first.moves)
+        assertEquals(1, afterBlack.moves)
+        assertEquals(2, afterBlack.press(Player.Second).moves)
+    }
+
+    @Test
+    fun pressesThatDontEndATurnDontCount() {
+        val paused = clock.press(Player.First).press(Player.Second).pause()
+        assertEquals(1, paused.press(Player.First).moves)
+        assertEquals(1, paused.press(Player.Second).press(Player.Second).moves)
+        assertEquals(0, paused.reset().moves)
+    }
+
+    @Test
+    fun aPeriodsTimeIsAddedOnTheMoveThatCompletesThePeriodBefore() {
+        val stages = listOf(TimeStage(2, 30.minutes), TimeStage(1, 15.minutes))
+        var game = ChessClock(TimeControl(10.minutes, Duration.ZERO, stages = stages)).press(Player.First)
+
+        game = game.press(Player.Second)
+        assertEquals(10.minutes, game.second.remaining)
+        game = game.press(Player.First).press(Player.Second)
+        assertEquals(40.minutes, game.second.remaining)
+        assertEquals(40.minutes, game.second.max)
+        assertEquals(10.minutes, game.first.remaining)
+
+        game = game.press(Player.First)
+        assertEquals(40.minutes, game.first.remaining)
+        game = game.press(Player.Second).press(Player.First)
+        assertEquals(55.minutes, game.second.remaining)
+        assertEquals(55.minutes, game.first.remaining)
+
+        // The last period lasts the rest of the game.
+        game = game.press(Player.Second).press(Player.First)
+        assertEquals(55.minutes, game.second.remaining)
+    }
+
+    @Test
+    fun aPeriodsTimeComesOnTopOfTheIncrement() {
+        val timeControl = TimeControl(10.minutes, 5.seconds, stages = listOf(TimeStage(1, 1.minutes)))
+        val game = ChessClock(timeControl).press(Player.First).press(Player.Second)
+        assertEquals(11.minutes + 5.seconds, game.second.remaining)
+    }
+
+    @Test
+    fun eachPlayerStartsWithTheirOwnTime() {
+        val odds = ChessClock(TimeControl(5.minutes, Duration.ZERO, secondInitial = 3.minutes))
+        assertEquals(PlayerTime.full(5.minutes), odds.first)
+        assertEquals(PlayerTime.full(3.minutes), odds.second)
+        assertEquals(odds, odds.press(Player.First).reset())
     }
 }
