@@ -362,18 +362,28 @@ private struct ControlButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(label)
-                .font(.headline)
+            // A symbol reads the same from either side of the board, where a word is upside down for one.
+            Image(systemName: symbol)
+                .font(.system(size: 28, weight: .semibold))
                 // Clear to hit before a game, small enough during one that a hard tap near the
                 // middle ends the turn rather than pausing.
                 .frame(width: 80, height: 80)
-                .contentTransition(.opacity)
+                .contentTransition(.symbolEffect(.replace))
                 .animation(.easeInOut(duration: colorFade), value: status)
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
         .tint(palette.primary)
         .foregroundStyle(palette.onPrimary)
+        .accessibilityLabel(label)
+    }
+
+    private var symbol: String {
+        switch status {
+        case .notStarted: "play.fill"
+        case .running: "pause.fill"
+        case .paused, .finished: "arrow.counterclockwise"
+        }
     }
 
     private var label: LocalizedStringKey {

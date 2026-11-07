@@ -46,7 +46,7 @@ class ClockScreenTest {
         setScreen(ClockUiState.Ready(newGame, Orientation.HorizontalSame))
 
         composeRule.onAllNodesWithText("05:00").assertCountEquals(2)
-        composeRule.onNodeWithText("Start").assertExists()
+        composeRule.onNodeWithContentDescription("Start").assertExists()
     }
 
     @Test
@@ -116,11 +116,11 @@ class ClockScreenTest {
         var controlPresses = 0
         setScreen({ state }, onControlPressed = { controlPresses++ })
 
-        composeRule.onNodeWithText("Start").performClick()
+        composeRule.onNodeWithContentDescription("Start").performClick()
         state = ClockUiState.Ready(newGame.toggle(), Orientation.HorizontalSame)
-        composeRule.onNodeWithText("Pause").assertExists()
+        composeRule.onNodeWithContentDescription("Pause").assertExists()
         state = ClockUiState.Ready(newGame.toggle().tick(10.minutes), Orientation.HorizontalSame)
-        composeRule.onNodeWithText("Reset").assertExists()
+        composeRule.onNodeWithContentDescription("Reset").assertExists()
 
         assertEquals(1, controlPresses)
     }
@@ -200,7 +200,7 @@ class ClockScreenTest {
         var opened = false
         setScreen(ClockUiState.Loading, onOpenSettings = { opened = true })
 
-        composeRule.onNodeWithText("Start").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Settings").performClick()
 
         assertTrue(opened)

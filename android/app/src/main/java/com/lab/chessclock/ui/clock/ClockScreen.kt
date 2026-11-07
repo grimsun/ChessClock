@@ -515,10 +515,11 @@ private fun KeepScreenOn() {
 
 @Composable
 private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val label = when (status) {
-        ClockStatus.NotStarted -> R.string.button_start
-        ClockStatus.Running -> R.string.button_pause
-        ClockStatus.Paused, ClockStatus.Finished -> R.string.button_reset
+    // A symbol reads the same from either side of the board, where a word is upside down for one.
+    val (icon, label) = when (status) {
+        ClockStatus.NotStarted -> R.drawable.ic_play_arrow_24 to R.string.button_start
+        ClockStatus.Running -> R.drawable.ic_pause_24 to R.string.button_pause
+        ClockStatus.Paused, ClockStatus.Finished -> R.drawable.ic_replay_24 to R.string.button_reset
     }
     Button(
         onClick = onClick,
@@ -529,11 +530,11 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
         contentPadding = PaddingValues(0.dp),
     ) {
         AnimatedContent(
-            targetState = label,
+            targetState = icon to label,
             transitionSpec = { fadeIn(tween(COLOR_FADE_MILLIS)) togetherWith fadeOut(tween(COLOR_FADE_MILLIS)) },
-            label = "controlLabel",
-        ) {
-            Text(stringResource(it), style = MaterialTheme.typography.titleMedium)
+            label = "controlIcon",
+        ) { (icon, label) ->
+            Icon(painterResource(icon), contentDescription = stringResource(label), Modifier.size(40.dp))
         }
     }
 }

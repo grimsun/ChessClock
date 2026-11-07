@@ -10,7 +10,7 @@ private const val TIMEOUT_MS = 5_000L
 
 /** Starts the clock, ends a few turns on each side, and pauses. */
 fun MacrobenchmarkScope.playAFewMoves() {
-    device.wait(Until.findObject(By.text("Start")), TIMEOUT_MS).click()
+    device.wait(Until.findObject(By.desc("Start")), TIMEOUT_MS).click()
     // Each half of the screen is a player's button: tap the top half, then the bottom one.
     val width = device.displayWidth
     val height = device.displayHeight
@@ -20,7 +20,7 @@ fun MacrobenchmarkScope.playAFewMoves() {
         device.click(width / 2, height * 3 / 4)
         device.waitForIdle()
     }
-    device.wait(Until.findObject(By.text("Pause")), TIMEOUT_MS).click()
+    device.wait(Until.findObject(By.desc("Pause")), TIMEOUT_MS).click()
 }
 
 /** Opens settings, scrolls through them, and goes back to the clock. */
@@ -30,5 +30,5 @@ fun MacrobenchmarkScope.openSettingsAndBack() {
     device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 4, device.displayWidth / 2, device.displayHeight / 4, 20)
     device.waitForIdle()
     device.pressBack()
-    device.wait(Until.hasObject(By.text("Reset")), TIMEOUT_MS)
+    device.wait(Until.hasObject(By.desc("Reset")), TIMEOUT_MS)
 }
