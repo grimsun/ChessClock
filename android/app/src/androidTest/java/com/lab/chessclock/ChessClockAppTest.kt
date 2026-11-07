@@ -48,6 +48,16 @@ class ChessClockAppTest {
     }
 
     @Test
+    fun openingSettingsDuringPlayPausesTheClock() {
+        composeRule.onNodeWithText("Start").performClick()
+
+        composeRule.onNodeWithContentDescription("Settings").performClick()
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
+        composeRule.onNodeWithText("Reset").assertExists()
+    }
+
+    @Test
     fun doubleTappingSettingsOpensItOnce() {
         doubleTap(composeRule.onNodeWithContentDescription("Settings"))
 

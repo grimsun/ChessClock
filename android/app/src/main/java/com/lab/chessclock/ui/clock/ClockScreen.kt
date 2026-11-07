@@ -5,7 +5,6 @@ import android.os.SystemClock
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
@@ -14,8 +13,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -181,21 +178,12 @@ fun ClockScreen(
             }
         }
 
-        // Both sit on the second player's half. The settings button hides during play, so a hard
-        // tap near its corner ends the turn instead of opening settings; the counter is only a
-        // label that touches pass through, so it stays.
+        // Both stay in the corners at all times, clear of the faces drawn beside them.
         val cornerModifier = Modifier.safeDrawingPadding().padding(16.dp)
         if (uiState is ClockUiState.Ready) {
             MoveCounter(uiState.clock.moves, cornerModifier.align(Alignment.BottomStart))
         }
-        AnimatedVisibility(
-            visible = !(uiState is ClockUiState.Ready && uiState.clock.status == ClockStatus.Running),
-            modifier = cornerModifier.align(Alignment.BottomEnd),
-            enter = fadeIn() + scaleIn(initialScale = 0.8f),
-            exit = fadeOut() + scaleOut(targetScale = 0.8f),
-        ) {
-            SettingsButton(onClick = onOpenSettings)
-        }
+        SettingsButton(onClick = onOpenSettings, modifier = cornerModifier.align(Alignment.BottomEnd))
     }
 }
 
@@ -451,8 +439,8 @@ private fun ClockText(
 }
 
 /**
- * The moves played, opposite the settings button. Only a label, so it stays during play: a touch
- * on it lands on the face below and ends the turn like anywhere else on it.
+ * The moves played, opposite the settings button. Only a label: a touch on it does nothing,
+ * rather than reaching the face below and ending the turn.
  */
 @Composable
 private fun MoveCounter(moves: Int, modifier: Modifier = Modifier) {
@@ -462,6 +450,8 @@ private fun MoveCounter(moves: Int, modifier: Modifier = Modifier) {
             .size(CORNER_BUTTON_SIZE)
             .shadow(1.dp, CircleShape)
             .background(MaterialTheme.clockColors.inactive, CircleShape)
+            // Takes the touches it covers without acting on them, as a non-clickable Surface does.
+            .pointerInput(Unit) {}
             .clearAndSetSemantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {

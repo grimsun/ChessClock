@@ -166,16 +166,13 @@ class ClockScreenTest {
     }
 
     @Test
-    fun settingsAreHiddenOnlyWhileRunning() {
-        var state by mutableStateOf<ClockUiState>(ClockUiState.Ready(newGame, Orientation.HorizontalSame))
-        setScreen({ state })
-        val settings = composeRule.onNodeWithContentDescription("Settings")
+    fun settingsStayDuringPlay() {
+        var opened = false
+        setScreen(ClockUiState.Ready(newGame.toggle(), Orientation.HorizontalSame), onOpenSettings = { opened = true })
 
-        settings.assertExists()
-        state = ClockUiState.Ready(newGame.toggle(), Orientation.HorizontalSame)
-        settings.assertDoesNotExist()
-        state = ClockUiState.Ready(newGame.toggle().pause(), Orientation.HorizontalSame)
-        settings.assertExists()
+        composeRule.onNodeWithContentDescription("Settings").performClick()
+
+        assertTrue(opened)
     }
 
     @Test
@@ -189,13 +186,13 @@ class ClockScreenTest {
     }
 
     @Test
-    fun aTouchOnTheMoveCounterEndsTheTurnBelowIt() {
+    fun aTouchOnTheMoveCounterDoesNothing() {
         val pressed = mutableListOf<Player>()
         setScreen(ClockUiState.Ready(newGame.toggle(), Orientation.HorizontalSame), onPlayerPressed = pressed::add)
 
         composeRule.onNodeWithContentDescription("0 moves played").performTouchInput { down(center) }
 
-        assertEquals(listOf(Player.Second), pressed)
+        assertEquals(emptyList<Player>(), pressed)
     }
 
     @Test

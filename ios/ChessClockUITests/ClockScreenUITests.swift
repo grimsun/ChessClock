@@ -27,18 +27,30 @@ final class ClockScreenUITests: XCTestCase {
         XCTAssertEqual(app.buttons["face.first"].value as? String, "")
     }
 
-    func testSettingsHideDuringPlayAndResetRestoresTheTime() {
+    func testSettingsStayDuringPlayAndPauseTheGame() {
         let app = launch()
-        XCTAssertTrue(app.buttons["Settings"].exists)
 
         app.buttons["face.second"].tap()
-        XCTAssertTrue(app.buttons["Settings"].waitForNonExistence(timeout: 2))
+        app.buttons["Settings"].tap()
+        app.buttons["Done"].tap()
 
-        app.buttons["Pause"].tap()
-        XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["Reset"].waitForExistence(timeout: 2))
         app.buttons["Reset"].tap()
         XCTAssertEqual(app.buttons["face.first"].label, "05:00")
         XCTAssertTrue(app.buttons["Start"].exists)
+    }
+
+    func testATouchOnTheMoveCounterDoesNothing() {
+        let app = launch()
+
+        // The counter sits on the second player's half: put them on move, so a touch reaching their
+        // face would end their turn.
+        app.buttons["face.second"].tap()
+        app.buttons["face.first"].tap()
+        app.staticTexts["1 move played"].tap()
+
+        XCTAssertEqual(app.buttons["face.second"].value as? String, "On move")
+        XCTAssertTrue(app.staticTexts["1 move played"].exists)
     }
 
     func testAPresetSetsTheTime() {

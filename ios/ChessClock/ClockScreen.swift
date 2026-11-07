@@ -40,31 +40,26 @@ struct ClockScreen: View {
             }
         }
         .onGeometryChange(for: Bool.self) { $0.size.width > $0.size.height } action: { wide = $0 }
-        // Both sit on the second player's half. The settings button hides during play, so a hard tap
-        // near its corner ends the turn instead of opening settings and pausing the game.
+        // Both stay in the corners at all times, clear of the faces drawn beside them. Opening
+        // settings pauses the game.
         .overlay(alignment: .bottomTrailing) {
-            if clock.status != .running {
-                Button("Settings", systemImage: "gearshape.fill") {
-                    model.pause()
-                    showingSettings = true
-                }
-                .labelStyle(.iconOnly)
-                .cornerButton(palette)
-                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            Button("Settings", systemImage: "gearshape.fill") {
+                model.pause()
+                showingSettings = true
             }
+            .labelStyle(.iconOnly)
+            .cornerButton(palette)
         }
-        // The moves played. Only a label, so it stays during play: a touch on it lands on the face
-        // below and ends the turn like anywhere else on it.
+        // The moves played. Only a label: a touch on it does nothing, rather than reaching the face
+        // below and ending the turn.
         .overlay(alignment: .bottomLeading) {
             Text("\(clock.moves)")
                 .monospacedDigit()
                 .contentTransition(.numericText(value: Double(clock.moves)))
                 .animation(.snappy, value: clock.moves)
                 .cornerButton(palette)
-                .allowsHitTesting(false)
                 .accessibilityLabel(clock.moves == 1 ? "1 move played" : "\(clock.moves) moves played")
         }
-        .animation(.easeInOut(duration: 0.2), value: clock.status == .running)
         .background(palette.background)
         .sheet(isPresented: $showingSettings) {
             SettingsView(settings: $settings.settings, wide: wide)
