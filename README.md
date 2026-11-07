@@ -3,16 +3,16 @@
 A two-player chess clock for Android and iPhone. Touch your half of the screen to end your turn and start your opponent's clock.
 
 <p>
-  <img src="docs/screenshots/rings.png" width="216" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite">
+  <img src="docs/screenshots/rings.png" width="216" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite and 12 moves played">
   <img src="docs/screenshots/panels-dark.png" width="216" alt="Clock screen with full-color panel faces in the dark theme">
-  <img src="docs/screenshots/settings.png" width="216" alt="Settings with time-control presets, custom time sliders and seating options">
+  <img src="docs/screenshots/settings.png" width="216" alt="Settings with time-control presets, the time slider, different times per player and a second period after 40 moves">
 </p>
 
 ## Design
 
 The idea is a minimal, clean clock that stays out of the way of the game:
 
-- **Two faces and one button.** During play the screen shows only the two times and Pause; the time control and settings buttons in the corners hide while the clock runs.
+- **Two faces and one button.** During play the screen shows only the two times, Pause and the move count; the settings button hides while the clock runs.
 - **Color carries the state.** Whose move it is, low time and the result show as color, not as extra labels or icons.
 - **One design language.** Rings and panels share the same square, digits and spacing, and differ only in shape.
 - **Quiet feedback.** A click confirms a press and a pulse warns of low time, so players can keep their eyes on the board.
@@ -20,7 +20,10 @@ The idea is a minimal, clean clock that stays out of the way of the game:
 
 ## Features
 
-- **Time controls** – one-tap presets from bullet to classical (`1 + 0` … `30 + 0`), picked from the clock screen's corner or in settings, or your own hours, minutes and seconds with an increment of up to a minute per move
+- **Time controls** – one-tap presets from bullet to rapid (`1 + 0` … `30 + 0`), or your own time from 15 seconds to 6 hours with up to a minute per move
+- **Periods** – classical controls in up to three periods: time added once each player has made a number of moves, such as 90 minutes for 40 moves, then 30 more with 30 seconds a move (FIDE)
+- **Time odds** – each player can start with their own time, so a stronger player can give a weaker one more
+- **Move counter** – the moves played, in the corner opposite settings; it stays during play, and a touch on it still ends the turn
 - **Increment or delay** – the seconds per move can be a Fischer increment, a Bronstein increment that gives back only the time a move took, or a simple delay that holds the clock at the start of each move, counted down on the face
 - **Seating** – times can face both players, whether they sit at the ends of the phone or at its sides
 - **Ready to play** – starts at `5 + 3` with each time turned to its player, for a phone lying between two players across a board
@@ -29,9 +32,9 @@ The idea is a minimal, clean clock that stays out of the way of the game:
 - **Four color palettes** – Walnut, Forest, Ocean (color-blind friendly) and Graphite (high contrast, true black when dark)
 - **Low-time warning** – the face of the player on move turns red under ten seconds
 - **Vibration** – a click confirms each press without looking at the clock, two pulses warn at ten seconds left and a long buzz marks a fallen flag; each can be turned off
-- **Made for play** – the screen stays on while the clock runs, the corner buttons hide during play so they can't be hit by accident, and the game pauses when the app goes to the background
-- **Quick to the touch** – a turn ends the moment your finger lands, timed by the touch itself, so the app's own handling time is never charged to the player who moved
-- **Accessible** – TalkBack and VoiceOver announce whose move it is, any delay, setting names and values, and presets in words ("3 minutes, plus 2 seconds per move")
+- **Made for play** – the screen stays on while the clock runs, the settings button hides during play so it can't be hit by accident, and the game pauses when the app goes to the background
+- **Quick to the touch** – a turn ends the moment your finger lands, timed by the touch itself, so the app's own handling time is never charged to the player who moved; each tick redraws only the face whose time runs
+- **Accessible** – TalkBack and VoiceOver announce whose move it is, any delay, the moves played, setting names and values, and presets in words ("3 minutes, plus 2 seconds per move")
 
 ### Palettes
 
