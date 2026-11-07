@@ -14,6 +14,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -35,7 +37,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -330,7 +333,7 @@ private fun RingFace(text: String, caption: String?, progress: () -> Float, colo
             progress = progress,
             modifier = Modifier.fillMaxSize(),
             color = color,
-            strokeWidth = RING_STROKE,
+            strokeWidth = PROGRESS_STROKE,
             trackColor = Color.Transparent,
             strokeCap = StrokeCap.Round,
             gapSize = 0.dp,
@@ -356,18 +359,29 @@ private fun PanelFace(
                 .background(color),
         )
         FaceContent(text, caption, onPanel)
-        // The remaining share of the player's time, as a thin bar along the panel's bottom edge.
-        LinearProgressIndicator(
+        // The remaining share of the player's time, as a bar along the panel's bottom edge: the
+        // ring's stroke laid straight, as thick and as round at the ends.
+        ProgressBar(
             progress = progress,
+            color = onPanel,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = PANEL_CORNER, vertical = 24.dp),
-            color = onPanel,
-            trackColor = onPanel.copy(alpha = 0.25f),
-            gapSize = 0.dp,
-            drawStopIndicator = {},
+                .padding(horizontal = PANEL_CORNER, vertical = 24.dp)
+                .height(PROGRESS_STROKE),
         )
+    }
+}
+
+/** A track with the remaining share of time filled in over it, both with round ends. */
+@Composable
+private fun ProgressBar(progress: () -> Float, color: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val radius = CornerRadius(size.height / 2)
+        drawRoundRect(color.copy(alpha = 0.25f), cornerRadius = radius)
+        // Never narrower than its height, so a nearly empty bar shrinks to a dot instead of a sliver.
+        val width = (size.width * progress().coerceIn(0f, 1f)).coerceAtLeast(size.height)
+        if (progress() > 0f) drawRoundRect(color, size = Size(width, size.height), cornerRadius = radius)
     }
 }
 
@@ -400,14 +414,14 @@ private fun BoxScope.FaceContent(text: String, caption: String?, color: Color) {
         // face is small or the system font is large instead of letting it overflow.
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = RING_STROKE + 24.dp),
+            .padding(horizontal = PROGRESS_STROKE + 24.dp),
     )
     if (caption != null) {
         Text(
             text = caption,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = RING_STROKE + 40.dp),
+                .padding(bottom = PROGRESS_STROKE + 40.dp),
             color = color,
             style = MaterialTheme.typography.titleMedium,
         )
@@ -524,7 +538,8 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
     }
 }
 
-private val RING_STROKE = 16.dp
+/** The thickness of a ring and of a panel's bar alike, so the two styles show time the same way. */
+private val PROGRESS_STROKE = 16.dp
 
 // Short, so the turn is seen to pass at once.
 private const val COLOR_FADE_MILLIS = 100

@@ -184,16 +184,16 @@ private struct PlayerFace: View, Equatable {
             switch style {
             case .rings:
                 Circle()
-                    .inset(by: ringStroke / 2)
+                    .inset(by: progressStroke / 2)
                     .trim(from: 0, to: progress)
-                    .stroke(color, style: StrokeStyle(lineWidth: ringStroke, lineCap: .round))
+                    .stroke(color, style: StrokeStyle(lineWidth: progressStroke, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .animation(sweep, value: progress)
                 content(time: time, color: palette.ringText)
             case .panels:
                 RoundedRectangle(cornerRadius: panelCorner, style: .continuous).fill(color)
                 content(time: time, color: onColor)
-                // The remaining share of the player's time, as a thin bar along the panel's bottom edge.
+                // The remaining share of the player's time, as a bar along the panel's bottom edge.
                 ProgressBar(progress: progress, color: onColor)
                     .animation(sweep, value: progress)
                     .padding(.horizontal, panelCorner)
@@ -214,12 +214,12 @@ private struct PlayerFace: View, Equatable {
                 .minimumScaleFactor(0.125)
                 .lineLimit(1)
                 // Clear of the ring's stroke even at the corners of the text.
-                .padding(.horizontal, ringStroke + 24)
+                .padding(.horizontal, progressStroke + 24)
             if let delayCaption {
                 Text(delayCaption)
                     .font(.headline)
                     .frame(maxHeight: .infinity, alignment: .bottom)
-                    .padding(.bottom, ringStroke + 40)
+                    .padding(.bottom, progressStroke + 40)
             }
         }
         .foregroundStyle(color)
@@ -251,7 +251,7 @@ private struct PlayerFace: View, Equatable {
     }
 }
 
-/// A thin track with the remaining share of time filled in.
+/// A track with the remaining share of time filled in: the ring's stroke laid straight.
 private struct ProgressBar: View {
     let progress: Double
     let color: Color
@@ -261,14 +261,18 @@ private struct ProgressBar: View {
             .fill(color.opacity(0.25))
             .overlay(alignment: .leading) {
                 GeometryReader { geometry in
-                    Capsule().fill(color).frame(width: geometry.size.width * progress)
+                    // Never narrower than its height, so a nearly empty bar shrinks to a dot instead of
+                    // a sliver.
+                    let width = max(geometry.size.width * min(progress, 1), progress > 0 ? geometry.size.height : 0)
+                    Capsule().fill(color).frame(width: width)
                 }
             }
-            .frame(height: 4)
+            .frame(height: progressStroke)
     }
 }
 
-private let ringStroke: CGFloat = 16
+/// The thickness of a ring and of a panel's bar alike, so the two styles show time the same way.
+private let progressStroke: CGFloat = 16
 
 /// Large enough for big digits, small enough that a ring stays a ring on an iPad.
 private let faceSize: CGFloat = 340
