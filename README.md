@@ -3,8 +3,8 @@
 A two-player chess clock for Android and iPhone. Touch your half of the screen to end your turn and start your opponent's clock.
 
 <p>
-  <img src="docs/screenshots/rings.png" width="216" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite and 12 moves played">
-  <img src="docs/screenshots/panels-dark.png" width="216" alt="Clock screen with full-color panel faces in the dark theme">
+  <img src="docs/screenshots/rings.png" width="216" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite, the move counter and the settings button in the corners">
+  <img src="docs/screenshots/panels-dark.png" width="216" alt="Clock screen mid-game with full-color panel faces in the dark theme, each with a bar as thick as the rings">
   <img src="docs/screenshots/settings.png" width="216" alt="Settings with time-control presets, the time slider, different times per player and a second period after 40 moves">
 </p>
 
@@ -12,9 +12,9 @@ A two-player chess clock for Android and iPhone. Touch your half of the screen t
 
 The idea is a minimal, clean clock that stays out of the way of the game:
 
-- **Two faces and one button.** Besides the two times and Start or Pause, the screen has only the move count and the settings button, small in the corners.
+- **Two faces and one button.** Besides the two times and the play, pause and reset button, the screen has only the move count and the settings button, small in the corners.
 - **Color carries the state.** Whose move it is, low time and the result show as color, not as extra labels or icons.
-- **One design language.** Rings and panels share the same square, digits and spacing, and differ only in shape.
+- **One design language.** Rings and panels share the same square, digits, spacing and stroke of remaining time, and differ only in shape.
 - **Quiet feedback.** A click confirms a press and a pulse warns of low time, so players can keep their eyes on the board.
 - **Every addition earns its place.** A feature or animation goes in only if it is clear, small and useful at the board.
 
