@@ -4,7 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -26,15 +26,15 @@ class ChessClockAppTest {
     @Before
     fun waitForStoredSettings() {
         // Nothing is drawn until the settings load from disk, which Compose's idling doesn't track.
-        composeRule.waitUntil { composeRule.onAllNodesWithText("Start").fetchSemanticsNodes().isNotEmpty() }
+        composeRule.waitUntil { composeRule.onAllNodesWithContentDescription("Start").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
     fun controlButtonStartsPausesAndResets() {
-        composeRule.onNodeWithText("Start").performClick()
-        composeRule.onNodeWithText("Pause").performClick()
-        composeRule.onNodeWithText("Reset").performClick()
-        composeRule.onNodeWithText("Start").assertExists()
+        composeRule.onNodeWithContentDescription("Start").performClick()
+        composeRule.onNodeWithContentDescription("Pause").performClick()
+        composeRule.onNodeWithContentDescription("Reset").performClick()
+        composeRule.onNodeWithContentDescription("Start").assertExists()
     }
 
     @Test
@@ -44,17 +44,17 @@ class ChessClockAppTest {
         composeRule.onNodeWithText("Increment per move (seconds)").assertExists()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
-        composeRule.onNodeWithText("Start").assertExists()
+        composeRule.onNodeWithContentDescription("Start").assertExists()
     }
 
     @Test
     fun openingSettingsDuringPlayPausesTheClock() {
-        composeRule.onNodeWithText("Start").performClick()
+        composeRule.onNodeWithContentDescription("Start").performClick()
 
         composeRule.onNodeWithContentDescription("Settings").performClick()
         composeRule.onNodeWithContentDescription("Back").performClick()
 
-        composeRule.onNodeWithText("Reset").assertExists()
+        composeRule.onNodeWithContentDescription("Reset").assertExists()
     }
 
     @Test
@@ -62,7 +62,7 @@ class ChessClockAppTest {
         doubleTap(composeRule.onNodeWithContentDescription("Settings"))
 
         composeRule.onNodeWithContentDescription("Back").performClick()
-        composeRule.onNodeWithText("Start").assertExists()
+        composeRule.onNodeWithContentDescription("Start").assertExists()
     }
 
     @Test
@@ -71,28 +71,28 @@ class ChessClockAppTest {
 
         doubleTap(composeRule.onNodeWithContentDescription("Back"))
 
-        composeRule.onNodeWithText("Start").assertExists()
+        composeRule.onNodeWithContentDescription("Start").assertExists()
     }
 
     @Test
     fun screenStaysOnOnlyWhileTheClockRuns() {
         assertFalse(keepsScreenOn())
 
-        composeRule.onNodeWithText("Start").performClick()
+        composeRule.onNodeWithContentDescription("Start").performClick()
         assertTrue(keepsScreenOn())
 
-        composeRule.onNodeWithText("Pause").performClick()
+        composeRule.onNodeWithContentDescription("Pause").performClick()
         assertFalse(keepsScreenOn())
     }
 
     @Test
     fun rotatingKeepsTheClockRunning() {
-        composeRule.onNodeWithText("Start").performClick()
+        composeRule.onNodeWithContentDescription("Start").performClick()
 
         composeRule.activityRule.scenario.recreate()
 
-        composeRule.onNodeWithText("Pause").performClick()
-        composeRule.onNodeWithText("Reset").assertExists()
+        composeRule.onNodeWithContentDescription("Pause").performClick()
+        composeRule.onNodeWithContentDescription("Reset").assertExists()
     }
 
     /** Taps twice without letting the screen transition run in between, like a quick double tap. */
