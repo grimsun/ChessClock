@@ -364,17 +364,18 @@ private struct ControlButton: View {
         Button(action: action) {
             // A symbol reads the same from either side of the board, where a word is upside down for one.
             Image(systemName: symbol)
-                .font(.system(size: 28, weight: .semibold))
-                // Clear to hit before a game, small enough during one that a hard tap near the
-                // middle ends the turn rather than pausing.
-                .frame(width: 80, height: 80)
+                .font(.system(size: 25, weight: .semibold))
+                // Clear to hit, yet well short of the faces, so it doesn't draw the eye from them and a
+                // hard tap near the middle ends the turn rather than pausing.
+                .frame(width: 72, height: 72)
                 .contentTransition(.symbolEffect(.replace))
                 .animation(.easeInOut(duration: colorFade), value: status)
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
-        .tint(palette.primary)
-        .foregroundStyle(palette.onPrimary)
+        // Tonal, in the corner buttons' color: the face on move stays the one strong color.
+        .tint(palette.inactive)
+        .foregroundStyle(palette.onInactive)
         .accessibilityLabel(label)
     }
 

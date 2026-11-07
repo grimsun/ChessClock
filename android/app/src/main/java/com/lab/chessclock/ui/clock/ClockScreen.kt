@@ -35,6 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -523,10 +524,15 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
     }
     Button(
         onClick = onClick,
-        // Material's medium FAB size: clear to hit before a game, small enough during one that a
-        // hard tap near the middle ends the turn rather than pausing.
-        modifier = modifier.size(80.dp),
+        // Clear to hit, yet well short of the faces, so it doesn't draw the eye from them and a hard
+        // tap near the middle ends the turn rather than pausing.
+        modifier = modifier.size(72.dp),
         shape = CircleShape,
+        // Tonal, in the corner buttons' color: the face on move stays the one strong color.
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.clockColors.inactive,
+            contentColor = MaterialTheme.clockColors.onInactive,
+        ),
         contentPadding = PaddingValues(0.dp),
     ) {
         AnimatedContent(
@@ -534,7 +540,7 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
             transitionSpec = { fadeIn(tween(COLOR_FADE_MILLIS)) togetherWith fadeOut(tween(COLOR_FADE_MILLIS)) },
             label = "controlIcon",
         ) { (icon, label) ->
-            Icon(painterResource(icon), contentDescription = stringResource(label), Modifier.size(40.dp))
+            Icon(painterResource(icon), contentDescription = stringResource(label), Modifier.size(36.dp))
         }
     }
 }
