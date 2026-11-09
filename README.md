@@ -1,22 +1,21 @@
-# ChessClock
+<div align="center">
 
-A two-player chess clock for Android and iPhone. Touch your half of the screen to end your turn and start your opponent's clock.
+# ♟️ ChessClock
 
-<p>
-  <img src="docs/screenshots/rings.png" width="216" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite, the move counter and the settings button in the corners">
-  <img src="docs/screenshots/panels-dark.png" width="216" alt="Clock screen mid-game with full-color panel faces in the dark theme, each with a bar as thick as the rings">
-  <img src="docs/screenshots/settings.png" width="216" alt="Settings with time-control presets, the time slider, different times per player and a second period after 40 moves">
-</p>
+**A minimal chess clock for Android and iPhone.**
 
-## Design
+A clean and concise design: two faces, one button, and nothing else in the way of the game.
+Touch your half of the screen to end your turn and start your opponent's clock.
 
-The idea is a minimal, clean clock that stays out of the way of the game:
+<img src="screenshots/rings.png" width="240" alt="Clock screen mid-game with ring faces, the top time turned toward the player opposite, the move counter and the settings button in the corners">
+&nbsp;
+<img src="screenshots/panels-dark.png" width="240" alt="Clock screen mid-game with full-color panel faces in the dark theme, each with a bar as thick as the rings">
+&nbsp;
+<img src="screenshots/settings.png" width="240" alt="Settings with time-control presets, the time slider, different times per player and a second period after 40 moves">
 
-- **Two faces and one button.** Besides the two times and the play, pause and reset button, the screen has only the move count and the settings button, small in the corners.
-- **Color carries the state.** Whose move it is, low time and the result show as color, not as extra labels or icons.
-- **One design language.** Rings and panels share the same square, digits, spacing and stroke of remaining time, and differ only in shape.
-- **Quiet feedback.** A click confirms a press and a pulse warns of low time, so players can keep their eyes on the board.
-- **Every addition earns its place.** A feature or animation goes in only if it is clear, small and useful at the board.
+</div>
+
+---
 
 ## Features
 
@@ -36,10 +35,14 @@ The idea is a minimal, clean clock that stays out of the way of the game:
 - **Quick to the touch** – a turn ends the moment your finger lands, timed by the touch itself, so the app's own handling time is never charged to the player who moved; each tick redraws only the face whose time runs
 - **Accessible** – TalkBack and VoiceOver announce whose move it is, any delay, the moves played, setting names and values, and presets in words ("3 minutes, plus 2 seconds per move")
 
+### Design
+
+The screen holds only what play needs: two faces, the play, pause and reset button, and the move count and settings small in the corners. Color carries the state, so whose move it is, low time and the result need no labels, and rings and panels share one square, the same digits and the same stroke of remaining time, differing only in shape. Feedback is quiet: a click confirms a press and a pulse warns of low time, so players keep their eyes on the board.
+
 ### Palettes
 
-![The four palettes in light mode: Walnut, Forest, Ocean and Graphite](docs/screenshots/palettes-light.png)
-![The four palettes in dark mode](docs/screenshots/palettes-dark.png)
+![The four palettes in light mode: Walnut, Forest, Ocean and Graphite](screenshots/palettes-light.png)
+![The four palettes in dark mode](screenshots/palettes-dark.png)
 
 Every palette's text colors meet WCAG AA contrast on their backgrounds, which `PaletteContrastTest` checks on Android and `PaletteContrastTests` on iOS.
 
@@ -51,9 +54,9 @@ Every palette's text colors meet WCAG AA contrast on their backgrounds, which `P
 ## Project layout
 
 ```
-android/       The Android app (Gradle project; open this folder in Android Studio)
-ios/           The iPhone app (Xcode project and the ClockCore Swift package), see ios/README.md
-docs/          Screenshots and the Android toolchain explainer
+android/       The Android app: a Gradle project, opened in Android Studio
+ios/           The iPhone app: an Xcode project and the ClockCore Swift package
+screenshots/   The pictures in this README
 ```
 
 Inside `android/`:
@@ -66,43 +69,47 @@ app/src/main/java/com/lab/chessclock/
   ui/clock/    Clock screen and ClockViewModel
   ui/settings/ Settings screen and SettingsViewModel
   ui/theme/    Palettes, clock colors and the Material theme
-app/src/release/generated/baselineProfiles/
-               The generated baseline profile shipped with release builds
 baselineprofile/
-               Profile generator and startup benchmark (Macrobenchmark)
+               Generator of the baseline profile release builds ship, and a startup benchmark
 ```
 
 Dependencies are wired by hand in `AppContainer`, which also loads the settings once at startup so every screen draws with them on its first frame. Versions live in `android/gradle/libs.versions.toml`.
 
+Inside `ios/`:
+
+```
+ClockCore/          Swift package: clock rules, settings and palettes, ported from the Android
+                    app and tested with `swift test`
+ChessClock/         SwiftUI app: clock screen, settings sheet, ClockModel that runs the clock,
+                    haptics, and the settings saved as JSON in UserDefaults
+ChessClockUITests/  XCUITests that play the app on a simulator
+```
+
+The two apps match feature for feature; each follows its platform where it should, with sliders and a settings screen on Android, steppers and a settings sheet on iPhone.
+
 ## Build and run
+
+### Android
 
 Requires JDK 17+ (Android Studio's bundled JDK works) and the Android SDK with platform 37.
 
 ```sh
 cd android
-./gradlew installDebug              # build and install on a running emulator/device
+./gradlew installDebug              # build and install on a running emulator or device
 ./gradlew testDebugUnitTest         # unit tests, no device needed
-./gradlew connectedDebugAndroidTest # Compose UI tests on an emulator/device
+./gradlew connectedDebugAndroidTest # Compose UI tests on an emulator or device
 ./gradlew assembleRelease           # R8-shrunk release APK with the baseline profile (unsigned)
 ```
 
-## Performance
+### iPhone
 
-Release builds ship a [baseline profile](https://developer.android.com/topic/performance/baselineprofiles/overview), so the code a game uses is compiled ahead of time instead of interpreted until the JIT warms up. The clock reports when it is fully drawn, so startup can be measured up to the moment the clock appears.
+Requires Xcode 27. Open `ios/ChessClock.xcodeproj` and run the ChessClock scheme, or from the shell:
 
 ```sh
-cd android
-./gradlew :app:generateBaselineProfile   # re-record the profile after UI changes (API 33+ device or emulator)
-./gradlew :baselineprofile:connectedBenchmarkReleaseAndroidTest \
-  -Pandroid.testInstrumentationRunnerArguments.class=com.lab.chessclock.baselineprofile.StartupBenchmark
+cd ios
+xcodebuild -project ChessClock.xcodeproj -scheme ChessClock \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build      # build for a simulator
+(cd ClockCore && swift test)                                           # rules, settings and palette tests, no simulator needed
+xcodebuild test -project ChessClock.xcodeproj -scheme ChessClock \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'            # UI tests on a simulator
 ```
-
-The benchmark compares cold start with and without the profile. Use a physical device for real numbers: an emulator that renders in software hides most of the profile's effect.
-
-## iPhone
-
-The SwiftUI app in [`ios/`](ios/README.md) has the same features, colors and defaults as the Android app. Its clock rules, settings and palettes live in the ClockCore Swift package, ported from the Android code and tested with `swift test`.
-
-## Docs
-
-[`docs/android-toolchain-map.html`](docs/android-toolchain-map.html) explains how the JDK, Gradle, AGP, Kotlin, the SDK and the emulator fit together.
