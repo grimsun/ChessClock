@@ -394,7 +394,7 @@ private fun ProgressBar(progress: () -> Float, color: Color, modifier: Modifier 
 private fun FaceSquare(rotation: Float, content: @Composable BoxScope.() -> Unit) {
     Box(
         modifier = Modifier
-            .padding(16.dp)
+            .padding(8.dp)
             .sizeIn(maxWidth = FACE_SIZE, maxHeight = FACE_SIZE)
             .aspectRatio(1f)
             .rotate(rotation),
@@ -526,7 +526,7 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
         onClick = onClick,
         // Clear to hit, yet well short of the faces, so it doesn't draw the eye from them and a hard
         // tap near the middle ends the turn rather than pausing.
-        modifier = modifier.size(72.dp),
+        modifier = modifier.size(64.dp),
         shape = CircleShape,
         // Tonal, in the corner buttons' color: the face on move stays the one strong color.
         colors = ButtonDefaults.buttonColors(
@@ -540,7 +540,7 @@ private fun ControlButton(status: ClockStatus, onClick: () -> Unit, modifier: Mo
             transitionSpec = { fadeIn(tween(COLOR_FADE_MILLIS)) togetherWith fadeOut(tween(COLOR_FADE_MILLIS)) },
             label = "controlIcon",
         ) { (icon, label) ->
-            Icon(painterResource(icon), contentDescription = stringResource(label), Modifier.size(36.dp))
+            Icon(painterResource(icon), contentDescription = stringResource(label), Modifier.size(32.dp))
         }
     }
 }
@@ -555,7 +555,7 @@ private const val COLOR_FADE_MILLIS = 100
 private val MAX_TOUCH_AGE = 1.seconds
 
 /** Large enough for big digits, small enough that a ring stays a ring on a tablet. */
-private val FACE_SIZE = 340.dp
+private val FACE_SIZE = 360.dp
 
 /** Material's extra-large shape. */
 private val PANEL_CORNER = 28.dp

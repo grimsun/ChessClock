@@ -150,7 +150,7 @@ private struct PlayerFace: View, Equatable {
         drawnFace(time: time)
             .frame(maxWidth: faceSize, maxHeight: faceSize)
             .aspectRatio(1, contentMode: .fit)
-            .padding(16)
+            .padding(8)
             .rotationEffect(rotation)
             // The face gives a little under the finger while it is down.
             .animation(.spring(duration: 0.2)) { $0.scaleEffect(pressed ? 0.96 : 1) }
@@ -275,7 +275,7 @@ private struct ProgressBar: View {
 private let progressStroke: CGFloat = 16
 
 /// Large enough for big digits, small enough that a ring stays a ring on an iPad.
-private let faceSize: CGFloat = 340
+private let faceSize: CGFloat = 360
 
 private let panelCorner: CGFloat = 28
 
@@ -364,10 +364,10 @@ private struct ControlButton: View {
         Button(action: action) {
             // A symbol reads the same from either side of the board, where a word is upside down for one.
             Image(systemName: symbol)
-                .font(.system(size: 25, weight: .semibold))
+                .font(.system(size: 22, weight: .semibold))
                 // Clear to hit, yet well short of the faces, so it doesn't draw the eye from them and a
                 // hard tap near the middle ends the turn rather than pausing.
-                .frame(width: 72, height: 72)
+                .frame(width: 64, height: 64)
                 .contentTransition(.symbolEffect(.replace))
                 .animation(.easeInOut(duration: colorFade), value: status)
         }
