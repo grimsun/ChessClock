@@ -30,6 +30,8 @@ struct ClockScreen: View {
                 .equatable()
                 ControlButton(status: clock.status) { model.toggle() }
                     .rotationEffect(seating.controlRotation)
+                    // A little room from the faces, so the button sits apart from both.
+                    .padding(8)
                 PlayerFace(
                     face: clock.face(of: .second), player: .second, style: faceStyle,
                     rotation: seating.rotation(of: .second), inset: .bottom,

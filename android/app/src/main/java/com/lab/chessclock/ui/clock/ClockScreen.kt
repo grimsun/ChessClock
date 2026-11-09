@@ -156,7 +156,10 @@ fun ClockScreen(
                 ControlButton(
                     status = clock.status,
                     onClick = onControlPressed,
-                    modifier = Modifier.rotate(orientation.controlRotation),
+                    // A little room from the faces, so the button sits apart from both.
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .rotate(orientation.controlRotation),
                 )
             }
 
