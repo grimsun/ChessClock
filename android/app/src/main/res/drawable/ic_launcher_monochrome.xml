@@ -6,17 +6,26 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:pathData="M54,30a24,24 0 1,1 0,48a24,24 0 1,1 0,-48"
+        android:pathData="M54,25a29,29 0 1,1 0,58a29,29 0 1,1 0,-58"
         android:strokeWidth="6"
         android:strokeColor="#59000000" />
     <path
-        android:pathData="M54,30A24,24 0 1,1 30,54"
+        android:pathData="M54,25A29,29 0 1,1 25,54"
         android:strokeWidth="6"
         android:strokeColor="#FF000000"
         android:strokeLineCap="round" />
-    <path
-        android:pathData="M48.5,45a5.5,5.5 0 1,0 11,0a5.5,5.5 0 1,0 -11,0M48.5,53H59.5C57,56.5 57,61.5 60.5,65.5H62.5Q64,65.5 64,67V69H44V67Q44,65.5 45.5,65.5H47.5C51,61.5 51,56.5 48.5,53Z"
-        android:strokeWidth="2.75"
-        android:strokeColor="#FF000000"
-        android:strokeLineJoin="round" />
+    <!-- The pawn in one outline: a round head on a short neck, a collar wider than the head, and the
+         body curving out to a broad base. Scaled about the center to fill the ring; its 2.5 stroke
+         draws 3 wide. -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="1.2"
+        android:scaleY="1.2">
+        <path
+            android:pathData="M51.4,48.35A5.5,5.5 0 1,1 56.6,48.35V49.6H60A1.75,1.75 0 0,1 60,53.1H57.4C57.4,57.5 58.5,61 61,63.3H62.5Q64.5,63.3 64.5,65.3V67Q64.5,69 62.5,69H45.5Q43.5,69 43.5,67V65.3Q43.5,63.3 45.5,63.3H47C49.5,61 50.6,57.5 50.6,53.1H48A1.75,1.75 0 0,1 48,49.6H51.4Z"
+            android:strokeWidth="2.5"
+            android:strokeColor="#FF000000"
+            android:strokeLineJoin="round" />
+    </group>
 </vector>
