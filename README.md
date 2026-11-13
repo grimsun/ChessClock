@@ -113,3 +113,7 @@ xcodebuild -project ChessClock.xcodeproj -scheme ChessClock \
 xcodebuild test -project ChessClock.xcodeproj -scheme ChessClock \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro'            # UI tests on a simulator
 ```
+
+## License
+
+[MIT](LICENSE)
