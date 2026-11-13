@@ -23,10 +23,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
     // The baseline profile plugin adds release-like build types for generating the profile and
