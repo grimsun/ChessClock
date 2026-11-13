@@ -563,8 +563,8 @@ private val FACE_SIZE = 360.dp
 /** Material's extra-large shape. */
 private val PANEL_CORNER = 28.dp
 
-/** What a face leaves for the corner buttons, beyond its own padding. */
-private val CORNER_BUTTON_STRIP = 40.dp
+/** What a face leaves for the corner buttons beyond its own padding: their 56 from the edge and a 16 gap. */
+private val CORNER_BUTTON_STRIP = 64.dp
 
 /** Material's small FAB. */
 private val CORNER_BUTTON_SIZE = 40.dp

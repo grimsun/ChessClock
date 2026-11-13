@@ -281,8 +281,8 @@ private let faceSize: CGFloat = 360
 
 private let panelCorner: CGFloat = 28
 
-/// What a face leaves for the corner buttons, beyond its own padding.
-private let cornerButtonStrip: CGFloat = 40
+/// What a face leaves for the corner buttons beyond its own padding: their 56 from the edge and a 16 gap.
+private let cornerButtonStrip: CGFloat = 64
 
 /// Short, so the turn is seen to pass at once.
 private let colorFade = 0.1
